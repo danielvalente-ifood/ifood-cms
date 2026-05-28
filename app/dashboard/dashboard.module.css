@@ -55,7 +55,7 @@
 }
 
 .iconButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
 }
 
 .iconButton:focus-visible {
@@ -123,7 +123,7 @@
 .statusDot {
   width: 12px;
   height: 12px;
-  background: #1fad68;
+  background: var(--color-success);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -154,7 +154,7 @@
 }
 
 .tab:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
 }
 
 .tab:focus-visible {
@@ -163,7 +163,7 @@
 }
 
 .tabActive {
-  background: rgba(47, 46, 48, 0.12);
+  background: var(--bg-active);
   color: var(--color-text-primary);
 }
 
@@ -201,7 +201,7 @@
 }
 
 .accountButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
 }
 
 .accountButton:focus-visible {
@@ -247,7 +247,7 @@
 }
 
 .menuButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
 }
 
 .menuButton svg {
@@ -346,7 +346,7 @@
 }
 
 .filterButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
 }
@@ -376,7 +376,7 @@
 }
 
 .performanceButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
 }
 
 .performanceButton:focus-visible {
@@ -491,7 +491,7 @@
 }
 
 .promoCard {
-  background: linear-gradient(135deg, var(--color-bg-light) 0%, rgba(47, 46, 48, 0.04) 100%);
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--bg-hover) 100%);
   border-radius: 8px;
   padding: 16px;
   position: relative;
@@ -579,7 +579,7 @@
 }
 
 .promoButton:hover {
-  background: rgba(47, 46, 48, 0.08);
+  background: var(--bg-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }

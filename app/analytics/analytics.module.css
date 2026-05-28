@@ -289,7 +289,7 @@
 
 .funnelBar {
   height: 28px;
-  background: linear-gradient(90deg, var(--brand), #ff4466);
+  background: linear-gradient(90deg, var(--brand), var(--brand-hover));
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -359,6 +359,38 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ---- Tab bar ---- */
+
+.tabBar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 28px;
+}
+
+.tab {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tabActive {
+  color: var(--text-primary);
+  border-bottom-color: var(--brand);
 }
 
 .sectionTitle {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import styles from './analytics.module.css';
@@ -86,6 +87,7 @@ async function fetchReport(body: {
 }
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const { user, signOut, providerToken } = useAuth();
   const [period, setPeriod] = useState<Period>('30d');
   const [loading, setLoading] = useState(true);
@@ -271,6 +273,19 @@ export default function AnalyticsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className={styles.tabBar}>
+          <button className={`${styles.tab} ${styles.tabActive}`}>
+            Visao Geral
+          </button>
+          <button
+            className={styles.tab}
+            onClick={() => router.push('/analytics/heatmap')}
+          >
+            Heatmap
+          </button>
         </div>
 
         {needsRelogin && (
