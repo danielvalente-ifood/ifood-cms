@@ -19,14 +19,14 @@ export default function AuthCallback() {
         return;
       }
 
-      // Domain validation disabled for development
-      // const email = session.user.email || '';
-      // const domain = email.split('@')[1];
-      // if (domain !== ALLOWED_DOMAIN) {
-      //   await supabase.auth.signOut();
-      //   router.replace('/login?error=domain');
-      //   return;
-      // }
+      const email = session.user.email || '';
+      const domain = email.split('@')[1];
+
+      if (domain !== ALLOWED_DOMAIN) {
+        await supabase.auth.signOut();
+        router.replace('/login?error=domain');
+        return;
+      }
 
       // Ensure cms_users profile exists
       const u = session.user;
