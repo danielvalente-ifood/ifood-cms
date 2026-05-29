@@ -32,36 +32,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    let isMounted = true;
+    let resolved = false;
+
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setProviderToken(session?.provider_token ?? null);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (isMounted && !resolved) {
+          resolved = true;
+          setUser(session?.user ?? null);
+          setProviderToken(session?.provider_token ?? null);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('[AuthProvider] getSession error:', err);
+        if (isMounted && !resolved) {
+          resolved = true;
+          setLoading(false);
+        }
+      }
     };
 
+    // Start auth check immediately
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.provider_token) {
-        setProviderToken(session.provider_token);
+    // Fallback timeout
+    const timeout = setTimeout(() => {
+      if (isMounted && !resolved) {
+        resolved = true;
+        setLoading(false);
       }
+    }, 5000);
 
-      // Sync cms_users profile on sign-in
-      if (_event === 'SIGNED_IN' && session?.user) {
-        const u = session.user;
-        await supabase.from('cms_users').upsert({
-          auth_id: u.id,
-          email: u.email || '',
-          full_name: u.user_metadata?.full_name || '',
-          avatar_url: u.user_metadata?.avatar_url || '',
-        }, { onConflict: 'auth_id' }).then(() => {});
-      }
+    let subscription: any;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (!isMounted) return;
 
-      setLoading(false);
-    });
+        setUser(session?.user ?? null);
+        if (session?.provider_token) {
+          setProviderToken(session.provider_token);
+        }
 
-    return () => subscription.unsubscribe();
+        if (!resolved) {
+          resolved = true;
+          setLoading(false);
+        }
+
+        // Sync cms_users profile on sign-in
+        if (_event === 'SIGNED_IN' && session?.user) {
+          const u = session.user;
+          try {
+            await supabase.from('cms_users').upsert({
+              auth_id: u.id,
+              email: u.email || '',
+              full_name: u.user_metadata?.full_name || '',
+              avatar_url: u.user_metadata?.avatar_url || '',
+            }, { onConflict: 'auth_id' });
+          } catch (err) {
+            console.error('[AuthProvider] upsert error:', err);
+          }
+        }
+      });
+      subscription = data?.subscription;
+    } catch (err) {
+      console.error('[AuthProvider] listener setup error:', err);
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+      subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
