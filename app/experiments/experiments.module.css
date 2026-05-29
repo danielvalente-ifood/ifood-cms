@@ -1,8 +1,8 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background: var(--home-bg);
-  color: var(--text-primary);
+  background: #121314;
+  color: #f5f5f5;
 }
 
 .main {
@@ -24,14 +24,14 @@
 .header h1 {
   font-size: 24px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #fff;
   margin: 0;
   letter-spacing: -0.3px;
 }
 
 .header p {
   font-size: 14px;
-  color: var(--color-status-draft);
+  color: #9fa0aa;
   margin: 6px 0 0;
 }
 
@@ -40,8 +40,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: var(--brand);
-  color: var(--text-inverse);
+  background: #eb0033;
+  color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -68,7 +68,7 @@
 }
 
 .experimentCard {
-  background: var(--home-card-bg);
+  background: #1B1C1E;
   border: none;
   border-radius: 12px;
   padding: 24px;
@@ -80,7 +80,7 @@
 
 .experimentCard:hover {
   transform: translateY(-2px);
-  border-color: var(--border-strong);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .experimentInfo {
@@ -99,7 +99,7 @@
 .experimentName {
   font-size: 16px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #fff;
   line-height: 1.4;
 }
 
@@ -108,7 +108,7 @@
   gap: 12px;
   align-items: center;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: #666;
   flex-wrap: wrap;
 }
 
@@ -123,73 +123,73 @@
 
 .btnSmall {
   padding: 8px 16px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-hover);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-status-draft);
+  color: #9fa0aa;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
 
 .btnSmall:hover {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-  background: var(--bg-active);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .btnSmallDanger {
   padding: 8px 16px;
-  border: 1px solid var(--border-brand);
-  background: var(--color-error-bg);
+  border: 1px solid rgba(235, 0, 51, 0.15);
+  background: rgba(235, 0, 51, 0.08);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--brand);
+  color: #eb0033;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
 
 .btnSmallDanger:hover {
-  background: var(--brand-subtle);
-  border-color: var(--brand);
+  background: rgba(235, 0, 51, 0.15);
+  border-color: rgba(235, 0, 51, 0.3);
 }
 
 .btnStart {
   padding: 8px 16px;
   border: none;
-  background: var(--color-status-running-bg);
+  background: rgba(76, 216, 185, 0.15);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-status-running);
+  color: #4cd8b9;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
 
 .btnStart:hover {
-  background: var(--color-success-bg);
+  background: rgba(76, 216, 185, 0.25);
 }
 
 .btnPause {
   padding: 8px 16px;
   border: none;
-  background: var(--color-status-paused-bg);
+  background: rgba(235, 180, 0, 0.15);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-status-paused);
+  color: #ebb400;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
 
 .btnPause:hover {
-  background: var(--color-warning-bg);
+  background: rgba(235, 180, 0, 0.25);
 }
 
 /* ---- Empty state ---- */
@@ -197,8 +197,8 @@
 .emptyState {
   text-align: center;
   padding: 80px 40px;
-  background: var(--home-card-bg);
-  border: 1px dashed var(--border-default);
+  background: #1B1C1E;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   margin: 40px 0;
 }
@@ -206,13 +206,13 @@
 .emptyState h3 {
   font-size: 18px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #fff;
   margin: 0 0 8px;
 }
 
 .emptyState p {
   font-size: 14px;
-  color: var(--color-status-draft);
+  color: #9fa0aa;
   margin: 0 0 24px;
 }
 
@@ -226,18 +226,18 @@
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-status-draft);
+  color: #9fa0aa;
   margin-bottom: 6px;
 }
 
 .formInput {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   font-size: 14px;
-  color: var(--text-primary);
-  background: var(--bg-hover);
+  color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.04);
   font-family: inherit;
   transition: border-color 0.15s, background 0.15s;
   line-height: 20px;
@@ -245,22 +245,22 @@
 
 .formInput:focus {
   outline: none;
-  border-color: var(--brand);
-  background: var(--bg-active);
+  border-color: #eb0033;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .formInput::placeholder {
-  color: var(--text-secondary);
+  color: #666;
 }
 
 .formSelect {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   font-size: 14px;
-  color: var(--text-primary);
-  background: var(--bg-hover);
+  color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.04);
   font-family: inherit;
   transition: border-color 0.15s;
   cursor: pointer;
@@ -269,13 +269,13 @@
 
 .formSelect:focus {
   outline: none;
-  border-color: var(--brand);
-  background: var(--bg-active);
+  border-color: #eb0033;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .formSelect option {
-  background: var(--home-card-bg);
-  color: var(--text-primary);
+  background: #1B1C1E;
+  color: #f5f5f5;
 }
 
 .formRow {
@@ -289,9 +289,9 @@
 
 .formError {
   font-size: 13px;
-  color: var(--brand);
-  background: var(--color-error-bg);
-  border: 1px solid var(--border-brand);
+  color: #eb0033;
+  background: rgba(235, 0, 51, 0.08);
+  border: 1px solid rgba(235, 0, 51, 0.15);
   border-radius: 8px;
   padding: 10px 14px;
   margin-top: 8px;
@@ -305,5 +305,5 @@
   justify-content: center;
   min-height: 200px;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: #666;
 }

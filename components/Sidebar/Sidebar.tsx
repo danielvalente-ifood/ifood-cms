@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useTheme } from '@/components/ThemeProvider';
-import { useRole } from '@/hooks/useRole';
 import { BrandMark } from '@/components/Brand/BrandMark';
 import { Icon } from '@/components/Icon/Icon';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
@@ -31,11 +30,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { isAdmin } = useRole();
-
-  const allNavItems = isAdmin
-    ? [...navItems, { href: '/settings', label: 'Configurações', icon: 'settings-gear' }]
-    : navItems;
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -52,7 +46,7 @@ export function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
-        {allNavItems.map((item) => (
+        {navItems.map((item) => (
           <a
             key={item.href}
             href={item.href}

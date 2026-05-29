@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { useRole } from '@/hooks/useRole';
 import type { Experiment, ExperimentVariant, Block, PageContent } from '@/types/database';
 import { HeroEditor } from '../../editor/[id]/components/editors/HeroEditor';
 import { VisionEditor } from '../../editor/[id]/components/editors/VisionEditor';
@@ -52,7 +51,6 @@ const typeIcons: Record<string, string> = {
 export default function ExperimentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { canEdit } = useRole();
   const experimentId = params.id as string;
 
   const [experiment, setExperiment] = useState<Experiment | null>(null);
@@ -343,15 +341,14 @@ export default function ExperimentDetailPage() {
               <input
                 className={styles.experimentTitle}
                 value={editName}
-                onChange={(e) => canEdit && handleNameChange(e.target.value)}
+                onChange={(e) => handleNameChange(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                 spellCheck={false}
-                readOnly={!canEdit}
               />
               <StatusBadge
                 status={experiment.status as StatusType}
                 size="md"
-                onStatusChange={canEdit ? (s) => handleStatusChange(s) : undefined}
+                onStatusChange={(s) => handleStatusChange(s)}
               />
             </div>
 
@@ -366,9 +363,8 @@ export default function ExperimentDetailPage() {
                   min="10"
                   max="90"
                   value={trafficPct}
-                  onChange={(e) => canEdit && handleTrafficChange(parseInt(e.target.value))}
+                  onChange={(e) => handleTrafficChange(parseInt(e.target.value))}
                   className={styles.trafficRange}
-                  disabled={!canEdit}
                   style={{
                     background: `linear-gradient(to right, #eb0033 0%, #eb0033 ${((trafficPct - 10) / 80) * 100}%, rgba(120,120,120,0.2) ${((trafficPct - 10) / 80) * 100}%, rgba(120,120,120,0.2) 100%)`,
                   }}
@@ -403,32 +399,30 @@ export default function ExperimentDetailPage() {
           </div>
 
           {/* Footer — floating with blur */}
-          {canEdit && (
-            <div className={styles.sidebarFooter}>
+          <div className={styles.sidebarFooter}>
+            <button
+              className={styles.saveBtn}
+              onClick={handleSave}
+              disabled={saving || !selectedBlockId}
+            >
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+            <div className={styles.footerSecondaryRow}>
               <button
-                className={styles.saveBtn}
-                onClick={handleSave}
-                disabled={saving || !selectedBlockId}
+                className={styles.undoBtn}
+                onClick={() => setShowUndoModal(true)}
+                disabled={!selectedBlockId || !variantBlockData}
               >
-                {saving ? 'Salvando...' : 'Salvar'}
+                Desfazer
               </button>
-              <div className={styles.footerSecondaryRow}>
-                <button
-                  className={styles.undoBtn}
-                  onClick={() => setShowUndoModal(true)}
-                  disabled={!selectedBlockId || !variantBlockData}
-                >
-                  Desfazer
-                </button>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  Excluir teste
-                </button>
-              </div>
+              <button
+                className={styles.deleteBtn}
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Excluir teste
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ====== MAIN AREA ====== */}
@@ -455,13 +449,11 @@ export default function ExperimentDetailPage() {
                   Variante
                 </div>
                 <div className={styles.panelBody}>
-                  <div className={canEdit ? undefined : styles.panelDisabled}>
-                    {variantBlockData && renderEditor(
-                      selectedBlock,
-                      variantBlockData,
-                      canEdit ? (updated: Block) => setVariantBlockData(updated.data) : () => {}
-                    )}
-                  </div>
+                  {variantBlockData && renderEditor(
+                    selectedBlock,
+                    variantBlockData,
+                    (updated: Block) => setVariantBlockData(updated.data)
+                  )}
                 </div>
               </div>
             </>

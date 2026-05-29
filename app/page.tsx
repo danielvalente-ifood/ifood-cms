@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { useRole } from '@/hooks/useRole';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ import styles from './home.module.css';
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { canEdit } = useRole();
   const [pages, setPages] = useState<PageWithVertical[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -114,12 +112,10 @@ export default function HomePage() {
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Suas páginas</h2>
                 <div className={styles.sectionActions}>
-                  {canEdit && (
-                    <Button variant="primary" onClick={() => router.push('/pages')}>
-                      <Icon name="plus-default" size={16} />
-                      Criar nova página
-                    </Button>
-                  )}
+                  <Button variant="primary" onClick={() => router.push('/pages')}>
+                    <Icon name="plus-default" size={16} />
+                    Criar nova página
+                  </Button>
                   <button
                     className={styles.btnIcon}
                     onClick={() => router.push('/pages')}

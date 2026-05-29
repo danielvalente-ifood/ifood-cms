@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { useRole } from '@/hooks/useRole';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { PageCard } from '@/components/PageCard/PageCard';
@@ -14,7 +13,6 @@ import cardStyles from '@/components/PageCard/PageCard.module.css';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Toast } from '@/components/ui/toast';
-import { FilterDropdown } from '@/components/ui/filter-dropdown';
 import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './pages.module.css';
@@ -24,7 +22,6 @@ type PageWithVertical = Page & { vertical?: Vertical | null };
 export default function PagesPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { canEdit } = useRole();
 
   const [pages, setPages] = useState<PageWithVertical[]>([]);
   const [verticals, setVerticals] = useState<Vertical[]>([]);
@@ -391,12 +388,10 @@ export default function PagesPage() {
               {filteredPages.length !== pages.length && ` · ${filteredPages.length} exibida${filteredPages.length !== 1 ? 's' : ''}`}
             </p>
           </div>
-          {canEdit && (
-            <Button variant="primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
-              <Icon name="plus-default" size={16} />
-              Nova página
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
+            <Icon name="plus-default" size={16} />
+            Nova página
+          </Button>
         </div>
 
         {/* Toolbar */}
@@ -409,26 +404,26 @@ export default function PagesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <FilterDropdown
+            <select
+              className={styles.filterSelect}
               value={verticalFilter}
-              onChange={setVerticalFilter}
-              placeholder="Todas as verticais"
-              options={[
-                { value: '', label: 'Todas as verticais' },
-                { value: '__none__', label: 'Ecossistema' },
-                ...verticals.map((v) => ({ value: v.id, label: v.name })),
-              ]}
-            />
-            <FilterDropdown
+              onChange={(e) => setVerticalFilter(e.target.value)}
+            >
+              <option value="">Todas as verticais</option>
+              <option value="__none__">Ecossistema</option>
+              {verticals.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </select>
+            <select
+              className={styles.filterSelect}
               value={statusFilter}
-              onChange={setStatusFilter}
-              placeholder="Todos os status"
-              options={[
-                { value: '', label: 'Todos os status' },
-                { value: 'published', label: 'Publicada' },
-                { value: 'draft', label: 'Rascunho' },
-              ]}
-            />
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Todos os status</option>
+              <option value="published">Publicada</option>
+              <option value="draft">Rascunho</option>
+            </select>
           </div>
         )}
 
@@ -455,8 +450,8 @@ export default function PagesPage() {
                 userAvatar={userAvatar}
                 formatDate={formatDate}
                 onClick={() => router.push(`/editor/${page.id}`)}
-                onStatusChange={canEdit ? (newStatus) => handleStatusChange(page, newStatus) : undefined}
-                actions={canEdit ? (
+                onStatusChange={(newStatus) => handleStatusChange(page, newStatus)}
+                actions={
                   <>
                     <button className={cardStyles.btnAction} onClick={() => router.push(`/editor/${page.id}`)}>
                       Editar
@@ -468,7 +463,7 @@ export default function PagesPage() {
                       Remover
                     </button>
                   </>
-                ) : undefined}
+                }
               />
             ))}
           </div>

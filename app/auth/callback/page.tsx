@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect } from 'react';
@@ -28,15 +27,6 @@ export default function AuthCallback() {
         return;
       }
 
-      // Ensure cms_users profile exists
-      const u = session.user;
-      await supabase.from('cms_users').upsert({
-        auth_id: u.id,
-        email: u.email || '',
-        full_name: u.user_metadata?.full_name || '',
-        avatar_url: u.user_metadata?.avatar_url || '',
-      }, { onConflict: 'auth_id' });
-
       router.replace('/');
     };
 
@@ -44,7 +34,7 @@ export default function AuthCallback() {
   }, [router]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '14px', background: 'var(--bg-primary)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '14px' }}>
       Autenticando...
     </div>
   );

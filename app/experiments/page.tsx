@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { useRole } from '@/hooks/useRole';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -21,7 +20,6 @@ import styles from './experiments.module.css';
 export default function ExperimentsPage() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { canEdit } = useRole();
   const [experiments, setExperiments] = useState<(Experiment & { page_name?: string })[]>([]);
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,12 +129,10 @@ export default function ExperimentsPage() {
             <h1>Testes A/B</h1>
             <p>{experiments.length} experimento{experiments.length !== 1 ? 's' : ''}</p>
           </div>
-          {canEdit && (
-            <button className={styles.btnPrimary} onClick={() => { resetForm(); setShowModal(true); }}>
-              <Icon name="plus-default" size={16} />
-              Novo experimento
-            </button>
-          )}
+          <button className={styles.btnPrimary} onClick={() => { resetForm(); setShowModal(true); }}>
+            <Icon name="plus-default" size={16} />
+            Novo experimento
+          </button>
         </div>
 
         {loading ? (
@@ -156,7 +152,7 @@ export default function ExperimentsPage() {
                     <StatusBadge
                       status={exp.status as StatusType}
                       size="sm"
-                      onStatusChange={canEdit ? (s) => handleStatusChange(exp.id, s) : undefined}
+                      onStatusChange={(s) => handleStatusChange(exp.id, s)}
                     />
                   </div>
                   <div className={styles.experimentMeta}>
@@ -167,14 +163,14 @@ export default function ExperimentsPage() {
                 </div>
                 <div className={styles.experimentActions}>
                   <button className={styles.btnSmall} onClick={() => router.push(`/experiments/${exp.id}`)}>
-                    {canEdit ? 'Editar variantes' : 'Ver variantes'}
+                    Editar variantes
                   </button>
-                  {canEdit && exp.status === 'draft' && (
+                  {exp.status === 'draft' && (
                     <button className={styles.btnStart} onClick={() => handleStatusChange(exp.id, 'running')}>
                       Iniciar
                     </button>
                   )}
-                  {canEdit && exp.status === 'running' && (
+                  {exp.status === 'running' && (
                     <>
                       <button className={styles.btnPause} onClick={() => handleStatusChange(exp.id, 'paused')}>
                         Pausar
@@ -184,7 +180,7 @@ export default function ExperimentsPage() {
                       </button>
                     </>
                   )}
-                  {canEdit && exp.status === 'paused' && (
+                  {exp.status === 'paused' && (
                     <>
                       <button className={styles.btnStart} onClick={() => handleStatusChange(exp.id, 'running')}>
                         Retomar
@@ -194,7 +190,7 @@ export default function ExperimentsPage() {
                       </button>
                     </>
                   )}
-                  {canEdit && (exp.status === 'draft' || exp.status === 'completed') && (
+                  {(exp.status === 'draft' || exp.status === 'completed') && (
                     <button className={styles.btnSmallDanger} onClick={() => handleDelete(exp.id)}>
                       Remover
                     </button>
