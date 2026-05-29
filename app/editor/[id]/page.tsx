@@ -11,7 +11,7 @@ import { BlockSelector } from './components/BlockSelector';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
 
 export default function EditorPage() {
   const params = useParams();
