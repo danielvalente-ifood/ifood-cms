@@ -124,7 +124,7 @@ export default function LoginPage() {
       provider: 'google',
       options: {
         queryParams: {
-          hd: 'ifood.com.br',
+          // hd: 'ifood.com.br', // Commented out for development
           access_type: 'offline',
           prompt: lastUser ? 'none' : 'consent',
         },
