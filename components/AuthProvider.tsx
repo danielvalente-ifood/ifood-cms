@@ -33,90 +33,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    let resolved = false;
 
-    const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (isMounted && !resolved) {
-          resolved = true;
-          setUser(session?.user ?? null);
-          setProviderToken(session?.provider_token ?? null);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('[AuthProvider] getSession error:', err);
-        if (isMounted && !resolved) {
-          resolved = true;
-          setLoading(false);
-        }
+    // Listener primeiro — captura o SIGNED_IN que vem do callback OAuth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      setUser(session?.user ?? null);
+      if (session?.provider_token) setProviderToken(session.provider_token);
+      setLoading(false);
+
+      if (_event === 'SIGNED_IN' && session?.user) {
+        const u = session.user;
+        supabase.from('cms_users').upsert({
+          auth_id: u.id,
+          email: u.email || '',
+          full_name: u.user_metadata?.full_name || '',
+          avatar_url: u.user_metadata?.avatar_url || '',
+        }, { onConflict: 'auth_id' }).then(() => {}).catch(console.error);
       }
-    };
+    });
 
-    // Start auth check immediately
-    getSession();
-
-    // Fallback timeout
-    const timeout = setTimeout(() => {
-      if (isMounted && !resolved) {
-        resolved = true;
+    // Checa sessão existente (caso já logado)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted && loading) {
+        setUser(session?.user ?? null);
+        setProviderToken(session?.provider_token ?? null);
         setLoading(false);
       }
-    }, 5000);
-
-    let subscription: any;
-    try {
-      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        if (!isMounted) return;
-
-        setUser(session?.user ?? null);
-        if (session?.provider_token) {
-          setProviderToken(session.provider_token);
-        }
-
-        if (!resolved) {
-          resolved = true;
-          setLoading(false);
-        }
-
-        // Sync cms_users profile on sign-in
-        if (_event === 'SIGNED_IN' && session?.user) {
-          const u = session.user;
-          try {
-            await supabase.from('cms_users').upsert({
-              auth_id: u.id,
-              email: u.email || '',
-              full_name: u.user_metadata?.full_name || '',
-              avatar_url: u.user_metadata?.avatar_url || '',
-            }, { onConflict: 'auth_id' });
-          } catch (err) {
-            console.error('[AuthProvider] upsert error:', err);
-          }
-        }
-      });
-      subscription = data?.subscription;
-    } catch (err) {
-      console.error('[AuthProvider] listener setup error:', err);
-    }
+    }).catch(() => {
+      if (isMounted) setLoading(false);
+    });
 
     return () => {
       isMounted = false;
-      clearTimeout(timeout);
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
     if (loading) return;
     const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-
-    if (!user && !isPublic) {
-      router.replace('/login');
-    }
+    if (!user && !isPublic) router.replace('/login');
   }, [user, loading, pathname, router]);
 
   const signOut = async () => {
-    // Salvar dados do último usuário para exibir na tela de login
     if (user) {
       localStorage.setItem('ifood_last_user', JSON.stringify({
         name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
@@ -137,10 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-
-  if (!user && !isPublic) {
-    return null;
-  }
+  if (!user && !isPublic) return null;
 
   return (
     <AuthContext.Provider value={{ user, loading, providerToken, signOut }}>
@@ -148,3 +104,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
