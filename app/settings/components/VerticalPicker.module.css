@@ -1,0 +1,60 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-family: inherit;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.item:hover {
+  background: var(--bg-hover);
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-default);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.checkboxChecked {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.checkIcon {
+  color: var(--text-inverse);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.verticalName {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.verticalSlug {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}

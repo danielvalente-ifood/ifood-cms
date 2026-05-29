@@ -26,13 +26,13 @@
 
 /* Variants */
 .primary {
-  background: var(--brand, #eb0033);
-  color: #fff;
+  background: var(--brand);
+  color: var(--text-inverse);
   border: none;
 }
 
 .primary:hover:not(.disabled) {
-  background: var(--brand-hover, #d4002e);
+  background: var(--brand-hover);
 }
 
 .primary:active:not(.disabled) {
@@ -40,35 +40,35 @@
 }
 
 .secondary {
-  background: var(--bg-secondary, #f5f5f5);
-  color: var(--text-primary, #141414);
-  border: 1px solid var(--home-btn-border, #E7E7E7);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--home-btn-border);
 }
 
 .secondary:hover:not(.disabled) {
-  background: var(--bg-tertiary, #e0e0e0);
+  background: var(--bg-tertiary);
 }
 
 .danger {
   background: transparent;
-  color: var(--color-error, #eb0033);
-  border: 1px solid var(--color-error, #eb0033);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
 }
 
 .danger:hover:not(.disabled) {
-  background: var(--color-error, #eb0033);
-  color: #fff;
+  background: var(--color-error);
+  color: var(--text-inverse);
 }
 
 .ghost {
   background: none;
-  color: var(--text-secondary, #9fa0aa);
+  color: var(--text-secondary);
   border: none;
 }
 
 .ghost:hover:not(.disabled) {
-  color: var(--text-primary, #f5f5f5);
-  background: var(--bg-hover, rgba(0, 0, 0, 0.08));
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 /* Disabled state */

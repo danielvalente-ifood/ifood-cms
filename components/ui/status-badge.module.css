@@ -1,4 +1,4 @@
-/* StatusBadge — Dark-first status indicator with optional dropdown */
+/* StatusBadge — Theme-aware status indicator with optional dropdown */
 
 /* ===== Wrapper ===== */
 
@@ -74,7 +74,7 @@
 
 .chevron {
   opacity: 0.5;
-  color: #f5f5f5;
+  color: var(--text-primary);
   display: inline-flex;
   align-items: center;
   margin-left: 2px;
@@ -89,7 +89,7 @@
 
 .draft {
   color: var(--color-status-draft);
-  background: rgba(159, 160, 170, 0.15);
+  background: var(--color-status-draft-bg);
 }
 
 .draft::before {
@@ -98,7 +98,7 @@
 
 .running {
   color: var(--color-status-running);
-  background: rgba(76, 216, 185, 0.15);
+  background: var(--color-status-running-bg);
 }
 
 .running::before {
@@ -107,7 +107,7 @@
 
 .paused {
   color: var(--color-status-paused);
-  background: rgba(235, 180, 0, 0.15);
+  background: var(--color-status-paused-bg);
 }
 
 .paused::before {
@@ -116,7 +116,7 @@
 
 .completed {
   color: var(--color-status-completed);
-  background: rgba(120, 120, 120, 0.15);
+  background: var(--color-status-completed-bg);
 }
 
 .completed::before {
@@ -125,7 +125,7 @@
 
 .published {
   color: var(--color-status-published);
-  background: rgba(76, 216, 185, 0.15);
+  background: var(--color-status-published-bg);
 }
 
 .published::before {
@@ -147,11 +147,11 @@
   top: calc(100% + 4px);
   left: 0;
   min-width: 160px;
-  background: #1B1C1E;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--home-card-bg);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
   z-index: 100;
   animation: scaleIn 150ms ease-out;
   transform-origin: top left;
@@ -181,15 +181,15 @@
   background: transparent;
   font-family: var(--font-body);
   font-size: 13px;
-  color: #9fa0aa;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
   line-height: 1;
 }
 
 .menuItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f5f5f5;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .menuItem:focus-visible {
@@ -198,8 +198,8 @@
 }
 
 .menuItemActive {
-  color: #f5f5f5;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 /* ===== Menu dot ===== */

@@ -236,6 +236,17 @@
   --color-status-completed: #787878;
   --color-status-published: #4cd8b9;
 
+  --color-status-draft-bg: rgba(159, 160, 170, 0.12);
+  --color-status-running-bg: rgba(76, 216, 185, 0.12);
+  --color-status-paused-bg: rgba(235, 180, 0, 0.12);
+  --color-status-completed-bg: rgba(120, 120, 120, 0.12);
+  --color-status-published-bg: rgba(76, 216, 185, 0.12);
+
+  /* ========== CARD / OVERLAY ========== */
+  --card-actions-bg: rgba(0, 0, 0, 0.35);
+  --sidebar-footer-gradient-start: transparent;
+  --sidebar-footer-gradient-end: #FFFFFF;
+
   /* ========== LEGACY COMPAT ========== */
   --font-sans: var(--font-body);
   --text-tertiary: #A3A3A3;
@@ -377,6 +388,17 @@ html[data-theme="dark"] {
   --color-status-paused: #ebb400;
   --color-status-completed: #787878;
   --color-status-published: #4cd8b9;
+
+  --color-status-draft-bg: rgba(159, 160, 170, 0.15);
+  --color-status-running-bg: rgba(76, 216, 185, 0.15);
+  --color-status-paused-bg: rgba(235, 180, 0, 0.15);
+  --color-status-completed-bg: rgba(120, 120, 120, 0.15);
+  --color-status-published-bg: rgba(76, 216, 185, 0.15);
+
+  /* Card / Overlay */
+  --card-actions-bg: rgba(27, 28, 30, 0.35);
+  --sidebar-footer-gradient-start: transparent;
+  --sidebar-footer-gradient-end: #121314;
 
   /* Legacy compat */
   --text-tertiary: #525252;

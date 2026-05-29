@@ -21,7 +21,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--bg-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -31,13 +31,13 @@
 }
 
 .modal {
-  background: #1b1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--home-card-bg);
+  border: 1px solid var(--border-default);
   border-radius: 16px;
   padding: 28px;
   max-width: 520px;
   width: 100%;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
   animation: scaleIn 200ms ease-out;
 }
 
@@ -52,26 +52,26 @@
 }
 
 .iconDefault {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f5f5;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .iconDanger {
-  background: rgba(235, 0, 51, 0.12);
-  color: #eb0033;
+  background: var(--brand-subtle);
+  color: var(--brand);
 }
 
 .title {
   font-size: 18px;
   font-weight: 500;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0 0 8px;
   line-height: 26px;
 }
 
 .description {
   font-size: 14px;
-  color: #9fa0aa;
+  color: var(--text-secondary);
   line-height: 20px;
   margin: 0 0 24px;
 }

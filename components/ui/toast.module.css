@@ -6,19 +6,19 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: var(--text-inverse);
   z-index: 2000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   animation: slideUp 250ms ease-out;
 }
 
 .success {
-  background: #4cd8b9;
-  color: #0a0a0a;
+  background: var(--color-status-running);
+  color: var(--text-inverse);
 }
 
 .error {
-  background: #eb0033;
+  background: var(--brand);
 }
 
 @keyframes slideUp {
