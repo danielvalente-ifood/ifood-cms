@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import styles from './analytics.module.css';
@@ -90,7 +91,7 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { user, signOut, providerToken } = useAuth();
   const [period, setPeriod] = useState<Period>('30d');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsRelogin, setNeedsRelogin] = useState(false);
 
@@ -230,7 +231,12 @@ export default function AnalyticsPage() {
     }
   }, [period, providerToken]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // Don't auto-load GA4 data - show message instead
+  useEffect(() => {
+    if (!providerToken) {
+      setNeedsRelogin(true);
+    }
+  }, [providerToken]);
 
   // Build sparkline SVG path
   function buildSparkline(data: DailyData[], key: 'sessions' | 'pageviews'): string {
@@ -305,12 +311,31 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {loading ? (
+        {!needsRelogin && !error && (
+          <div style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 12, marginTop: 24 }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              <strong>Google Analytics 4</strong> não está configurado neste ambiente.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 24 }}>
+              Para visualizar dados de rastreamento, acesse a aba <strong>Heatmap</strong> abaixo.
+            </p>
+            <button
+              onClick={() => router.push('/analytics/heatmap')}
+              style={{ padding: '10px 24px', background: 'var(--brand)', color: 'var(--text-inverse)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+            >
+              Ir para Heatmap →
+            </button>
+          </div>
+        )}
+
+        {loading && (
           <div className={styles.loading}>
             <span className={styles.spinner} />
             Carregando dados do GA4...
           </div>
-        ) : (
+        )}
+
+        {!loading && !needsRelogin && !error && metrics.length > 0 && (
           <>
             {/* Overview cards */}
             <div className={styles.cardsGrid}>
