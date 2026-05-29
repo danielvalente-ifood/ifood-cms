@@ -1,62 +1,22 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
+import { BlockEditor } from './components/BlockEditor';
+import { BlockSelector } from './components/BlockSelector';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
-import {
-  HERO_TYPES,
-  CONTENT_TYPES,
-  FOOTER_TYPES,
-  CONTENT_CATEGORIES,
-  BLOCK_TYPE_LABELS,
-  createBlock,
-  duplicateBlock,
-  type GroupKey,
-  type ContentType,
-} from './block-config';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
-
-type StructureGroup = {
-  key: GroupKey;
-  label: string;
-  icon: string;
-  singleton: boolean;
-};
-
-const STRUCTURE_GROUPS: StructureGroup[] = [
-  { key: 'hero', label: 'Hero', icon: 'window-dock-top', singleton: true },
-  { key: 'content', label: 'Content', icon: 'window-fullscreen', singleton: false },
-  { key: 'footer', label: 'Footer', icon: 'window-dock-bottom', singleton: true },
-];
-
-const HERO_SET = new Set<BlockType>(HERO_TYPES);
-const CONTENT_SET = new Set<BlockType>(CONTENT_TYPES as unknown as BlockType[]);
-const FOOTER_SET = new Set<BlockType>(FOOTER_TYPES);
-
-function splitBlocks(blocks: Block[]) {
-  const hero: Block[] = [];
-  const content: Block[] = [];
-  const footer: Block[] = [];
-  for (const b of blocks) {
-    if (HERO_SET.has(b.type)) hero.push(b);
-    else if (FOOTER_SET.has(b.type)) footer.push(b);
-    else if (CONTENT_SET.has(b.type)) content.push(b);
-  }
-  return { hero, content, footer };
-}
-
-function combineBlocks(hero: Block[], content: Block[], footer: Block[]): Block[] {
-  return [...hero, ...content, ...footer];
-}
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 export default function EditorPage() {
   const params = useParams();
   const router = useRouter();
+  const { canEdit } = useRole();
   const pageId = params.id as string;
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -65,53 +25,64 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(true);
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [iframeReady, setIframeReady] = useState(false);
-
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialLoadRef = useRef(true);
-  const latestBlocksRef = useRef<Block[]>([]);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [showBlockSelector, setShowBlockSelector] = useState(false);
+  const [insertIndex, setInsertIndex] = useState<number>(-1);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // AI adaptation config
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiSaving, setAiSaving] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    hero: true,
-    content: true,
-    footer: true,
-  });
-  const [activeGroup, setActiveGroup] = useState<GroupKey | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<ContentType | null>(
-    CONTENT_CATEGORIES[0]?.type ?? null
-  );
-  const structureSectionRef = useRef<HTMLElement>(null);
-
-  const grouped = useMemo(() => splitBlocks(blocks), [blocks]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
+  // Send message to iframe
   const sendToIframe = useCallback((type: string, payload: any) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage({ type, payload }, '*');
     }
   }, []);
 
+  // Sync blocks to iframe whenever they change
   useEffect(() => {
     if (iframeReady) {
       sendToIframe('cms:update-all-blocks', { blocks });
     }
   }, [blocks, iframeReady, sendToIframe]);
 
+  // Sync selected block to iframe
+  useEffect(() => {
+    if (iframeReady && selectedBlockId) {
+      sendToIframe('cms:select-block', { blockId: selectedBlockId });
+    } else if (iframeReady) {
+      sendToIframe('cms:deselect', {});
+    }
+  }, [selectedBlockId, iframeReady, sendToIframe]);
+
+  // Listen for messages from iframe
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const { type } = event.data || {};
-      if (type === 'landing:ready') setIframeReady(true);
+      const { type, payload } = event.data || {};
+      switch (type) {
+        case 'landing:ready':
+          setIframeReady(true);
+          break;
+        case 'landing:block-selected':
+          setSelectedBlockId(payload.blockId);
+          // Scroll panel to the block editor
+          const el = document.getElementById(`panel-block-${payload.blockId}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+      }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
@@ -164,7 +135,8 @@ export default function EditorPage() {
     load();
   }, [pageId, router]);
 
-  const saveDraft = useCallback(async (updatedBlocks: Block[], silent = false) => {
+  // Save draft
+  const saveDraft = useCallback(async (updatedBlocks: Block[]) => {
     setSaving(true);
     const content: PageContent = { blocks: updatedBlocks };
 
@@ -178,30 +150,12 @@ export default function EditorPage() {
       showToast('Erro ao salvar', 'error');
     } else {
       setSaved(true);
-      setLastSavedAt(new Date());
-      if (!silent) showToast('Rascunho salvo', 'success');
+      showToast('Rascunho salvo', 'success');
     }
     setSaving(false);
   }, [pageId, showToast]);
 
-  useEffect(() => {
-    latestBlocksRef.current = blocks;
-    if (initialLoadRef.current) {
-      if (!loading) initialLoadRef.current = false;
-      return;
-    }
-    if (saved) return;
-
-    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = setTimeout(() => {
-      saveDraft(latestBlocksRef.current, true);
-    }, 1500);
-
-    return () => {
-      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    };
-  }, [blocks, saved, loading, saveDraft]);
-
+  // Publish
   const handlePublish = async () => {
     if (blocks.length === 0) {
       showToast('Adicione ao menos 1 bloco antes de publicar', 'error');
@@ -227,17 +181,108 @@ export default function EditorPage() {
 
     setSaving(false);
     setSaved(true);
-    setLastSavedAt(new Date());
     showToast('Página publicada!', 'success');
 
     const { data } = await supabase.from('pages').select('*').eq('id', pageId).single();
     if (data) setPage(data);
 
+    // Reload iframe to show published version
     if (iframeRef.current) {
       iframeRef.current.src = iframeRef.current.src;
     }
   };
 
+  // Block operations
+  const updateBlock = (index: number, updatedBlock: Block) => {
+    const newBlocks = [...blocks];
+    newBlocks[index] = updatedBlock;
+    setBlocks(newBlocks);
+    setSaved(false);
+
+    // Live update in iframe
+    sendToIframe('cms:update-block', {
+      blockId: updatedBlock.id,
+      data: updatedBlock.data,
+    });
+  };
+
+  const removeBlock = (index: number) => {
+    const newBlocks = blocks.filter((_, i) => i !== index);
+    setBlocks(newBlocks);
+    setSaved(false);
+    if (blocks[index]?.id === selectedBlockId) setSelectedBlockId(null);
+  };
+
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= blocks.length) return;
+    const newBlocks = [...blocks];
+    [newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]];
+    setBlocks(newBlocks);
+    setSaved(false);
+  };
+
+  const duplicateBlock = (index: number) => {
+    const block = blocks[index];
+    const newBlock: Block = {
+      ...block,
+      id: `block-${Date.now()}`,
+      data: JSON.parse(JSON.stringify(block.data)),
+    } as Block;
+    const newBlocks = [...blocks];
+    newBlocks.splice(index + 1, 0, newBlock);
+    setBlocks(newBlocks);
+    setSaved(false);
+  };
+
+  const addBlock = (type: BlockType) => {
+    const newBlock = createEmptyBlock(type);
+    const newBlocks = [...blocks];
+    if (insertIndex >= 0) {
+      newBlocks.splice(insertIndex, 0, newBlock);
+    } else {
+      newBlocks.push(newBlock);
+    }
+    setBlocks(newBlocks);
+    setShowBlockSelector(false);
+    setInsertIndex(-1);
+    setSaved(false);
+    setSelectedBlockId(newBlock.id);
+  };
+
+  const openBlockSelector = (index?: number) => {
+    setInsertIndex(index !== undefined ? index : blocks.length);
+    setShowBlockSelector(true);
+  };
+
+  // Drag and drop
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) return;
+    const newBlocks = [...blocks];
+    const [dragged] = newBlocks.splice(dragIndex, 1);
+    newBlocks.splice(targetIndex, 0, dragged);
+    setBlocks(newBlocks);
+    setSaved(false);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Save AI adaptation config
   const saveAiConfig = async () => {
     setAiSaving(true);
     // @ts-ignore
@@ -257,88 +302,6 @@ export default function EditorPage() {
     setAiSaving(false);
   };
 
-  const toggleGroup = (key: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleAddClick = (key: GroupKey) => {
-    setActiveGroup((prev) => (prev === key ? null : key));
-    if (key === 'content') {
-      setExpandedCategory(CONTENT_CATEGORIES[0]?.type ?? null);
-    }
-  };
-
-  const updateBlocks = (nextBlocks: Block[]) => {
-    setBlocks(nextBlocks);
-    setSaved(false);
-  };
-
-  const handleSelectTheme = (groupKey: GroupKey, type: BlockType, theme: number) => {
-    const newBlock = createBlock(type, theme);
-    const { hero, content, footer } = grouped;
-    let next: Block[];
-    if (groupKey === 'hero') {
-      next = combineBlocks([newBlock], content, footer);
-    } else if (groupKey === 'footer') {
-      next = combineBlocks(hero, content, [newBlock]);
-    } else {
-      next = combineBlocks(hero, [...content, newBlock], footer);
-    }
-    updateBlocks(next);
-    setActiveGroup(null);
-  };
-
-  const handleDeleteBlock = (blockId: string) => {
-    updateBlocks(blocks.filter((b) => b.id !== blockId));
-  };
-
-  const handleDuplicateBlock = (blockId: string) => {
-    const idx = blocks.findIndex((b) => b.id === blockId);
-    if (idx === -1) return;
-    const original = blocks[idx];
-    if (HERO_SET.has(original.type) || FOOTER_SET.has(original.type)) {
-      return;
-    }
-    const dup = duplicateBlock(original);
-    const next = [...blocks.slice(0, idx + 1), dup, ...blocks.slice(idx + 1)];
-    updateBlocks(next);
-  };
-
-  const handleMoveBlock = (blockId: string, direction: 'up' | 'down') => {
-    const { hero, content, footer } = grouped;
-    const idx = content.findIndex((b) => b.id === blockId);
-    if (idx === -1) return;
-    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= content.length) return;
-    const nextContent = [...content];
-    [nextContent[idx], nextContent[targetIdx]] = [nextContent[targetIdx], nextContent[idx]];
-    updateBlocks(combineBlocks(hero, nextContent, footer));
-  };
-
-  useEffect(() => {
-    if (!activeGroup) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        structureSectionRef.current &&
-        !structureSectionRef.current.contains(e.target as Node)
-      ) {
-        setActiveGroup(null);
-      }
-    };
-
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActiveGroup(null);
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEsc);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [activeGroup]);
-
   if (loading) {
     return <div className={styles.loading}>Carregando editor...</div>;
   }
@@ -346,12 +309,6 @@ export default function EditorPage() {
   if (!page) return null;
 
   const iframeSrc = `${LANDING_URL}/p/${page.slug}?edit=true`;
-
-  const getBlocksForGroup = (key: GroupKey): Block[] => {
-    if (key === 'hero') return grouped.hero;
-    if (key === 'footer') return grouped.footer;
-    return grouped.content;
-  };
 
   return (
     <div className={styles.editorLayout}>
@@ -367,34 +324,30 @@ export default function EditorPage() {
           </div>
         </div>
         <div className={styles.topBarRight}>
-          <span className={styles.saveStatus} aria-live="polite">
-            {saving
-              ? 'Salvando…'
-              : !saved
-                ? 'Alterações pendentes…'
-                : lastSavedAt
-                  ? `Salvo às ${formatTime(lastSavedAt)}`
-                  : 'Salvo'}
-          </span>
-          <a
-            className={styles.btnOutline}
-            href={`${LANDING_URL}/p/${page.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Abrir página pública em nova aba"
-          >
-            <Icon name="eye-on" size={14} />
-            <span>Abrir no browser</span>
-          </a>
-          <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
-            Publicar
-          </button>
+          {canEdit ? (
+            <>
+              <span className={styles.saveStatus}>
+                {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
+              </span>
+              <button className={styles.btnOutline} onClick={() => saveDraft(blocks)} disabled={saving || saved}>
+                Salvar rascunho
+              </button>
+              <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
+                Publicar
+              </button>
+            </>
+          ) : (
+            <span className={styles.readOnlyBadge}>
+              <Icon name="eye-on" size={14} />
+              Modo leitura
+            </span>
+          )}
         </div>
       </header>
 
-      {/* Main editor area */}
+      {/* Main editor area: iframe + panel */}
       <div className={styles.editorBody}>
-        {/* Preview */}
+        {/* Iframe preview */}
         <div className={styles.iframeContainer}>
           <iframe
             ref={iframeRef}
@@ -407,266 +360,141 @@ export default function EditorPage() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className={styles.sidePanel}>
-          {/* AI card */}
-          <div className={styles.card}>
-            <button
-              className={styles.cardHeader}
-              onClick={() => setShowAiPanel(!showAiPanel)}
-              type="button"
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}
-            >
-              <span className={styles.cardHeaderLeft}>
-                <span className={styles.cardIcon}>
-                  <Icon name="bot" size={16} />
-                </span>
-                <span className={styles.cardTitleSecondary}>Personalização com IA</span>
-              </span>
-              <span
-                className={styles.cardChevron}
-                style={{ transform: showAiPanel ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
-              >
-                <Icon name="chevron-down" size={20} />
-              </span>
+        {/* Side panel */}
+        <div className={`${styles.sidePanel} ${panelCollapsed ? styles.sidePanelCollapsed : ''}`}>
+          <div className={styles.panelHeader}>
+            <button className={styles.panelToggle} onClick={() => setPanelCollapsed(!panelCollapsed)} title={panelCollapsed ? 'Expandir' : 'Recolher'}>
+              <Icon name={panelCollapsed ? 'chevron-left' : 'chevron-right'} size={16} />
             </button>
-
-            {showAiPanel && (
-              <div className={styles.aiPanelBody}>
-                <label className={styles.aiToggleRow}>
-                  <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
-                  <button
-                    className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
-                    onClick={() => setAiEnabled(!aiEnabled)}
-                    role="switch"
-                    aria-checked={aiEnabled}
-                  >
-                    <span className={styles.aiToggleKnob} />
-                  </button>
-                </label>
-
-                {aiEnabled && (
-                  <div className={styles.aiPromptGroup}>
-                    <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
-                    <textarea
-                      className={styles.aiPromptInput}
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Ex: Adapte o tom para ser mais informal quando a campanha for de redes sociais."
-                      rows={4}
-                    />
-                    <span className={styles.aiPromptHint}>
-                      A IA usará os UTM params para adaptar textos automaticamente.
-                    </span>
-                  </div>
-                )}
-
-                <button
-                  className={styles.aiSaveBtn}
-                  onClick={saveAiConfig}
-                  disabled={aiSaving}
-                >
-                  {aiSaving ? 'Salvando...' : 'Salvar configuração'}
-                </button>
-              </div>
-            )}
+            {!panelCollapsed && <span className={styles.panelTitle}>Blocos</span>}
           </div>
 
-          {/* Estrutura */}
-          <section className={styles.panelSection} ref={structureSectionRef}>
-            <h2 className={styles.panelSectionLabel}>Estrutura</h2>
+          {!panelCollapsed && (
+            <div className={styles.panelContent}>
+              {/* AI Adaptation Config — only for editors */}
+              {canEdit && (
+                <div className={styles.aiSection}>
+                  <button
+                    className={styles.aiSectionToggle}
+                    onClick={() => setShowAiPanel(!showAiPanel)}
+                  >
+                    <Icon name="bot" size={16} />
+                    <span>Personalização com IA</span>
+                    <span className={`${styles.aiStatusDot} ${aiEnabled ? styles.aiStatusActive : ''}`} />
+                    <span style={{ marginLeft: 'auto', transform: showAiPanel ? 'rotate(180deg)' : 'none', transition: 'transform 150ms', display: 'inline-flex' }}>
+                      <Icon name="chevron-down" size={12} />
+                    </span>
+                  </button>
 
-            {STRUCTURE_GROUPS.map((group) => {
-              const isExpanded = expandedGroups[group.key];
-              const isActive = activeGroup === group.key;
-              const isDimmed = activeGroup !== null && activeGroup !== group.key;
-              const groupBlocks = getBlocksForGroup(group.key);
-              const showAddSlot = group.singleton ? groupBlocks.length === 0 : true;
+                  {showAiPanel && (
+                    <div className={styles.aiPanelBody}>
+                      <label className={styles.aiToggleRow}>
+                        <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
+                        <button
+                          className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
+                          onClick={() => setAiEnabled(!aiEnabled)}
+                          role="switch"
+                          aria-checked={aiEnabled}
+                        >
+                          <span className={styles.aiToggleKnob} />
+                        </button>
+                      </label>
 
-              const cardClassName = [
-                styles.card,
-                styles.cardInteractive,
-                isActive ? styles.cardActive : '',
-                isDimmed ? styles.cardDimmed : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
-
-              return (
-                <div key={group.key} className={styles.cardWrapper}>
-                  <div className={cardClassName}>
-                    <button
-                      className={styles.cardHeader}
-                      onClick={() => toggleGroup(group.key)}
-                      type="button"
-                      style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}
-                    >
-                      <span className={styles.cardHeaderLeft}>
-                        <span className={styles.cardIcon}>
-                          <Icon name={group.icon} size={16} />
-                        </span>
-                        <span className={styles.cardTitle}>{group.label}</span>
-                      </span>
-                      <span
-                        className={styles.cardChevron}
-                        style={{ transform: isExpanded ? 'none' : 'rotate(-90deg)', transition: 'transform 150ms' }}
-                      >
-                        <Icon name="chevron-down" size={20} />
-                      </span>
-                    </button>
-
-                    {isExpanded && (
-                      <div className={styles.blockList}>
-                        {groupBlocks.map((block, idx) => {
-                          const canMoveUp = group.key === 'content' && idx > 0;
-                          const canMoveDown = group.key === 'content' && idx < groupBlocks.length - 1;
-                          const canDuplicate = group.key === 'content';
-                          return (
-                            <div key={block.id} className={styles.blockItem}>
-                              <div className={styles.blockItemHeader}>
-                                <div className={styles.blockItemLabelGroup}>
-                                  <span className={styles.blockDragHandle} aria-label="Reordenar">
-                                    <Icon name="draggable-six-dots" size={16} />
-                                  </span>
-                                  <span className={styles.blockItemLabel}>
-                                    {BLOCK_TYPE_LABELS[block.type]} / Tema {block.theme ?? 1}
-                                  </span>
-                                </div>
-                                <div className={styles.blockItemActions}>
-                                  {group.key === 'content' && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleMoveBlock(block.id, 'down')}
-                                        disabled={!canMoveDown}
-                                        aria-label="Mover para baixo"
-                                      >
-                                        <Icon name="chevron-big-down" size={16} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleMoveBlock(block.id, 'up')}
-                                        disabled={!canMoveUp}
-                                        aria-label="Mover para cima"
-                                      >
-                                        <Icon name="chevron-big-up" size={16} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleDuplicateBlock(block.id)}
-                                        disabled={!canDuplicate}
-                                        aria-label="Duplicar"
-                                      >
-                                        <Icon name="copy-default" size={16} />
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    type="button"
-                                    className={styles.blockAction}
-                                    onClick={() => handleDeleteBlock(block.id)}
-                                    aria-label="Deletar"
-                                  >
-                                    <Icon name="delete-dustbin-01" size={16} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className={styles.blockItemForm}>
-                                <span className={styles.blockItemFormText}>Form do tema</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {showAddSlot && (
-                          <button
-                            type="button"
-                            className={styles.addSlot}
-                            onClick={() => handleAddClick(group.key)}
-                            aria-label={`Adicionar bloco em ${group.label}`}
-                            aria-expanded={isActive}
-                          >
-                            <span className={styles.addSlotIcon}>
-                              <Icon name="plus-default" size={20} />
+                      {aiEnabled && (
+                        <>
+                          <div className={styles.aiPromptGroup}>
+                            <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
+                            <textarea
+                              className={styles.aiPromptInput}
+                              value={aiPrompt}
+                              onChange={(e) => setAiPrompt(e.target.value)}
+                              placeholder="Ex: Adapte o tom para ser mais informal quando a campanha for de redes sociais. Destaque benefícios financeiros para campanhas de Google Ads."
+                              rows={4}
+                            />
+                            <span className={styles.aiPromptHint}>
+                              A IA usará os UTM params (source, campaign, medium) para adaptar textos automaticamente.
                             </span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {isActive && group.key !== 'content' && (
-                    <div className={styles.templatePicker} role="dialog" aria-label={`Escolha o template do ${group.label.toLowerCase()}`}>
-                      <h3 className={styles.templatePickerTitle}>
-                        Escolha o template do {group.label.toLowerCase()}
-                      </h3>
-                      <div className={styles.themeList}>
-                        {[1, 2, 3].map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            className={styles.themeCard}
-                            onClick={() => handleSelectTheme(group.key, group.key === 'hero' ? 'hero' : 'footer', n)}
-                          >
-                            <span className={styles.themePreview} aria-hidden="true" />
-                            <span className={styles.themeLabel}>Tema {n}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {isActive && group.key === 'content' && (
-                    <div className={styles.templatePicker} role="dialog" aria-label="Escolha o bloco para o content">
-                      {CONTENT_CATEGORIES.map((cat) => {
-                        const isCatExpanded = expandedCategory === cat.type;
-                        return (
-                          <div key={cat.type} className={styles.categoryItem}>
-                            <button
-                              type="button"
-                              className={styles.categoryHeader}
-                              onClick={() =>
-                                setExpandedCategory((prev) => (prev === cat.type ? null : cat.type))
-                              }
-                              aria-expanded={isCatExpanded}
-                            >
-                              <span className={styles.categoryLabel}>{cat.label}</span>
-                              <span
-                                className={styles.categoryChevron}
-                                style={{ transform: isCatExpanded ? 'rotate(180deg)' : 'none' }}
-                              >
-                                <Icon name="chevron-down" size={20} />
-                              </span>
-                            </button>
-                            {isCatExpanded && (
-                              <div className={styles.themeList}>
-                                {[1, 2, 3].map((n) => (
-                                  <button
-                                    key={n}
-                                    type="button"
-                                    className={styles.themeCard}
-                                    onClick={() => handleSelectTheme('content', cat.type as BlockType, n)}
-                                  >
-                                    <span className={styles.themePreview} aria-hidden="true" />
-                                    <span className={styles.themeLabel}>Tema {n}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        );
-                      })}
+
+                          <button
+                            className={styles.aiSaveBtn}
+                            onClick={saveAiConfig}
+                            disabled={aiSaving}
+                          >
+                            {aiSaving ? 'Salvando...' : 'Salvar configuração'}
+                          </button>
+                        </>
+                      )}
+
+                      {!aiEnabled && (
+                        <button
+                          className={styles.aiSaveBtn}
+                          onClick={saveAiConfig}
+                          disabled={aiSaving}
+                        >
+                          {aiSaving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </section>
-        </aside>
+              )}
+
+              {blocks.length === 0 ? (
+                <div className={styles.emptyEditor}>
+                  <p>Nenhum bloco</p>
+                  {canEdit && (
+                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
+                      + Adicionar
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {blocks.map((block, index) => (
+                    <div key={block.id} id={`panel-block-${block.id}`} className={styles.blockWrapper}>
+                      <BlockEditor
+                        block={block}
+                        index={index}
+                        total={blocks.length}
+                        isSelected={selectedBlockId === block.id}
+                        onSelect={() => {
+                          setSelectedBlockId(block.id);
+                          sendToIframe('cms:select-block', { blockId: block.id });
+                        }}
+                        onUpdate={canEdit ? (updated) => updateBlock(index, updated) : undefined}
+                        onRemove={canEdit ? () => removeBlock(index) : undefined}
+                        onMove={canEdit ? (dir) => moveBlock(index, dir) : undefined}
+                        onDuplicate={canEdit ? () => duplicateBlock(index) : undefined}
+                        isDragging={dragIndex === index}
+                        isDragOver={dragOverIndex === index}
+                        onDragStart={canEdit ? () => handleDragStart(index) : undefined}
+                        onDragEnd={canEdit ? handleDragEnd : undefined}
+                        onDragOver={canEdit ? (e) => handleDragOver(e, index) : undefined}
+                        onDrop={canEdit ? () => handleDrop(index) : undefined}
+                      />
+                    </div>
+                  ))}
+
+                  {canEdit && (
+                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
+                      + Adicionar bloco
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Block selector modal */}
+      {canEdit && showBlockSelector && (
+        <BlockSelector
+          onSelect={addBlock}
+          onClose={() => { setShowBlockSelector(false); setInsertIndex(-1); }}
+        />
+      )}
 
       {/* Toast */}
       {toast && (
@@ -678,11 +506,17 @@ export default function EditorPage() {
   );
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
+function createEmptyBlock(type: BlockType): Block {
+  const id = `block-${type}-${Date.now()}`;
+  const templates: Record<BlockType, any> = {
+    navbar: { logo: '', cta_text: 'CTA', cta_link: '#', items: [] },
+    hero: { title: ['Título principal'], description: 'Descrição do hero', cta_text: 'Saiba mais', cta_link: '#', background_image: '', logo_decoration: '' },
+    vision: { badge: 'Badge', title: ['Título'], ratings_count: '0', ratings_text: '', avatars: [], cards: [] },
+    growth: { badge: 'Badge', title: ['Título'], tabs: [] },
+    integrated: { badge: 'Badge', title: 'Título', image: '', features: [] },
+    results: { badge: 'Badge', title: ['Título'], testimonials: [] },
+    faq: { badge: 'FAQ', title: 'Perguntas frequentes', description: '', items: [] },
+    footer: { logo: '', copyright: '', social_links: [], columns: [] },
+  };
+  return { id, type, data: templates[type] } as Block;
 }
