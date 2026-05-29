@@ -40,6 +40,7 @@ export default function HeatmapPage() {
   // Iframe dimensions
   const [iframeDimensions, setIframeDimensions] = useState({ width: 0, height: 0 });
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -242,9 +243,33 @@ export default function HeatmapPage() {
                 ref={iframeRef}
                 src={`${LANDING_URL}/p/${selectedSlug}?edit=true`}
                 className={styles.heatmapIframe}
-                onLoad={() => setIframeLoaded(true)}
+                onLoad={() => {
+                  setIframeLoaded(true);
+                  setIframeError(false);
+                }}
+                onError={() => setIframeError(true)}
                 title={`Heatmap - ${selectedPage?.name}`}
               />
+              {iframeError && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--bg-secondary)',
+                  borderRadius: 8,
+                  padding: 20,
+                }}>
+                  <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    <p style={{ marginBottom: 12, fontWeight: 600 }}>Não conseguimos carregar a página</p>
+                    <p style={{ fontSize: 13, marginBottom: 12 }}>A landing app pode não estar rodando em {LANDING_URL}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                      Certifique-se de que a ifood-landing está rodando e configure NEXT_PUBLIC_LANDING_URL se necessário.
+                    </p>
+                  </div>
+                </div>
+              )}
               {iframeLoaded && !dataLoading && canvasSize.width > 0 && (
                 <HeatmapCanvas
                   clicks={clicks}
