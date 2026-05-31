@@ -85,6 +85,7 @@ interface BaseBlock<T extends BlockType, D> {
   id: string;
   type: T;
   data: D;
+  theme?: number;
 }
 
 // =============================================
