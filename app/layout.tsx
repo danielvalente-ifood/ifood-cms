@@ -7,6 +7,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'iFood CMS — Landing Page Builder',
   description: 'CMS para criação e gestão de landing pages',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

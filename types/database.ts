@@ -117,6 +117,7 @@ export interface HeroData {
   cta_link: string;
   background_image: string;
   logo_decoration: string;
+  variant?: 'image-left' | 'image-right' | 'image-overlay' | 'full-width';
 }
 
 export type HeroBlock = BaseBlock<'hero', HeroData>;

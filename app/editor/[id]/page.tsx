@@ -326,6 +326,14 @@ export default function EditorPage() {
         <div className={styles.topBarRight}>
           {canEdit ? (
             <>
+              <button
+                className={styles.btnPreview}
+                onClick={() => window.open(`${LANDING_URL}/p/${page.slug}?edit=true`, '_blank')}
+                title="Abrir preview em nova aba"
+              >
+                <Icon name="eye-on" size={16} />
+                Preview
+              </button>
               <span className={styles.saveStatus}>
                 {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
               </span>

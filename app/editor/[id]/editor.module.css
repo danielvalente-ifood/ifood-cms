@@ -115,6 +115,28 @@
 .btnPublish:hover { background: var(--brand-hover); }
 .btnPublish:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.btnPreview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.btnPreview:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 .readOnlyBadge {
   display: inline-flex;
   align-items: center;
