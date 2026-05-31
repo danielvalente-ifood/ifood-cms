@@ -2,57 +2,73 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { isAllowedDomain } from '@/lib/auth';
+import { isAllowedDomain, syncUserProfile } from '@/lib/auth';
 
-/** Tempo máximo aguardando a sessão antes de desistir e voltar ao login. */
-const SESSION_TIMEOUT_MS = 8000;
+// Guarda module-level: o code PKCE só pode ser trocado uma vez. Sem isso o
+// double-invoke do useEffect (React StrictMode em dev) dispara um 2º exchange
+// com o mesmo code já consumido → erro → bounce para /login.
+let exchangedCode: string | null = null;
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    let settled = false;
+    let cancelled = false;
 
-    function resolve(session: Session | null) {
-      if (settled) return;
-      settled = true;
-      subscription.unsubscribe();
-      clearTimeout(timeout);
+    async function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const oauthError = params.get('error');
 
-      if (!session) {
+      if (oauthError) {
         router.replace('/login');
         return;
       }
 
-      if (!isAllowedDomain(session.user.email)) {
-        supabase.auth.signOut().finally(() => router.replace('/login?error=domain'));
+      // Já trocado nesta sessão de página — não repete.
+      if (code && exchangedCode === code) return;
+
+      // PKCE: troca o ?code= pela sessão explicitamente (detectSessionInUrl
+      // está desligado, então este é o único ponto de exchange).
+      if (code) {
+        exchangedCode = code;
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (cancelled) return;
+
+        if (error || !data.session) {
+          console.error('[Callback] exchangeCodeForSession falhou:', error?.message);
+          router.replace('/login');
+          return;
+        }
+
+        const session = data.session;
+
+        if (!isAllowedDomain(session.user.email)) {
+          await supabase.auth.signOut();
+          router.replace('/login?error=domain');
+          return;
+        }
+
+        void syncUserProfile(session.user);
+        router.replace('/');
         return;
       }
 
-      router.replace('/');
+      // Sem code: talvez a sessão já exista (revisita). Senão volta ao login.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
+
+      if (session && isAllowedDomain(session.user.email)) {
+        router.replace('/');
+      } else {
+        router.replace('/login');
+      }
     }
 
-    // O token do Google chega no hash da URL e o Supabase o processa de forma
-    // assíncrona. Em vez de checar a sessão uma única vez (o que causava a
-    // corrida e mandava o usuário de volta pro login), aguardamos o evento de
-    // autenticação. getSession cobre o caso já-resolvido e o timeout é a rede
-    // de segurança para não travar em "Autenticando...".
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) resolve(session);
-    });
+    handleCallback();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) resolve(session);
-    });
-
-    const timeout = setTimeout(() => resolve(null), SESSION_TIMEOUT_MS);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+    return () => { cancelled = true; };
   }, [router]);
 
   return (
