@@ -12,7 +12,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .cardInner {
@@ -85,7 +85,7 @@
   height: 22px;
   border-radius: 20px;
   background: var(--brand);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,7 +113,7 @@
   align-items: center;
   gap: 6px;
   padding: 24px 32px;
-  background: rgba(27, 28, 30, 0.35);
+  background: var(--card-actions-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   opacity: 0;
@@ -154,7 +154,7 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: var(--weight-medium);
-  color: #fff;
+  color: var(--text-inverse);
   cursor: pointer;
   font-family: inherit;
   transition: opacity var(--transition-fast);
@@ -179,7 +179,7 @@
 
 .btnActionDanger:hover {
   background: var(--color-error);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 /* ========== RESPONSIVE ========== */

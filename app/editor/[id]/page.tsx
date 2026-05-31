@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
@@ -19,7 +20,7 @@ import {
   type ContentType,
 } from './block-config';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
 
 type StructureGroup = {
   key: GroupKey;
@@ -57,6 +58,7 @@ function combineBlocks(hero: Block[], content: Block[], footer: Block[]): Block[
 export default function EditorPage() {
   const params = useParams();
   const router = useRouter();
+  const { canEdit } = useRole();
   const pageId = params.id as string;
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -367,28 +369,32 @@ export default function EditorPage() {
           </div>
         </div>
         <div className={styles.topBarRight}>
-          <span className={styles.saveStatus} aria-live="polite">
-            {saving
-              ? 'Salvando…'
-              : !saved
-                ? 'Alterações pendentes…'
-                : lastSavedAt
-                  ? `Salvo às ${formatTime(lastSavedAt)}`
-                  : 'Salvo'}
-          </span>
-          <a
-            className={styles.btnOutline}
-            href={`${LANDING_URL}/p/${page.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Abrir página pública em nova aba"
-          >
-            <Icon name="eye-on" size={14} />
-            <span>Abrir no browser</span>
-          </a>
-          <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
-            Publicar
-          </button>
+          {canEdit ? (
+            <>
+              <button
+                className={styles.btnPreview}
+                onClick={() => window.open(`${LANDING_URL}/p/${page.slug}?edit=true`, '_blank')}
+                title="Abrir preview em nova aba"
+              >
+                <Icon name="eye-on" size={16} />
+                Preview
+              </button>
+              <span className={styles.saveStatus}>
+                {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
+              </span>
+              <button className={styles.btnOutline} onClick={() => saveDraft(blocks)} disabled={saving || saved}>
+                Salvar rascunho
+              </button>
+              <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
+                Publicar
+              </button>
+            </>
+          ) : (
+            <span className={styles.readOnlyBadge}>
+              <Icon name="eye-on" size={14} />
+              Modo leitura
+            </span>
+          )}
         </div>
       </header>
 
@@ -407,266 +413,141 @@ export default function EditorPage() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className={styles.sidePanel}>
-          {/* AI card */}
-          <div className={styles.card}>
-            <button
-              className={styles.cardHeader}
-              onClick={() => setShowAiPanel(!showAiPanel)}
-              type="button"
-              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}
-            >
-              <span className={styles.cardHeaderLeft}>
-                <span className={styles.cardIcon}>
-                  <Icon name="bot" size={16} />
-                </span>
-                <span className={styles.cardTitleSecondary}>Personalização com IA</span>
-              </span>
-              <span
-                className={styles.cardChevron}
-                style={{ transform: showAiPanel ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}
-              >
-                <Icon name="chevron-down" size={20} />
-              </span>
+        {/* Side panel */}
+        <div className={`${styles.sidePanel} ${panelCollapsed ? styles.sidePanelCollapsed : ''}`}>
+          <div className={styles.panelHeader}>
+            <button className={styles.panelToggle} onClick={() => setPanelCollapsed(!panelCollapsed)} title={panelCollapsed ? 'Expandir' : 'Recolher'}>
+              <Icon name={panelCollapsed ? 'chevron-left' : 'chevron-right'} size={16} />
             </button>
-
-            {showAiPanel && (
-              <div className={styles.aiPanelBody}>
-                <label className={styles.aiToggleRow}>
-                  <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
-                  <button
-                    className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
-                    onClick={() => setAiEnabled(!aiEnabled)}
-                    role="switch"
-                    aria-checked={aiEnabled}
-                  >
-                    <span className={styles.aiToggleKnob} />
-                  </button>
-                </label>
-
-                {aiEnabled && (
-                  <div className={styles.aiPromptGroup}>
-                    <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
-                    <textarea
-                      className={styles.aiPromptInput}
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Ex: Adapte o tom para ser mais informal quando a campanha for de redes sociais."
-                      rows={4}
-                    />
-                    <span className={styles.aiPromptHint}>
-                      A IA usará os UTM params para adaptar textos automaticamente.
-                    </span>
-                  </div>
-                )}
-
-                <button
-                  className={styles.aiSaveBtn}
-                  onClick={saveAiConfig}
-                  disabled={aiSaving}
-                >
-                  {aiSaving ? 'Salvando...' : 'Salvar configuração'}
-                </button>
-              </div>
-            )}
+            {!panelCollapsed && <span className={styles.panelTitle}>Blocos</span>}
           </div>
 
-          {/* Estrutura */}
-          <section className={styles.panelSection} ref={structureSectionRef}>
-            <h2 className={styles.panelSectionLabel}>Estrutura</h2>
+          {!panelCollapsed && (
+            <div className={styles.panelContent}>
+              {/* AI Adaptation Config — only for editors */}
+              {canEdit && (
+                <div className={styles.aiSection}>
+                  <button
+                    className={styles.aiSectionToggle}
+                    onClick={() => setShowAiPanel(!showAiPanel)}
+                  >
+                    <Icon name="bot" size={16} />
+                    <span>Personalização com IA</span>
+                    <span className={`${styles.aiStatusDot} ${aiEnabled ? styles.aiStatusActive : ''}`} />
+                    <span style={{ marginLeft: 'auto', transform: showAiPanel ? 'rotate(180deg)' : 'none', transition: 'transform 150ms', display: 'inline-flex' }}>
+                      <Icon name="chevron-down" size={12} />
+                    </span>
+                  </button>
 
-            {STRUCTURE_GROUPS.map((group) => {
-              const isExpanded = expandedGroups[group.key];
-              const isActive = activeGroup === group.key;
-              const isDimmed = activeGroup !== null && activeGroup !== group.key;
-              const groupBlocks = getBlocksForGroup(group.key);
-              const showAddSlot = group.singleton ? groupBlocks.length === 0 : true;
+                  {showAiPanel && (
+                    <div className={styles.aiPanelBody}>
+                      <label className={styles.aiToggleRow}>
+                        <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
+                        <button
+                          className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
+                          onClick={() => setAiEnabled(!aiEnabled)}
+                          role="switch"
+                          aria-checked={aiEnabled}
+                        >
+                          <span className={styles.aiToggleKnob} />
+                        </button>
+                      </label>
 
-              const cardClassName = [
-                styles.card,
-                styles.cardInteractive,
-                isActive ? styles.cardActive : '',
-                isDimmed ? styles.cardDimmed : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
-
-              return (
-                <div key={group.key} className={styles.cardWrapper}>
-                  <div className={cardClassName}>
-                    <button
-                      className={styles.cardHeader}
-                      onClick={() => toggleGroup(group.key)}
-                      type="button"
-                      style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}
-                    >
-                      <span className={styles.cardHeaderLeft}>
-                        <span className={styles.cardIcon}>
-                          <Icon name={group.icon} size={16} />
-                        </span>
-                        <span className={styles.cardTitle}>{group.label}</span>
-                      </span>
-                      <span
-                        className={styles.cardChevron}
-                        style={{ transform: isExpanded ? 'none' : 'rotate(-90deg)', transition: 'transform 150ms' }}
-                      >
-                        <Icon name="chevron-down" size={20} />
-                      </span>
-                    </button>
-
-                    {isExpanded && (
-                      <div className={styles.blockList}>
-                        {groupBlocks.map((block, idx) => {
-                          const canMoveUp = group.key === 'content' && idx > 0;
-                          const canMoveDown = group.key === 'content' && idx < groupBlocks.length - 1;
-                          const canDuplicate = group.key === 'content';
-                          return (
-                            <div key={block.id} className={styles.blockItem}>
-                              <div className={styles.blockItemHeader}>
-                                <div className={styles.blockItemLabelGroup}>
-                                  <span className={styles.blockDragHandle} aria-label="Reordenar">
-                                    <Icon name="draggable-six-dots" size={16} />
-                                  </span>
-                                  <span className={styles.blockItemLabel}>
-                                    {BLOCK_TYPE_LABELS[block.type]} / Tema {block.theme ?? 1}
-                                  </span>
-                                </div>
-                                <div className={styles.blockItemActions}>
-                                  {group.key === 'content' && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleMoveBlock(block.id, 'down')}
-                                        disabled={!canMoveDown}
-                                        aria-label="Mover para baixo"
-                                      >
-                                        <Icon name="chevron-big-down" size={16} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleMoveBlock(block.id, 'up')}
-                                        disabled={!canMoveUp}
-                                        aria-label="Mover para cima"
-                                      >
-                                        <Icon name="chevron-big-up" size={16} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className={styles.blockAction}
-                                        onClick={() => handleDuplicateBlock(block.id)}
-                                        disabled={!canDuplicate}
-                                        aria-label="Duplicar"
-                                      >
-                                        <Icon name="copy-default" size={16} />
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    type="button"
-                                    className={styles.blockAction}
-                                    onClick={() => handleDeleteBlock(block.id)}
-                                    aria-label="Deletar"
-                                  >
-                                    <Icon name="delete-dustbin-01" size={16} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className={styles.blockItemForm}>
-                                <span className={styles.blockItemFormText}>Form do tema</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {showAddSlot && (
-                          <button
-                            type="button"
-                            className={styles.addSlot}
-                            onClick={() => handleAddClick(group.key)}
-                            aria-label={`Adicionar bloco em ${group.label}`}
-                            aria-expanded={isActive}
-                          >
-                            <span className={styles.addSlotIcon}>
-                              <Icon name="plus-default" size={20} />
+                      {aiEnabled && (
+                        <>
+                          <div className={styles.aiPromptGroup}>
+                            <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
+                            <textarea
+                              className={styles.aiPromptInput}
+                              value={aiPrompt}
+                              onChange={(e) => setAiPrompt(e.target.value)}
+                              placeholder="Ex: Adapte o tom para ser mais informal quando a campanha for de redes sociais. Destaque benefícios financeiros para campanhas de Google Ads."
+                              rows={4}
+                            />
+                            <span className={styles.aiPromptHint}>
+                              A IA usará os UTM params (source, campaign, medium) para adaptar textos automaticamente.
                             </span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {isActive && group.key !== 'content' && (
-                    <div className={styles.templatePicker} role="dialog" aria-label={`Escolha o template do ${group.label.toLowerCase()}`}>
-                      <h3 className={styles.templatePickerTitle}>
-                        Escolha o template do {group.label.toLowerCase()}
-                      </h3>
-                      <div className={styles.themeList}>
-                        {[1, 2, 3].map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            className={styles.themeCard}
-                            onClick={() => handleSelectTheme(group.key, group.key === 'hero' ? 'hero' : 'footer', n)}
-                          >
-                            <span className={styles.themePreview} aria-hidden="true" />
-                            <span className={styles.themeLabel}>Tema {n}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {isActive && group.key === 'content' && (
-                    <div className={styles.templatePicker} role="dialog" aria-label="Escolha o bloco para o content">
-                      {CONTENT_CATEGORIES.map((cat) => {
-                        const isCatExpanded = expandedCategory === cat.type;
-                        return (
-                          <div key={cat.type} className={styles.categoryItem}>
-                            <button
-                              type="button"
-                              className={styles.categoryHeader}
-                              onClick={() =>
-                                setExpandedCategory((prev) => (prev === cat.type ? null : cat.type))
-                              }
-                              aria-expanded={isCatExpanded}
-                            >
-                              <span className={styles.categoryLabel}>{cat.label}</span>
-                              <span
-                                className={styles.categoryChevron}
-                                style={{ transform: isCatExpanded ? 'rotate(180deg)' : 'none' }}
-                              >
-                                <Icon name="chevron-down" size={20} />
-                              </span>
-                            </button>
-                            {isCatExpanded && (
-                              <div className={styles.themeList}>
-                                {[1, 2, 3].map((n) => (
-                                  <button
-                                    key={n}
-                                    type="button"
-                                    className={styles.themeCard}
-                                    onClick={() => handleSelectTheme('content', cat.type as BlockType, n)}
-                                  >
-                                    <span className={styles.themePreview} aria-hidden="true" />
-                                    <span className={styles.themeLabel}>Tema {n}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        );
-                      })}
+
+                          <button
+                            className={styles.aiSaveBtn}
+                            onClick={saveAiConfig}
+                            disabled={aiSaving}
+                          >
+                            {aiSaving ? 'Salvando...' : 'Salvar configuração'}
+                          </button>
+                        </>
+                      )}
+
+                      {!aiEnabled && (
+                        <button
+                          className={styles.aiSaveBtn}
+                          onClick={saveAiConfig}
+                          disabled={aiSaving}
+                        >
+                          {aiSaving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </section>
-        </aside>
+              )}
+
+              {blocks.length === 0 ? (
+                <div className={styles.emptyEditor}>
+                  <p>Nenhum bloco</p>
+                  {canEdit && (
+                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
+                      + Adicionar
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {blocks.map((block, index) => (
+                    <div key={block.id} id={`panel-block-${block.id}`} className={styles.blockWrapper}>
+                      <BlockEditor
+                        block={block}
+                        index={index}
+                        total={blocks.length}
+                        isSelected={selectedBlockId === block.id}
+                        onSelect={() => {
+                          setSelectedBlockId(block.id);
+                          sendToIframe('cms:select-block', { blockId: block.id });
+                        }}
+                        onUpdate={canEdit ? (updated) => updateBlock(index, updated) : undefined}
+                        onRemove={canEdit ? () => removeBlock(index) : undefined}
+                        onMove={canEdit ? (dir) => moveBlock(index, dir) : undefined}
+                        onDuplicate={canEdit ? () => duplicateBlock(index) : undefined}
+                        isDragging={dragIndex === index}
+                        isDragOver={dragOverIndex === index}
+                        onDragStart={canEdit ? () => handleDragStart(index) : undefined}
+                        onDragEnd={canEdit ? handleDragEnd : undefined}
+                        onDragOver={canEdit ? (e) => handleDragOver(e, index) : undefined}
+                        onDrop={canEdit ? () => handleDrop(index) : undefined}
+                      />
+                    </div>
+                  ))}
+
+                  {canEdit && (
+                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
+                      + Adicionar bloco
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Block selector modal */}
+      {canEdit && showBlockSelector && (
+        <BlockSelector
+          onSelect={addBlock}
+          onClose={() => { setShowBlockSelector(false); setInsertIndex(-1); }}
+        />
+      )}
 
       {/* Toast */}
       {toast && (

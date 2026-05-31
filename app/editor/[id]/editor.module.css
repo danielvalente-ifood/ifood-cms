@@ -123,7 +123,42 @@
 .btnPublish:hover { background: var(--brand-hover); }
 .btnPublish:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ---- Editor body: preview + sidebar ---- */
+.btnPreview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.btnPreview:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.readOnlyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+/* ---- Editor body ---- */
 
 .editorBody {
   display: flex;
@@ -212,7 +247,7 @@
 .cardActive,
 .cardActive:hover {
   border-color: var(--brand);
-  box-shadow: 0 0 2px rgba(235, 0, 51, 0.3);
+  box-shadow: 0 0 0 2px var(--brand-subtle);
 }
 
 .cardDimmed,
@@ -294,7 +329,88 @@
   justify-content: center;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.arrayItem {
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.removeItemBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.removeItemBtn:hover {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+/* ---- Block selector modal ---- */
+
+.selectorOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 150ms ease-out;
+}
+
+.selectorModal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 28px;
+  width: 520px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 200ms ease-out;
+}
+
+.selectorModal h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 20px;
+}
+
+.selectorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.selectorItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
   font-family: inherit;
 }
 
@@ -303,17 +419,71 @@
   color: var(--text-primary);
 }
 
-.addSlotIcon {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  align-items: center;
-  justify-content: center;
+.selectorItem:hover {
+  border-color: var(--brand);
+  background: var(--brand-subtle);
 }
 
-/* ---- Block list (within an expanded structure group) ---- */
+.selectorItem:hover .selectorItemIcon {
+  background: var(--brand-subtle);
+  color: var(--brand);
+}
 
-.blockList {
+.selectorItemIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.selectorItemInfo h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  line-height: 24px;
+}
+
+.selectorItemInfo p {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 16px;
+}
+
+/* ---- Toast ---- */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-inverse);
+  z-index: 2000;
+  animation: slideUp 250ms ease-out;
+  box-shadow: var(--shadow-md);
+}
+
+.toastSuccess { background: var(--color-success); }
+.toastError { background: var(--color-error); }
+
+/* ---- AI Adaptation Section ---- */
+
+.aiSection {
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 8px;
+}
+
+.aiSectionToggle {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -564,7 +734,7 @@
   border-radius: 50%;
   background: white;
   transition: transform var(--transition-fast);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .aiToggleSwitchOn .aiToggleKnob {

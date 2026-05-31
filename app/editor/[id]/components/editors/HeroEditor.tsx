@@ -3,6 +3,7 @@
 import type { HeroBlock } from '@/types/database';
 import styles from '../../editor.module.css';
 import { ImageUpload } from '../ImageUpload';
+import { HeroVariantSelector } from '@/components/HeroVariantSelector/HeroVariantSelector';
 
 interface Props {
   block: HeroBlock;
@@ -16,6 +17,11 @@ export function HeroEditor({ block, onUpdate }: Props) {
 
   return (
     <>
+      <HeroVariantSelector
+        currentVariant={block.data.variant || 'image-left'}
+        onVariantChange={(variant) => update('variant', variant)}
+      />
+
       <div className={styles.fieldGroup}>
         <label className={styles.fieldLabel}>Título (uma linha por campo)</label>
         {block.data.title.map((line, i) => (

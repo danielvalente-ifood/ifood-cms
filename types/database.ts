@@ -4,6 +4,7 @@
 
 export type PageStatus = 'draft' | 'published';
 export type VersionType = 'draft' | 'published';
+export type UserRole = 'admin' | 'editor' | 'viewer';
 
 // =============================================
 // Table row types
@@ -117,6 +118,7 @@ export interface HeroData {
   cta_link: string;
   background_image: string;
   logo_decoration: string;
+  variant?: 'image-left' | 'image-right' | 'image-overlay' | 'full-width';
 }
 
 export type HeroBlock = BaseBlock<'hero', HeroData>;
@@ -261,6 +263,32 @@ export interface FooterLink {
 export type FooterBlock = BaseBlock<'footer', FooterData>;
 
 // =============================================
+// User Management (RBAC)
+// =============================================
+
+export interface CmsUser {
+  id: string;
+  auth_id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserVertical {
+  id: string;
+  user_id: string;
+  vertical_id: string;
+  created_at: string;
+}
+
+export interface CmsUserWithVerticals extends CmsUser {
+  verticals: Vertical[];
+}
+
+// =============================================
 // A/B Testing
 // =============================================
 
@@ -290,6 +318,30 @@ export interface ExperimentVariant {
   target_block_id: string | null;
   block_data: Record<string, any> | null;
   alt_page_id: string | null;
+  created_at: string;
+}
+
+// =============================================
+// Heatmap Tracking
+// =============================================
+
+export type EventType = 'click' | 'scroll';
+
+export interface PageEvent {
+  id: string;
+  page_id: string;
+  event_type: EventType;
+  x_pct: number | null;
+  y_pct: number | null;
+  element_tag: string | null;
+  element_text: string | null;
+  scroll_depth_pct: number | null;
+  viewport_width: number | null;
+  device_type: string | null;
+  session_id: string | null;
+  page_slug: string | null;
+  experiment_id: string | null;
+  variant_id: string | null;
   created_at: string;
 }
 
@@ -352,6 +404,32 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Omit<ExperimentVariant, 'id' | 'created_at'>>;
+      };
+      cms_users: {
+        Row: CmsUser;
+        Insert: Omit<CmsUser, 'id' | 'role' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          role?: UserRole;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<CmsUser, 'id' | 'created_at'>>;
+      };
+      user_verticals: {
+        Row: UserVertical;
+        Insert: Omit<UserVertical, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<UserVertical, 'id' | 'created_at'>>;
+      };
+      page_events: {
+        Row: PageEvent;
+        Insert: Omit<PageEvent, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<PageEvent, 'id' | 'created_at'>>;
       };
     };
   };
