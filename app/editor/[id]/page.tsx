@@ -69,6 +69,12 @@ export default function EditorPage() {
   const [saved, setSaved] = useState(true);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [iframeReady, setIframeReady] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [showBlockSelector, setShowBlockSelector] = useState(false);
+  const [insertIndex, setInsertIndex] = useState<number>(-1);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(true);
