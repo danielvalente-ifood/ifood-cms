@@ -405,8 +405,9 @@ export interface Database {
       };
       cms_users: {
         Row: CmsUser;
-        Insert: Omit<CmsUser, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: Omit<CmsUser, 'id' | 'role' | 'created_at' | 'updated_at'> & {
           id?: string;
+          role?: UserRole;
           created_at?: string;
           updated_at?: string;
         };
