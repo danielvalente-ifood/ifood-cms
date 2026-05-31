@@ -17,7 +17,7 @@ import {
   CONTENT_CATEGORIES,
   BLOCK_TYPE_LABELS,
   createBlock,
-  duplicateBlock,
+  duplicateBlock as duplicateBlockConfig,
   type GroupKey,
   type ContentType,
 } from './block-config';
@@ -314,6 +314,58 @@ export default function EditorPage() {
     setSaved(false);
   };
 
+  const updateBlock = (index: number, updatedBlock: Block) => {
+    const newBlocks = [...blocks];
+    newBlocks[index] = updatedBlock;
+    setBlocks(newBlocks);
+    setSaved(false);
+    sendToIframe('cms:update-block', { blockId: updatedBlock.id, data: updatedBlock.data });
+  };
+
+  const removeBlock = (index: number) => {
+    const newBlocks = blocks.filter((_, i) => i !== index);
+    setBlocks(newBlocks);
+    setSaved(false);
+    if (blocks[index]?.id === selectedBlockId) setSelectedBlockId(null);
+  };
+
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= blocks.length) return;
+    const newBlocks = [...blocks];
+    [newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]];
+    setBlocks(newBlocks);
+    setSaved(false);
+  };
+
+  const duplicateBlock = (index: number) => {
+    const block = blocks[index];
+    const newBlock: Block = {
+      ...block,
+      id: `block-${Date.now()}`,
+      data: JSON.parse(JSON.stringify(block.data)),
+    } as Block;
+    const newBlocks = [...blocks];
+    newBlocks.splice(index + 1, 0, newBlock);
+    setBlocks(newBlocks);
+    setSaved(false);
+  };
+
+  const addBlock = (type: BlockType) => {
+    const newBlock = createEmptyBlock(type);
+    const newBlocks = [...blocks];
+    if (insertIndex >= 0) {
+      newBlocks.splice(insertIndex, 0, newBlock);
+    } else {
+      newBlocks.push(newBlock);
+    }
+    setBlocks(newBlocks);
+    setShowBlockSelector(false);
+    setInsertIndex(-1);
+    setSaved(false);
+    setSelectedBlockId(newBlock.id);
+  };
+
   const handleSelectTheme = (groupKey: GroupKey, type: BlockType, theme: number) => {
     const newBlock = createBlock(type, theme);
     const { hero, content, footer } = grouped;
@@ -340,7 +392,7 @@ export default function EditorPage() {
     if (HERO_SET.has(original.type) || FOOTER_SET.has(original.type)) {
       return;
     }
-    const dup = duplicateBlock(original);
+    const dup = duplicateBlockConfig(original);
     const next = [...blocks.slice(0, idx + 1), dup, ...blocks.slice(idx + 1)];
     updateBlocks(next);
   };
@@ -605,4 +657,20 @@ function formatTime(date: Date): string {
     second: '2-digit',
     hour12: false,
   });
+}
+
+
+function createEmptyBlock(type: BlockType): Block {
+  const id = `block-${type}-${Date.now()}`;
+  const templates: Record<BlockType, any> = {
+    navbar: { logo: '', cta_text: 'CTA', cta_link: '#', items: [] },
+    hero: { title: ['Título principal'], description: 'Descrição do hero', cta_text: 'Saiba mais', cta_link: '#', background_image: '', logo_decoration: '' },
+    vision: { badge: 'Badge', title: ['Título'], ratings_count: '0', ratings_text: '', avatars: [], cards: [] },
+    growth: { badge: 'Badge', title: ['Título'], tabs: [] },
+    integrated: { badge: 'Badge', title: 'Título', image: '', features: [] },
+    results: { badge: 'Badge', title: ['Título'], testimonials: [] },
+    faq: { badge: 'FAQ', title: 'Perguntas frequentes', description: '', items: [] },
+    footer: { logo: '', copyright: '', social_links: [], columns: [] },
+  };
+  return { id, type, data: templates[type] } as Block;
 }
