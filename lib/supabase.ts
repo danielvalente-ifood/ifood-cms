@@ -12,7 +12,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     // (Forçar `implicit` quebrava o login: o client esperava `#access_token` no
     // hash e ignorava o `?code=`, então a sessão nunca era estabelecida.)
     flowType: 'pkce',
-    detectSessionInUrl: true,
+    // Exchange do ?code= é feito MANUALMENTE no /auth/callback via
+    // exchangeCodeForSession. detectSessionInUrl fica desligado para não
+    // competir/consumir o code antes (causava sessão nunca estabelecida).
+    detectSessionInUrl: false,
     persistSession: true,
     autoRefreshToken: true,
   },
