@@ -42,11 +42,21 @@ export interface PageVersion {
 export interface Asset {
   id: string;
   page_id: string | null;
+  vertical_id: string | null;
   file_url: string;
   file_name: string | null;
   file_type: string;
   file_size: number | null;
+  storage_path: string | null;
+  alt_text: string | null;
+  uploaded_by: string | null;
   created_at: string;
+}
+
+export type AssetMediaType = 'image' | 'video' | 'pdf' | 'other';
+
+export interface AssetWithVertical extends Asset {
+  vertical: Vertical | null;
 }
 
 // =============================================
