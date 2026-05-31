@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
+import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
@@ -65,6 +66,7 @@ export default function EditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const [page, setPage] = useState<Page | null>(null);
+  const [verticalSlug, setVerticalSlug] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -144,6 +146,16 @@ export default function EditorPage() {
       setPage(pageData);
       setAiEnabled(pageData.ai_adaptation_enabled ?? false);
       setAiPrompt(pageData.ai_adaptation_prompt ?? '');
+
+      // Load vertical slug for media organization
+      if (pageData.vertical_id) {
+        const { data: vert } = await supabase
+          .from('verticals')
+          .select('slug')
+          .eq('id', pageData.vertical_id)
+          .single();
+        if (vert) setVerticalSlug(vert.slug);
+      }
 
       let versionData = await supabase
         .from('page_versions')
@@ -447,6 +459,7 @@ export default function EditorPage() {
   };
 
   return (
+    <MediaProvider verticalId={page.vertical_id} verticalSlug={verticalSlug}>
     <div className={styles.editorLayout}>
       {/* Top bar */}
       <header className={styles.topBar}>
@@ -647,6 +660,7 @@ export default function EditorPage() {
         </div>
       )}
     </div>
+    </MediaProvider>
   );
 }
 
