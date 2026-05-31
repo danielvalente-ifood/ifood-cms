@@ -1,63 +1,72 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { isAllowedDomain } from '@/lib/auth';
 
-const ALLOWED_DOMAIN = 'ifood.com.br';
+/** Tempo máximo aguardando a sessão antes de desistir e voltar ao login. */
+const SESSION_TIMEOUT_MS = 8000;
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      console.log('[Callback] Starting');
-      const { data: { session }, error } = await supabase.auth.getSession();
+    let settled = false;
 
-      console.log('[Callback] getSession:', !!session, error);
+    function resolve(session: Session | null) {
+      if (settled) return;
+      settled = true;
+      subscription.unsubscribe();
+      clearTimeout(timeout);
 
-      if (error || !session) {
-        console.log('[Callback] No session, redirecting');
+      if (!session) {
         router.replace('/login');
         return;
       }
 
-      const email = session.user.email || '';
-      const domain = email.split('@')[1];
-
-      console.log('[Callback] Domain:', domain);
-
-      if (domain !== ALLOWED_DOMAIN) {
-        console.log('[Callback] Domain not allowed');
-        await supabase.auth.signOut();
-        router.replace('/login?error=domain');
+      if (!isAllowedDomain(session.user.email)) {
+        supabase.auth.signOut().finally(() => router.replace('/login?error=domain'));
         return;
       }
 
-      console.log('[Callback] Domain OK, syncing profile');
-      const u = session.user;
-      try {
-        await supabase.from('cms_users').upsert({
-          auth_id: u.id,
-          email: u.email || '',
-          full_name: u.user_metadata?.full_name || '',
-          avatar_url: u.user_metadata?.avatar_url || '',
-        }, { onConflict: 'auth_id' });
-        console.log('[Callback] Profile synced');
-      } catch (err) {
-        console.error('[Callback] Upsert error:', err);
-      }
-
-      console.log('[Callback] Redirecting to /');
       router.replace('/');
-    };
+    }
 
-    handleCallback();
+    // O token do Google chega no hash da URL e o Supabase o processa de forma
+    // assíncrona. Em vez de checar a sessão uma única vez (o que causava a
+    // corrida e mandava o usuário de volta pro login), aguardamos o evento de
+    // autenticação. getSession cobre o caso já-resolvido e o timeout é a rede
+    // de segurança para não travar em "Autenticando...".
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) resolve(session);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) resolve(session);
+    });
+
+    const timeout = setTimeout(() => resolve(null), SESSION_TIMEOUT_MS);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [router]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '14px', background: 'var(--bg-primary)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)',
+        fontSize: '14px',
+        background: 'var(--bg-primary)',
+      }}
+    >
       Autenticando...
     </div>
   );
