@@ -271,6 +271,37 @@ export default function EditorPage() {
     setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const openBlockSelector = (index?: number) => {
+    setInsertIndex(index !== undefined ? index : blocks.length);
+    setShowBlockSelector(true);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) return;
+    const newBlocks = [...blocks];
+    const [dragged] = newBlocks.splice(dragIndex, 1);
+    newBlocks.splice(targetIndex, 0, dragged);
+    setBlocks(newBlocks);
+    setSaved(false);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
   const handleAddClick = (key: GroupKey) => {
     setActiveGroup((prev) => (prev === key ? null : key));
     if (key === 'content') {
