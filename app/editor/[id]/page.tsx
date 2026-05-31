@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
+import { BlockEditor } from './components/BlockEditor';
+import { BlockSelector } from './components/BlockSelector';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
 import {
