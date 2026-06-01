@@ -119,7 +119,7 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
           />
 
           <button className={styles.uploadBtn} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            <Icon name="add-plus-circle" size={14} />
+            <Icon name="upload" size={14} />
             {uploading ? 'Enviando…' : 'Upload'}
           </button>
           <input
