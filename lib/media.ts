@@ -146,6 +146,13 @@ export async function fetchAssets(verticalId: string | null | undefined): Promis
 
 import type { Vertical } from '@/types/database';
 
+export interface FolderMember {
+  id: string;
+  name: string;
+  avatar: string | null;
+  role: string;
+}
+
 export interface MediaFolder {
   /** null = Global (assets sem vertical) */
   vertical: Vertical | null;
@@ -153,28 +160,56 @@ export interface MediaFolder {
   name: string;
   color: string | null;
   count: number;
+  /** soma dos file_size da pasta, em bytes */
+  sizeBytes: number;
   /** até 4 URLs de imagem (mais recentes) para o collage de capa */
   thumbs: string[];
   /** created_at mais recente da pasta, ou null se vazia */
   updated: string | null;
+  /** pessoas com acesso à pasta (admins + atribuídos; Global = todos) */
+  members: FolderMember[];
 }
 
 const GLOBAL_FOLDER = { slug: 'global', name: 'Global' };
 
 /**
  * Agrupa todos os assets por vertical (+ Global) para a visão de pastas.
- * Retorna uma pasta por vertical mesmo que vazia, mais a pasta Global.
+ * Inclui tamanho total e os membros com acesso a cada pasta.
  */
 export async function fetchMediaFolders(): Promise<MediaFolder[]> {
-  const [{ data: verticals }, { data: assets }] = await Promise.all([
-    supabase.from('verticals').select('*').order('name'),
-    supabase
-      .from('assets')
-      .select('id, file_url, file_type, vertical_id, created_at')
-      .order('created_at', { ascending: false }),
-  ]);
+  const [{ data: verticals }, { data: assets }, { data: users }, { data: userVerticals }] =
+    await Promise.all([
+      supabase.from('verticals').select('*').order('name'),
+      supabase
+        .from('assets')
+        .select('id, file_url, file_type, file_size, vertical_id, created_at')
+        .order('created_at', { ascending: false }),
+      supabase.from('cms_users').select('id, full_name, email, avatar_url, role'),
+      supabase.from('user_verticals').select('user_id, vertical_id'),
+    ]);
 
-  const rows = (assets ?? []) as Pick<Asset, 'id' | 'file_url' | 'file_type' | 'vertical_id' | 'created_at'>[];
+  const rows = (assets ?? []) as Pick<Asset, 'id' | 'file_url' | 'file_type' | 'file_size' | 'vertical_id' | 'created_at'>[];
+  const allUsers = (users ?? []) as { id: string; full_name: string | null; email: string; avatar_url: string | null; role: string }[];
+  const assignments = (userVerticals ?? []) as { user_id: string; vertical_id: string }[];
+
+  const toMember = (u: typeof allUsers[number]): FolderMember => ({
+    id: u.id,
+    name: u.full_name || u.email.split('@')[0],
+    avatar: u.avatar_url,
+    role: u.role,
+  });
+
+  const admins = allUsers.filter((u) => u.role === 'admin');
+
+  const membersFor = (vid: string | null): FolderMember[] => {
+    // Global: todos têm acesso. Vertical: admins + atribuídos.
+    if (vid === null) return allUsers.map(toMember);
+    const assignedIds = new Set(assignments.filter((a) => a.vertical_id === vid).map((a) => a.user_id));
+    const set = new Map<string, FolderMember>();
+    for (const a of admins) set.set(a.id, toMember(a));
+    for (const u of allUsers) if (assignedIds.has(u.id)) set.set(u.id, toMember(u));
+    return [...set.values()];
+  };
 
   const build = (vertical: Vertical | null): MediaFolder => {
     const vid = vertical?.id ?? null;
@@ -189,8 +224,10 @@ export async function fetchMediaFolders(): Promise<MediaFolder[]> {
       name: vertical?.name ?? GLOBAL_FOLDER.name,
       color: vertical?.color ?? null,
       count: group.length,
+      sizeBytes: group.reduce((sum, a) => sum + (a.file_size ?? 0), 0),
       thumbs,
       updated: group[0]?.created_at ?? null,
+      members: membersFor(vid),
     };
   };
 
