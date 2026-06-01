@@ -213,9 +213,19 @@ export default function MediaFolderPage() {
     persistTags(selectedAsset, selectedAsset.tags.filter(x => x !== t));
   };
 
+  // Imagem maior que o container → cover (preenche, corta um pouco).
+  // Imagem menor → tamanho natural centralizada (não amplia/estoura).
+  const fitOnLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const box = img.parentElement;
+    if (!box) return;
+    const fill = img.naturalWidth >= box.clientWidth && img.naturalHeight >= box.clientHeight;
+    img.style.objectFit = fill ? 'cover' : 'none';
+  };
+
   const renderThumb = (asset: Asset, size: 'sm' | 'lg' = 'sm') => {
     if (getMediaType(asset.file_type) === 'image') {
-      return <img src={asset.file_url} alt={asset.alt_text ?? asset.file_name ?? ''} loading="lazy" />;
+      return <img src={asset.file_url} alt={asset.alt_text ?? asset.file_name ?? ''} loading="lazy" onLoad={fitOnLoad} />;
     }
     return <span className={styles.assetThumbIcon}><Icon name="file-default" size={size === 'lg' ? 40 : 28} /></span>;
   };

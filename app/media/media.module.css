@@ -477,11 +477,11 @@
   position: relative;
 }
 
-/* Imagem grande: contida no container. Imagem menor: tamanho natural,
-   centralizada (scale-down nunca amplia — evita ícones/logos estourados). */
+/* object-fit definido por JS (fitOnLoad): cover p/ imagem grande,
+   none (tamanho natural centralizado) p/ imagem menor que o container. */
 .assetThumb img {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: scale-down;
   display: block;
 }
