@@ -32,6 +32,15 @@ export function getPublicUrl(storagePath: string): string {
   return data.publicUrl;
 }
 
+/** Corrige preserveAspectRatio="none" em SVGs (distorce ao escalar). No-op p/ não-SVG. */
+export async function sanitizeSvg(file: File): Promise<File | Blob> {
+  if (file.type !== 'image/svg+xml') return file;
+  const text = await file.text();
+  if (!text.includes('preserveAspectRatio="none"')) return file;
+  const fixed = text.replace(/preserveAspectRatio="none"/g, 'preserveAspectRatio="xMidYMid meet"');
+  return new Blob([fixed], { type: 'image/svg+xml' });
+}
+
 export interface UploadOptions {
   file: File;
   verticalId: string | null;
@@ -51,9 +60,13 @@ export async function uploadMedia(opts: UploadOptions): Promise<{ asset: Asset |
   const uniqueName = `${base}_${ts}${ext}`;
   const storagePath = buildStoragePath(verticalSlug, uniqueName);
 
+  // SVGs exportados do Figma vêm com preserveAspectRatio="none" + 100%/100%,
+  // o que distorce o desenho ao escalar. Sanitiza para preservar proporção.
+  const body: File | Blob = await sanitizeSvg(file);
+
   const { error: uploadError } = await supabase.storage
     .from(MEDIA_BUCKET)
-    .upload(storagePath, file, { cacheControl: '3600', upsert: false });
+    .upload(storagePath, body, { cacheControl: '3600', upsert: false, contentType: file.type });
 
   if (uploadError) return { asset: null, error: uploadError.message };
 
