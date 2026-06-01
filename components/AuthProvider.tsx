@@ -32,7 +32,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    let mounted = true;
+
+    // Lê a sessão persistida imediatamente no mount — não depende do timing do
+    // evento. Cobre o caso de carregar/atualizar uma página autenticada.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      setUser(session?.user ?? null);
+      if (session?.provider_token) setProviderToken(session.provider_token);
+      setLoading(false);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
       setUser(session?.user ?? null);
       if (session?.provider_token) {
         setProviderToken(session.provider_token);
@@ -47,10 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Rede de segurança: se o listener não disparar em 5s, libera o loading.
-    const timeout = setTimeout(() => setLoading(false), 5000);
+    // Rede de segurança: se nada disparar em 5s, libera o loading.
+    const timeout = setTimeout(() => { if (mounted) setLoading(false); }, 5000);
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
       clearTimeout(timeout);
     };
