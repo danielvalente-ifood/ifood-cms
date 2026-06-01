@@ -235,7 +235,8 @@ export default function MediaFolderPage() {
           alt={asset.alt_text ?? asset.file_name ?? ''}
           loading="lazy"
           onLoad={isSvg ? undefined : fitOnLoad}
-          style={isSvg ? { objectFit: 'contain' } : undefined}
+          // SVG: tamanho modesto centralizado (não preenche o container)
+          style={isSvg ? { width: '55%', height: '55%', objectFit: 'contain' } : undefined}
         />
       );
     }
@@ -400,7 +401,11 @@ export default function MediaFolderPage() {
 
           <div className={styles.detailPreview}>
             {getMediaType(selectedAsset.file_type) === 'image'
-              ? <img src={selectedAsset.file_type === 'image/svg+xml' ? `${selectedAsset.file_url}?ar=1` : selectedAsset.file_url} alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''} />
+              ? <img
+                  src={selectedAsset.file_type === 'image/svg+xml' ? `${selectedAsset.file_url}?ar=1` : selectedAsset.file_url}
+                  alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''}
+                  style={selectedAsset.file_type === 'image/svg+xml' ? { width: '55%', height: '55%', objectFit: 'contain' } : undefined}
+                />
               : <span className={styles.detailPreviewIcon}><Icon name="file-default" size={48} /></span>}
           </div>
 
