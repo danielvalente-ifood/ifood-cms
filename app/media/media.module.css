@@ -94,6 +94,139 @@
   color: var(--text-primary);
 }
 
+/* ---- Drop area (estilo Drive) ---- */
+
+.dropArea {
+  position: relative;
+  min-height: 300px;
+}
+
+.dropOverlay {
+  position: absolute;
+  inset: -8px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px dashed var(--brand);
+  border-radius: 12px;
+  background: var(--brand-subtle);
+  color: var(--brand);
+  pointer-events: none;
+}
+
+.dropOverlay p {
+  font-size: var(--text-sm);
+  color: var(--brand);
+  margin: 0;
+}
+
+/* ---- Selected check badge ---- */
+
+.selectedCheck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- Detail header ---- */
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detailHeaderTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+/* ---- Detail two-col row ---- */
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ---- Tags ---- */
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+
+.tagRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+.tagRemove:hover { color: var(--color-error-text); background: var(--color-error-bg); }
+
+.tagInput {
+  width: 90px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-family: inherit;
+  outline: none;
+}
+
+.tagAdd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px dashed var(--border-default);
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.tagAdd:hover { border-color: var(--brand); color: var(--brand); }
+
 /* ---- Toolbar ---- */
 
 .toolbar {

@@ -50,6 +50,7 @@ export interface Asset {
   storage_path: string | null;
   alt_text: string | null;
   uploaded_by: string | null;
+  tags: string[];
   created_at: string;
 }
 

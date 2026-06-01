@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar } from '@/components/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
@@ -12,6 +12,8 @@ import {
   deleteMedia,
   fetchAssets,
   resolveFolderVertical,
+  updateAssetTags,
+  downloadAsset,
   getMediaType,
   formatFileSize,
 } from '@/lib/media';
@@ -21,25 +23,12 @@ import styles from '../media.module.css';
 type ViewMode = 'grid' | 'list';
 type TypeFilter = 'all' | 'image' | 'video' | 'pdf' | 'other';
 
-interface UploadItem {
-  name: string;
-  status: 'uploading' | 'done' | 'error';
-}
-
-interface Toast {
-  message: string;
-  type: 'success' | 'error';
-}
-
-interface Folder {
-  verticalId: string | null;
-  name: string;
-  slug: string;
-}
+interface UploadItem { name: string; status: 'uploading' | 'done' | 'error'; }
+interface Toast { message: string; type: 'success' | 'error'; }
+interface Folder { verticalId: string | null; name: string; slug: string; }
 
 export default function MediaFolderPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.vertical as string;
   const { user } = useAuth();
 
@@ -55,14 +44,19 @@ export default function MediaFolderPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [copied, setCopied] = useState(false);
+  const [dimensions, setDimensions] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [addingTag, setAddingTag] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef(0);
 
-  // ---- Resolve folder from slug ----
+  // ---- Resolve folder ----
   useEffect(() => {
     resolveFolderVertical(slug).then((f) => {
       if (!f) { setNotFound(true); setLoading(false); return; }
@@ -70,7 +64,7 @@ export default function MediaFolderPage() {
     });
   }, [slug]);
 
-  // ---- Load assets for this folder ----
+  // ---- Load assets ----
   const loadAssets = useCallback(async () => {
     if (!folder) return;
     setLoading(true);
@@ -81,6 +75,16 @@ export default function MediaFolderPage() {
   }, [folder]);
 
   useEffect(() => { loadAssets(); }, [loadAssets]);
+
+  // ---- Compute image dimensions when a new asset is selected ----
+  useEffect(() => {
+    setDimensions(null);
+    if (selectedAsset && getMediaType(selectedAsset.file_type) === 'image') {
+      const img = new window.Image();
+      img.onload = () => setDimensions(`${img.naturalWidth} × ${img.naturalHeight} px`);
+      img.src = selectedAsset.file_url;
+    }
+  }, [selectedAsset]);
 
   const filtered = assets.filter(a => {
     const matchSearch = !search || (a.file_name ?? '').toLowerCase().includes(search.toLowerCase());
@@ -97,7 +101,6 @@ export default function MediaFolderPage() {
     if (!files || files.length === 0 || !folder) return;
     const items: UploadItem[] = Array.from(files).map(f => ({ name: f.name, status: 'uploading' }));
     setUploads(items);
-
     for (let i = 0; i < files.length; i++) {
       const { error } = await uploadMedia({
         file: files[i],
@@ -107,15 +110,25 @@ export default function MediaFolderPage() {
       });
       setUploads(prev => prev.map((u, idx) => idx === i ? { ...u, status: error ? 'error' : 'done' } : u));
     }
-
     await loadAssets();
     setTimeout(() => setUploads([]), 2000);
     showToast(`${files.length} arquivo(s) enviado(s)`, 'success');
   };
 
+  // ---- Drag & drop sobre o grid (estilo Drive) ----
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('Files')) { dragCounter.current++; setIsDragging(true); }
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current <= 0) { setIsDragging(false); dragCounter.current = 0; }
+  };
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    dragCounter.current = 0;
     handleFiles(e.dataTransfer.files);
   };
 
@@ -154,19 +167,41 @@ export default function MediaFolderPage() {
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    showToast('URL copiada!', 'success');
+    showToast('Link copiado!', 'success');
+  };
+
+  const handleDownload = async () => {
+    if (!selectedAsset) return;
+    setDownloading(true);
+    try { await downloadAsset(selectedAsset.file_url, selectedAsset.file_name ?? 'download'); }
+    catch { showToast('Erro ao baixar', 'error'); }
+    setDownloading(false);
+  };
+
+  // ---- Tags ----
+  const persistTags = async (asset: Asset, tags: string[]) => {
+    setSelectedAsset({ ...asset, tags });
+    setAssets(prev => prev.map(a => a.id === asset.id ? { ...a, tags } : a));
+    const { error } = await updateAssetTags(asset.id, tags);
+    if (error) showToast('Erro ao salvar tag', 'error');
+  };
+  const addTag = () => {
+    const t = tagInput.trim();
+    if (!t || !selectedAsset) return;
+    if (!selectedAsset.tags.includes(t)) persistTags(selectedAsset, [...selectedAsset.tags, t]);
+    setTagInput('');
+    setAddingTag(false);
+  };
+  const removeTag = (t: string) => {
+    if (!selectedAsset) return;
+    persistTags(selectedAsset, selectedAsset.tags.filter(x => x !== t));
   };
 
   const renderThumb = (asset: Asset, size: 'sm' | 'lg' = 'sm') => {
-    const type = getMediaType(asset.file_type);
-    if (type === 'image') {
+    if (getMediaType(asset.file_type) === 'image') {
       return <img src={asset.file_url} alt={asset.alt_text ?? asset.file_name ?? ''} loading="lazy" />;
     }
-    return (
-      <span className={styles.assetThumbIcon}>
-        <Icon name="file-default" size={size === 'lg' ? 40 : 28} />
-      </span>
-    );
+    return <span className={styles.assetThumbIcon}><Icon name="file-default" size={size === 'lg' ? 40 : 28} /></span>;
   };
 
   if (notFound) {
@@ -189,7 +224,7 @@ export default function MediaFolderPage() {
       <Sidebar />
 
       <main className={styles.main}>
-        {/* Breadcrumb + header */}
+        {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <nav className={styles.breadcrumb} aria-label="Trilha">
@@ -198,21 +233,40 @@ export default function MediaFolderPage() {
               </Link>
             </nav>
             <h1>{folder?.name ?? '…'}</h1>
-            <p>Gerencie imagens, vídeos e arquivos desta pasta</p>
+            <p>{assets.length} {assets.length === 1 ? 'asset no total' : 'assets no total'}</p>
           </div>
           <div className={styles.headerRight}>
+            <div className={styles.viewToggle} role="group" aria-label="Modo de exibição">
+              <button className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('grid')} aria-label="Grade" title="Grade">
+                <Icon name="grid-dashboard-bento" size={16} />
+              </button>
+              <button className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`} onClick={() => setViewMode('list')} aria-label="Lista" title="Lista">
+                <Icon name="file-default" size={16} />
+              </button>
+            </div>
             <button className={styles.btnUpload} onClick={() => fileInputRef.current?.click()}>
               <Icon name="upload" size={16} />
               Upload
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*,application/pdf"
-              multiple
-              style={{ display: 'none' }}
-              onChange={e => handleFiles(e.target.files)}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*,video/*,application/pdf" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
+          </div>
+        </div>
+
+        {/* Toolbar: busca + tipo */}
+        <div className={styles.toolbar}>
+          <div className={styles.searchWrap}>
+            <span className={styles.searchIcon}><Icon name="barchart-default" size={14} /></span>
+            <input className={styles.searchInput} type="search" placeholder="Buscar por nome…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Buscar arquivos" />
+          </div>
+          <div className={styles.typeFilter} role="group" aria-label="Filtrar por tipo">
+            {(['all', 'image', 'video', 'pdf'] as TypeFilter[]).map(t => {
+              const labels: Record<TypeFilter, string> = { all: 'Todos', image: 'Imagens', video: 'Vídeos', pdf: 'PDFs', other: 'Outros' };
+              return (
+                <button key={t} className={`${styles.typeBtn} ${typeFilter === t ? styles.typeBtnActive : ''}`} onClick={() => setTypeFilter(t)}>
+                  {labels[t]}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -223,260 +277,186 @@ export default function MediaFolderPage() {
               <div key={i} className={styles.uploadItem}>
                 <Icon name={u.status === 'done' ? 'eye-on' : u.status === 'error' ? 'close-x' : 'file-default'} size={14} />
                 <span className={styles.uploadItemName}>{u.name}</span>
-                <span className={styles.uploadItemStatus}>
-                  {u.status === 'uploading' ? 'Enviando…' : u.status === 'done' ? 'Concluído' : 'Erro'}
-                </span>
+                <span className={styles.uploadItemStatus}>{u.status === 'uploading' ? 'Enviando…' : u.status === 'done' ? 'Concluído' : 'Erro'}</span>
               </div>
             ))}
           </div>
         )}
 
-        {/* Drop zone */}
+        {/* Área de conteúdo = drop target estilo Drive */}
         <div
-          className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
-          onDragEnter={() => setIsDragging(true)}
-          onDragLeave={() => setIsDragging(false)}
+          className={styles.dropArea}
+          onDragEnter={onDragEnter}
           onDragOver={e => e.preventDefault()}
+          onDragLeave={onDragLeave}
           onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          aria-label="Área de upload — clique ou arraste arquivos aqui"
-          onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
         >
-          <div className={styles.dropIcon}>
-            <Icon name="upload" size={28} />
-          </div>
-          <p>Arraste arquivos aqui ou <strong>clique para selecionar</strong></p>
-          <span>Imagens, vídeos e PDFs · máx. 50 MB por arquivo</span>
-        </div>
+          {isDragging && (
+            <div className={styles.dropOverlay}>
+              <Icon name="upload" size={32} />
+              <p>Solte os arquivos para enviar para <strong>{folder?.name}</strong></p>
+            </div>
+          )}
 
-        {/* Toolbar */}
-        <div className={styles.toolbar}>
-          <div className={styles.searchWrap}>
-            <span className={styles.searchIcon}><Icon name="barchart-default" size={14} /></span>
-            <input
-              className={styles.searchInput}
-              type="search"
-              placeholder="Buscar por nome…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              aria-label="Buscar arquivos"
-            />
-          </div>
-
-          <div className={styles.typeFilter} role="group" aria-label="Filtrar por tipo">
-            {(['all', 'image', 'video', 'pdf'] as TypeFilter[]).map(t => {
-              const labels: Record<TypeFilter, string> = { all: 'Todos', image: 'Imagens', video: 'Vídeos', pdf: 'PDFs', other: 'Outros' };
-              return (
-                <button
-                  key={t}
-                  className={`${styles.typeBtn} ${typeFilter === t ? styles.typeBtnActive : ''}`}
-                  onClick={() => setTypeFilter(t)}
+          {loading ? (
+            <div className={styles.empty}><p>Carregando…</p></div>
+          ) : filtered.length === 0 ? (
+            <div className={styles.empty}>
+              <Icon name="folder" size={40} />
+              <p>{search ? 'Nenhum arquivo encontrado.' : 'Pasta vazia — arraste arquivos aqui ou use Upload.'}</p>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className={styles.grid}>
+              {filtered.map(asset => (
+                <div
+                  key={asset.id}
+                  className={`${styles.assetCard} ${selectedAsset?.id === asset.id ? styles.assetCardSelected : ''}`}
+                  onClick={() => selectAsset(asset)}
+                  role="button" tabIndex={0}
+                  aria-label={asset.file_name ?? 'arquivo'}
+                  onKeyDown={e => e.key === 'Enter' && selectAsset(asset)}
                 >
-                  {labels[t]}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className={styles.viewToggle} role="group" aria-label="Modo de exibição">
-            <button
-              className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-              onClick={() => setViewMode('grid')}
-              aria-label="Grade"
-              title="Grade"
-            >
-              <Icon name="grid-dashboard-bento" size={16} />
-            </button>
-            <button
-              className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-              onClick={() => setViewMode('list')}
-              aria-label="Lista"
-              title="Lista"
-            >
-              <Icon name="file-default" size={16} />
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className={styles.empty}><p>Carregando…</p></div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.empty}>
-            <Icon name="file-default" size={40} />
-            <p>{search ? 'Nenhum arquivo encontrado para esta busca.' : 'Nenhum arquivo nesta pasta ainda.'}</p>
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className={styles.grid}>
-            {filtered.map(asset => (
-              <div
-                key={asset.id}
-                className={`${styles.assetCard} ${selectedAsset?.id === asset.id ? styles.assetCardSelected : ''}`}
-                onClick={() => selectAsset(asset)}
-                role="button"
-                tabIndex={0}
-                aria-label={asset.file_name ?? 'arquivo'}
-                onKeyDown={e => e.key === 'Enter' && selectAsset(asset)}
-              >
-                <div className={styles.assetThumb}>
-                  {renderThumb(asset)}
-                  <div className={styles.assetOverlay}>
-                    <div className={styles.overlayActions}>
-                      <button
-                        className={styles.overlayBtn}
-                        title="Copiar URL"
-                        onClick={e => { e.stopPropagation(); copyUrl(asset.file_url); }}
-                        aria-label="Copiar URL"
-                      >
-                        <Icon name="copy-default" size={14} />
-                      </button>
-                      <button
-                        className={`${styles.overlayBtn} ${styles.overlayBtnDanger}`}
-                        title="Excluir"
-                        onClick={e => { e.stopPropagation(); setDeleteTarget(asset); }}
-                        aria-label="Excluir arquivo"
-                      >
-                        <Icon name="delete-dustbin-01" size={14} />
-                      </button>
-                    </div>
+                  <div className={styles.assetThumb}>
+                    {renderThumb(asset)}
+                    {selectedAsset?.id === asset.id && (
+                      <span className={styles.selectedCheck}><Icon name="eye-on" size={12} /></span>
+                    )}
+                  </div>
+                  <div className={styles.assetInfo}>
+                    <p className={styles.assetName}>{asset.file_name}</p>
+                    <p className={styles.assetMeta}>{formatFileSize(asset.file_size)}</p>
                   </div>
                 </div>
-                <div className={styles.assetInfo}>
-                  <p className={styles.assetName}>{asset.file_name}</p>
-                  <p className={styles.assetMeta}>{formatFileSize(asset.file_size)}</p>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.listView}>
+              {filtered.map(asset => (
+                <div
+                  key={asset.id}
+                  className={`${styles.listRow} ${selectedAsset?.id === asset.id ? styles.listRowSelected : ''}`}
+                  onClick={() => selectAsset(asset)}
+                  role="button" tabIndex={0}
+                  aria-label={asset.file_name ?? 'arquivo'}
+                  onKeyDown={e => e.key === 'Enter' && selectAsset(asset)}
+                >
+                  <div className={styles.listThumb}>{renderThumb(asset, 'sm')}</div>
+                  <div className={styles.listInfo}>
+                    <p className={styles.listName}>{asset.file_name}</p>
+                    <p className={styles.listMeta}>{getMediaType(asset.file_type).toUpperCase()} · {formatFileSize(asset.file_size)} · {new Date(asset.created_at).toLocaleDateString('pt-BR')}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.listView}>
-            {filtered.map(asset => (
-              <div
-                key={asset.id}
-                className={`${styles.listRow} ${selectedAsset?.id === asset.id ? styles.listRowSelected : ''}`}
-                onClick={() => selectAsset(asset)}
-                role="button"
-                tabIndex={0}
-                aria-label={asset.file_name ?? 'arquivo'}
-                onKeyDown={e => e.key === 'Enter' && selectAsset(asset)}
-              >
-                <div className={styles.listThumb}>{renderThumb(asset, 'sm')}</div>
-                <div className={styles.listInfo}>
-                  <p className={styles.listName}>{asset.file_name}</p>
-                  <p className={styles.listMeta}>
-                    {getMediaType(asset.file_type).toUpperCase()} · {formatFileSize(asset.file_size)} · {new Date(asset.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div className={styles.listActions}>
-                  <button
-                    className={styles.listAction}
-                    title="Copiar URL"
-                    onClick={e => { e.stopPropagation(); copyUrl(asset.file_url); }}
-                    aria-label="Copiar URL"
-                  >
-                    <Icon name="copy-default" size={14} />
-                  </button>
-                  <button
-                    className={`${styles.listAction} ${styles.listActionDanger}`}
-                    title="Excluir"
-                    onClick={e => { e.stopPropagation(); setDeleteTarget(asset); }}
-                    aria-label="Excluir arquivo"
-                  >
-                    <Icon name="delete-dustbin-01" size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
-      {/* Detail / rename panel */}
+      {/* Painel Asset Details */}
       {selectedAsset && (
         <aside className={styles.detailPanel} aria-label="Detalhes do arquivo">
-          <div className={styles.detailClose}>
-            <span>Detalhes</span>
+          <div className={styles.detailHeader}>
+            <span className={styles.detailHeaderTitle}>Detalhes do Asset</span>
             <button className={styles.detailCloseBtn} onClick={() => setSelectedAsset(null)} aria-label="Fechar painel">
-              <Icon name="chevron-right" size={16} />
+              <Icon name="close-x" size={16} />
             </button>
           </div>
 
           <div className={styles.detailPreview}>
             {getMediaType(selectedAsset.file_type) === 'image'
               ? <img src={selectedAsset.file_url} alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''} />
-              : <span className={styles.detailPreviewIcon}><Icon name="file-default" size={48} /></span>
-            }
+              : <span className={styles.detailPreviewIcon}><Icon name="file-default" size={48} /></span>}
           </div>
 
+          {/* Nome (rename inline) */}
           <div className={styles.detailField}>
-            <span className={styles.detailLabel}>Nome do arquivo</span>
-            <input
-              className={styles.detailInput}
-              value={editName}
-              onChange={e => setEditName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-              aria-label="Renomear arquivo"
-            />
+            <span className={styles.detailLabel}>Nome</span>
+            <input className={styles.detailInput} value={editName} onChange={e => setEditName(e.target.value)} onBlur={handleSave} onKeyDown={e => e.key === 'Enter' && handleSave()} aria-label="Renomear arquivo" />
           </div>
 
+          {/* Tamanho + Tipo */}
+          <div className={styles.detailRow}>
+            <div className={styles.detailField}>
+              <span className={styles.detailLabel}>Tamanho</span>
+              <span className={styles.detailValue}>{formatFileSize(selectedAsset.file_size)}</span>
+            </div>
+            <div className={styles.detailField}>
+              <span className={styles.detailLabel}>Tipo</span>
+              <span className={styles.detailValue}>{selectedAsset.file_type}</span>
+            </div>
+          </div>
+
+          {/* Dimensões */}
+          {getMediaType(selectedAsset.file_type) === 'image' && (
+            <div className={styles.detailField}>
+              <span className={styles.detailLabel}>Dimensões</span>
+              <span className={styles.detailValue}>{dimensions ?? '…'}</span>
+            </div>
+          )}
+
+          {/* Criado */}
           <div className={styles.detailField}>
-            <span className={styles.detailLabel}>Tipo</span>
-            <span className={styles.detailValue}>{selectedAsset.file_type}</span>
+            <span className={styles.detailLabel}>Criado</span>
+            <span className={styles.detailValue}>{new Date(selectedAsset.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
 
+          {/* Tags */}
           <div className={styles.detailField}>
-            <span className={styles.detailLabel}>Tamanho</span>
-            <span className={styles.detailValue}>{formatFileSize(selectedAsset.file_size)}</span>
+            <span className={styles.detailLabel}>Tags</span>
+            <div className={styles.tagList}>
+              {selectedAsset.tags.map(t => (
+                <span key={t} className={styles.tag}>
+                  {t}
+                  <button className={styles.tagRemove} onClick={() => removeTag(t)} aria-label={`Remover tag ${t}`}>
+                    <Icon name="close-x" size={10} />
+                  </button>
+                </span>
+              ))}
+              {addingTag ? (
+                <input
+                  className={styles.tagInput}
+                  value={tagInput}
+                  autoFocus
+                  placeholder="nova tag"
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addTag(); if (e.key === 'Escape') { setAddingTag(false); setTagInput(''); } }}
+                  onBlur={addTag}
+                />
+              ) : (
+                <button className={styles.tagAdd} onClick={() => setAddingTag(true)} aria-label="Adicionar tag">
+                  <Icon name="add-plus-circle" size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className={styles.detailField}>
-            <span className={styles.detailLabel}>Enviado em</span>
-            <span className={styles.detailValue}>
-              {new Date(selectedAsset.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </span>
-          </div>
-
-          <div className={styles.detailField}>
-            <span className={styles.detailLabel}>URL pública</span>
-            <span className={styles.detailValue} style={{ fontSize: '11px', wordBreak: 'break-all' }}>
-              {selectedAsset.file_url}
-            </span>
-          </div>
-
+          {/* Ações */}
           <div className={styles.detailActions}>
+            <button className={styles.btnSave} onClick={handleDownload} disabled={downloading}>
+              <Icon name="upload" size={14} />
+              {downloading ? 'Baixando…' : 'Baixar arquivo'}
+            </button>
             <button className={styles.btnCopyUrl} onClick={() => copyUrl(selectedAsset.file_url)}>
               <Icon name="copy-default" size={14} />
-              {copied ? 'Copiado!' : 'Copiar URL'}
-            </button>
-            <button className={styles.btnSave} onClick={handleSave} disabled={saving}>
-              <Icon name="eye-on" size={14} />
-              {saving ? 'Salvando…' : 'Salvar nome'}
+              {copied ? 'Copiado!' : 'Copiar link'}
             </button>
             <button className={styles.btnDelete} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
               <Icon name="delete-dustbin-01" size={14} />
-              Excluir arquivo
+              Mover para lixeira
             </button>
           </div>
         </aside>
       )}
 
-      {/* Delete confirm dialog */}
+      {/* Delete confirm */}
       {deleteTarget && (
         <div className={styles.dialogOverlay} role="dialog" aria-modal="true" aria-label="Confirmar exclusão">
           <div className={styles.dialog}>
             <h3>Excluir arquivo?</h3>
-            <p>
-              <strong>{deleteTarget.file_name}</strong> será removido permanentemente do storage e do banco de dados. Esta ação não pode ser desfeita.
-            </p>
+            <p><strong>{deleteTarget.file_name}</strong> será removido permanentemente do storage e do banco de dados. Esta ação não pode ser desfeita.</p>
             <div className={styles.dialogActions}>
-              <button className={styles.btnCancel} onClick={() => setDeleteTarget(null)}>
-                Cancelar
-              </button>
-              <button className={styles.btnConfirmDelete} onClick={handleDelete} disabled={deleting}>
-                {deleting ? 'Excluindo…' : 'Excluir'}
-              </button>
+              <button className={styles.btnCancel} onClick={() => setDeleteTarget(null)}>Cancelar</button>
+              <button className={styles.btnConfirmDelete} onClick={handleDelete} disabled={deleting}>{deleting ? 'Excluindo…' : 'Excluir'}</button>
             </div>
           </div>
         </div>
@@ -484,9 +464,7 @@ export default function MediaFolderPage() {
 
       {/* Toast */}
       {toast && (
-        <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`}>
-          {toast.message}
-        </div>
+        <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`}>{toast.message}</div>
       )}
     </div>
   );
