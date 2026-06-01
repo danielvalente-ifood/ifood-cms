@@ -336,12 +336,8 @@ export default function MediaFolderPage() {
                   <div className={styles.assetThumb}>
                     {renderThumb(asset)}
                     {selectedAsset?.id === asset.id && (
-                      <span className={styles.selectedCheck}><Icon name="eye-on" size={12} /></span>
+                      <span className={styles.selectedCheck}><Icon name="check" size={14} /></span>
                     )}
-                  </div>
-                  <div className={styles.assetInfo}>
-                    <p className={styles.assetName}>{asset.file_name}</p>
-                    <p className={styles.assetMeta}>{formatFileSize(asset.file_size)}</p>
                   </div>
                 </div>
               ))}
