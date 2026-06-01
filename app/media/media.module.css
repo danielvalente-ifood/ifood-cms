@@ -460,9 +460,10 @@
   box-shadow: var(--shadow-sm);
 }
 
-.assetCardSelected {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px var(--brand);
+.assetCardSelected,
+.assetCardSelected:hover {
+  border: 1px solid var(--brand);
+  box-shadow: none;
 }
 
 .assetThumb {
