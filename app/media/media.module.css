@@ -632,7 +632,7 @@
 .detailPanel {
   width: 340px;
   flex-shrink: 0;
-  background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+  background: color-mix(in srgb, #252729 85%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: none;
