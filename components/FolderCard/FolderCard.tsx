@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/components/Icon/Icon';
+import { formatFileSize } from '@/lib/media';
 import type { MediaFolder } from '@/lib/media';
 import styles from './FolderCard.module.css';
 
@@ -9,18 +10,13 @@ interface FolderCardProps {
   onClick: () => void;
 }
 
-function formatUpdated(iso: string | null): string {
-  if (!iso) return 'vazia';
-  const d = new Date(iso);
-  return `atualizado ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
-}
+const MAX_AVATARS = 3;
 
 export function FolderCard({ folder, onClick }: FolderCardProps) {
-  const { name, color, count, thumbs } = folder;
-  const accent = color ?? 'var(--bg-tertiary)';
-  // Preenche até 4 slots: thumbs reais + blocos na cor da vertical
-  const slots = Array.from({ length: 4 }, (_, i) => thumbs[i] ?? null);
-  const hasThumbs = thumbs.length > 0;
+  const { name, color, count, sizeBytes, members } = folder;
+  const accent = color ?? 'var(--text-secondary)';
+  const shown = members.slice(0, MAX_AVATARS);
+  const extra = members.length - shown.length;
 
   return (
     <article
@@ -28,36 +24,49 @@ export function FolderCard({ folder, onClick }: FolderCardProps) {
       onClick={onClick}
       role="button"
       tabIndex={0}
-      aria-label={`Pasta ${name}, ${count} assets`}
+      aria-label={`Pasta ${name}, ${count} arquivos`}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      {/* Capa */}
-      <div className={styles.cover} style={{ background: accent }}>
-        {hasThumbs ? (
-          <div className={styles.collage}>
-            {slots.map((url, i) =>
-              url ? (
-                <img key={i} src={url} alt="" loading="lazy" className={styles.collageImg} />
-              ) : (
-                <span key={i} className={styles.collageFill} style={{ background: accent }} />
-              ),
-            )}
-          </div>
-        ) : null}
-        <div className={styles.coverScrim} />
+      {/* Topo: ícone da pasta */}
+      <div className={styles.top}>
+        <span
+          className={styles.folderIcon}
+          style={{ background: color ? `${color}1A` : 'var(--bg-tertiary)', color: accent }}
+        >
+          <Icon name="folder" size={22} />
+        </span>
       </div>
 
-      {/* Rodapé */}
+      {/* Meio: título + contagem */}
+      <div className={styles.body}>
+        <h3 className={styles.title}>{name}</h3>
+        <p className={styles.count}>{count} {count === 1 ? 'arquivo' : 'arquivos'}</p>
+      </div>
+
+      {/* Rodapé: tamanho + avatares */}
       <div className={styles.footer}>
-        <span className={styles.iconBadge} style={{ background: color ? `${color}22` : 'var(--bg-tertiary)', color: color ?? 'var(--text-secondary)' }}>
-          <Icon name="folder" size={20} />
-        </span>
-        <div className={styles.info}>
-          <h3 className={styles.title}>{name}</h3>
-          <p className={styles.meta}>
-            {count} {count === 1 ? 'asset' : 'assets'} · {formatUpdated(folder.updated)}
-          </p>
-        </div>
+        <span className={styles.size}>{formatFileSize(sizeBytes)}</span>
+        {members.length > 0 && (
+          <div className={styles.avatars} aria-label={`${members.length} com acesso`}>
+            {shown.map((m) => (
+              m.avatar ? (
+                <img
+                  key={m.id}
+                  src={m.avatar}
+                  alt={m.name}
+                  title={m.name}
+                  className={styles.avatar}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span key={m.id} className={styles.avatarFallback} title={m.name}>
+                  {m.name.charAt(0).toUpperCase()}
+                </span>
+              )
+            ))}
+            {extra > 0 && <span className={styles.avatarMore}>+{extra}</span>}
+          </div>
+        )}
       </div>
     </article>
   );
