@@ -747,7 +747,10 @@
   gap: 8px;
   margin-top: auto;
   padding-top: 8px;
-  border-top: 1px solid var(--border-default);
+}
+
+.fullBtn {
+  width: 100%;
 }
 
 .btnCopyUrl {

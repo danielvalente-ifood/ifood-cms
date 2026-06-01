@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar } from '@/components/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import {
   uploadMedia,
@@ -244,10 +245,10 @@ export default function MediaFolderPage() {
                 <Icon name="file-default" size={16} />
               </button>
             </div>
-            <button className={styles.btnUpload} onClick={() => fileInputRef.current?.click()}>
+            <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()}>
               <Icon name="upload" size={16} />
               Upload
-            </button>
+            </Button>
             <input ref={fileInputRef} type="file" accept="image/*,video/*,application/pdf" multiple style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
           </div>
         </div>
@@ -432,18 +433,18 @@ export default function MediaFolderPage() {
 
           {/* Ações */}
           <div className={styles.detailActions}>
-            <button className={styles.btnSave} onClick={handleDownload} disabled={downloading}>
+            <Button variant="primary" size="sm" className={styles.fullBtn} onClick={handleDownload} loading={downloading}>
               <Icon name="upload" size={14} />
-              {downloading ? 'Baixando…' : 'Baixar arquivo'}
-            </button>
-            <button className={styles.btnCopyUrl} onClick={() => copyUrl(selectedAsset.file_url)}>
+              Baixar arquivo
+            </Button>
+            <Button variant="secondary" size="sm" className={styles.fullBtn} onClick={() => copyUrl(selectedAsset.file_url)}>
               <Icon name="copy-default" size={14} />
               {copied ? 'Copiado!' : 'Copiar link'}
-            </button>
-            <button className={styles.btnDelete} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
+            </Button>
+            <Button variant="danger" size="sm" className={styles.fullBtn} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
               <Icon name="delete-dustbin-01" size={14} />
               Mover para lixeira
-            </button>
+            </Button>
           </div>
         </aside>
       )}
@@ -455,8 +456,8 @@ export default function MediaFolderPage() {
             <h3>Excluir arquivo?</h3>
             <p><strong>{deleteTarget.file_name}</strong> será removido permanentemente do storage e do banco de dados. Esta ação não pode ser desfeita.</p>
             <div className={styles.dialogActions}>
-              <button className={styles.btnCancel} onClick={() => setDeleteTarget(null)}>Cancelar</button>
-              <button className={styles.btnConfirmDelete} onClick={handleDelete} disabled={deleting}>{deleting ? 'Excluindo…' : 'Excluir'}</button>
+              <Button variant="secondary" size="md" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+              <Button variant="danger" size="md" onClick={handleDelete} loading={deleting}>Excluir</Button>
             </div>
           </div>
         </div>
