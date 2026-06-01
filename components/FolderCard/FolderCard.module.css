@@ -1,6 +1,5 @@
 .card {
   background: var(--home-card-bg, #fff);
-  border: 1px solid var(--border-default);
   border-radius: 16px;
   cursor: pointer;
   display: flex;
@@ -8,13 +7,12 @@
   gap: 20px;
   padding: 20px;
   min-height: 200px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
-  border-color: var(--border-strong);
 }
 
 /* ---- Topo ---- */
@@ -70,8 +68,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-default);
 }
 
 .size {
