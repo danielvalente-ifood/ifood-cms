@@ -441,8 +441,9 @@ export default function MediaFolderPage() {
                   onBlur={addTag}
                 />
               ) : (
-                <button className={styles.tagAdd} onClick={() => setAddingTag(true)} aria-label="Adicionar tag">
-                  <Icon name="add-plus-circle" size={14} />
+                <button className={styles.tagAdd} onClick={() => setAddingTag(true)}>
+                  <Icon name="add-plus-circle" size={12} />
+                  Adicionar tag
                 </button>
               )}
             </div>
