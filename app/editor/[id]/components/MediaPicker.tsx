@@ -119,7 +119,7 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
             aria-label="Buscar mídia"
           />
 
-          <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()} loading={uploading}>
+          <Button variant="primary" onClick={() => fileInputRef.current?.click()} loading={uploading}>
             <Icon name="upload" size={14} />
             Upload
           </Button>

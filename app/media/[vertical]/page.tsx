@@ -245,7 +245,7 @@ export default function MediaFolderPage() {
                 <Icon name="file-default" size={16} />
               </button>
             </div>
-            <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Button variant="primary" onClick={() => fileInputRef.current?.click()}>
               <Icon name="upload" size={16} />
               Upload
             </Button>
@@ -433,15 +433,15 @@ export default function MediaFolderPage() {
 
           {/* Ações */}
           <div className={styles.detailActions}>
-            <Button variant="primary" size="sm" className={styles.fullBtn} onClick={handleDownload} loading={downloading}>
+            <Button variant="primary" className={styles.fullBtn} onClick={handleDownload} loading={downloading}>
               <Icon name="upload" size={14} />
               Baixar arquivo
             </Button>
-            <Button variant="secondary" size="sm" className={styles.fullBtn} onClick={() => copyUrl(selectedAsset.file_url)}>
+            <Button variant="secondary" className={styles.fullBtn} onClick={() => copyUrl(selectedAsset.file_url)}>
               <Icon name="copy-default" size={14} />
               {copied ? 'Copiado!' : 'Copiar link'}
             </Button>
-            <Button variant="danger" size="sm" className={styles.fullBtn} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
+            <Button variant="danger" className={styles.fullBtn} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
               <Icon name="delete-dustbin-01" size={14} />
               Mover para lixeira
             </Button>
@@ -456,8 +456,8 @@ export default function MediaFolderPage() {
             <h3>Excluir arquivo?</h3>
             <p><strong>{deleteTarget.file_name}</strong> será removido permanentemente do storage e do banco de dados. Esta ação não pode ser desfeita.</p>
             <div className={styles.dialogActions}>
-              <Button variant="secondary" size="md" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-              <Button variant="danger" size="md" onClick={handleDelete} loading={deleting}>Excluir</Button>
+              <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+              <Button variant="danger" onClick={handleDelete} loading={deleting}>Excluir</Button>
             </div>
           </div>
         </div>
