@@ -640,12 +640,7 @@
   overflow-y: auto;
   z-index: 40;
   box-shadow: var(--shadow-lg);
-  animation: slideInRight 180ms ease-out;
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  /* abertura/fechamento animados via GSAP no componente */
 }
 
 .detailClose {

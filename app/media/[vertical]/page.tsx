@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import gsap from 'gsap';
 import { Sidebar } from '@/components/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,31 @@ export default function MediaFolderPage() {
     return params.length ? `${a.file_url}?${params.join('&')}` : a.file_url;
   };
 
+  // ---- Animação de abertura do painel (GSAP) ----
+  const isOpen = !!selectedAsset;
+  useEffect(() => {
+    if (isOpen && panelRef.current) {
+      gsap.fromTo(
+        panelRef.current,
+        { xPercent: 8, autoAlpha: 0 },
+        { xPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out' },
+      );
+    }
+  }, [isOpen]);
+
+  // Fecha com animação de saída e só então desmonta
+  const requestClose = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) { setSelectedAsset(null); return; }
+    gsap.to(el, {
+      xPercent: 8,
+      autoAlpha: 0,
+      duration: 0.28,
+      ease: 'power2.in',
+      onComplete: () => setSelectedAsset(null),
+    });
+  }, []);
+
   // ---- Fecha o painel ao clicar fora (ignora cliques em cards/diálogos) ----
   useEffect(() => {
     if (!selectedAsset) return;
@@ -78,11 +104,11 @@ export default function MediaFolderPage() {
       if (panelRef.current?.contains(target)) return;       // dentro do painel
       if (target.closest('[data-asset-card]')) return;       // clicou num card (troca seleção)
       if (target.closest('[role="dialog"]')) return;         // diálogo de exclusão
-      setSelectedAsset(null);
+      requestClose();
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
-  }, [selectedAsset]);
+  }, [selectedAsset, requestClose]);
 
   // ---- Resolve folder ----
   useEffect(() => {
@@ -419,7 +445,7 @@ export default function MediaFolderPage() {
         <aside ref={panelRef} className={styles.detailPanel} aria-label="Detalhes do arquivo">
           <div className={styles.detailHeader}>
             <span className={styles.detailHeaderTitle}>Detalhes do Asset</span>
-            <button className={styles.detailCloseBtn} onClick={() => setSelectedAsset(null)} aria-label="Fechar painel">
+            <button className={styles.detailCloseBtn} onClick={requestClose} aria-label="Fechar painel">
               <Icon name="close-x" size={16} />
             </button>
           </div>
