@@ -96,6 +96,28 @@ export async function uploadMedia(opts: UploadOptions): Promise<{ asset: Asset |
   return { asset: data as Asset, error: null };
 }
 
+/**
+ * Substitui o conteúdo de um asset mantendo o MESMO storage_path e file_url —
+ * assim toda página/bloco que referencia a URL passa a exibir a nova imagem
+ * automaticamente. Atualiza tamanho/tipo no DB; nome e URL permanecem.
+ */
+export async function replaceMedia(asset: Asset, file: File): Promise<{ error: string | null }> {
+  if (!asset.storage_path) return { error: 'Asset sem storage_path' };
+
+  const body = await sanitizeSvg(file);
+  const { error: upErr } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .upload(asset.storage_path, body, { upsert: true, contentType: file.type, cacheControl: '3600' });
+  if (upErr) return { error: upErr.message };
+
+  const { error: dbErr } = await supabase
+    .from('assets')
+    .update({ file_size: file.size, file_type: file.type })
+    .eq('id', asset.id);
+
+  return { error: dbErr?.message ?? null };
+}
+
 /** Rename: copy to new path, delete old, update DB */
 export async function renameMedia(
   asset: Asset,
