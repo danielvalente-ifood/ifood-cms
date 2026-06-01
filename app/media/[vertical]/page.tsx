@@ -10,6 +10,7 @@ import { useAuth } from '@/components/AuthProvider';
 import {
   uploadMedia,
   renameMedia,
+  replaceMedia,
   deleteMedia,
   fetchAssets,
   resolveFolderVertical,
@@ -53,10 +54,21 @@ export default function MediaFolderPage() {
   const [dimensions, setDimensions] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [addingTag, setAddingTag] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  const [busted, setBusted] = useState<Record<string, number>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const panelRef = useRef<HTMLElement>(null);
+
+  // src com cache-bust (após substituir) e ?ar=1 p/ SVG
+  const srcFor = (a: Asset) => {
+    const params: string[] = [];
+    if (a.file_type === 'image/svg+xml') params.push('ar=1');
+    if (busted[a.id]) params.push(`t=${busted[a.id]}`);
+    return params.length ? `${a.file_url}?${params.join('&')}` : a.file_url;
+  };
 
   // ---- Fecha o painel ao clicar fora (ignora cliques em cards/diálogos) ----
   useEffect(() => {
@@ -98,9 +110,9 @@ export default function MediaFolderPage() {
     if (selectedAsset && getMediaType(selectedAsset.file_type) === 'image') {
       const img = new window.Image();
       img.onload = () => setDimensions(`${img.naturalWidth} × ${img.naturalHeight} px`);
-      img.src = selectedAsset.file_url;
+      img.src = srcFor(selectedAsset);
     }
-  }, [selectedAsset]);
+  }, [selectedAsset, busted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = assets.filter(a => {
     const matchSearch = !search || (a.file_name ?? '').toLowerCase().includes(search.toLowerCase());
@@ -194,6 +206,20 @@ export default function MediaFolderPage() {
     setDownloading(false);
   };
 
+  const handleReplace = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !selectedAsset) return;
+    setReplacing(true);
+    const { error } = await replaceMedia(selectedAsset, files[0]);
+    setReplacing(false);
+    if (error) { showToast('Erro ao substituir: ' + error, 'error'); return; }
+    const updated = { ...selectedAsset, file_size: files[0].size, file_type: files[0].type };
+    setBusted(prev => ({ ...prev, [updated.id]: Date.now() }));
+    setSelectedAsset(updated);
+    setAssets(prev => prev.map(a => a.id === updated.id ? updated : a));
+    setDimensions(null);
+    showToast('Imagem substituída — aplicada onde estiver em uso', 'success');
+  };
+
   // ---- Tags ----
   const persistTags = async (asset: Asset, tags: string[]) => {
     setSelectedAsset({ ...asset, tags });
@@ -226,12 +252,11 @@ export default function MediaFolderPage() {
   const renderThumb = (asset: Asset, size: 'sm' | 'lg' = 'sm') => {
     if (getMediaType(asset.file_type) === 'image') {
       const isSvg = asset.file_type === 'image/svg+xml';
-      // SVG: sempre contain (preserva proporção, nunca estica) + cache-bust p/
-      // garantir os bytes corrigidos. Raster: cover/natural via fitOnLoad.
-      const src = isSvg ? `${asset.file_url}?ar=1` : asset.file_url;
+      // SVG: sempre contain (preserva proporção, nunca estica). Raster:
+      // cover/natural via fitOnLoad. srcFor adiciona ?ar=1/cache-bust.
       return (
         <img
-          src={src}
+          src={srcFor(asset)}
           alt={asset.alt_text ?? asset.file_name ?? ''}
           loading="lazy"
           onLoad={isSvg ? undefined : fitOnLoad}
@@ -402,7 +427,7 @@ export default function MediaFolderPage() {
           <div className={styles.detailPreview}>
             {getMediaType(selectedAsset.file_type) === 'image'
               ? <img
-                  src={selectedAsset.file_type === 'image/svg+xml' ? `${selectedAsset.file_url}?ar=1` : selectedAsset.file_url}
+                  src={srcFor(selectedAsset)}
                   alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''}
                   style={selectedAsset.file_type === 'image/svg+xml' ? { width: '55%', height: '55%', objectFit: 'contain' } : undefined}
                 />
@@ -473,7 +498,18 @@ export default function MediaFolderPage() {
 
           {/* Ações */}
           <div className={styles.detailActions}>
-            <Button variant="primary" className={styles.fullBtn} onClick={handleDownload} loading={downloading}>
+            <Button variant="primary" className={styles.fullBtn} onClick={() => replaceInputRef.current?.click()} loading={replacing}>
+              <Icon name="upload" size={14} />
+              Substituir imagem
+            </Button>
+            <input
+              ref={replaceInputRef}
+              type="file"
+              accept="image/*,video/*,application/pdf"
+              style={{ display: 'none' }}
+              onChange={e => { handleReplace(e.target.files); e.target.value = ''; }}
+            />
+            <Button variant="secondary" className={styles.fullBtn} onClick={handleDownload} loading={downloading}>
               <Icon name="upload" size={14} />
               Baixar arquivo
             </Button>
