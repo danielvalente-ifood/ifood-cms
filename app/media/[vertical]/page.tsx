@@ -442,7 +442,6 @@ export default function MediaFolderPage() {
                 />
               ) : (
                 <button className={styles.tagAdd} onClick={() => setAddingTag(true)}>
-                  <Icon name="add-plus-circle" size={12} />
                   Adicionar tag
                 </button>
               )}
