@@ -117,6 +117,26 @@ export async function renameMedia(
   return { error: dbError?.message ?? null };
 }
 
+/** Atualiza as tags de um asset */
+export async function updateAssetTags(assetId: string, tags: string[]): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('assets').update({ tags }).eq('id', assetId);
+  return { error: error?.message ?? null };
+}
+
+/** Baixa o arquivo (fetch blob → download forçado, contorna cross-origin) */
+export async function downloadAsset(url: string, filename: string): Promise<void> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const objUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objUrl;
+  a.download = filename || 'download';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objUrl);
+}
+
 /** Delete from storage + DB */
 export async function deleteMedia(asset: Asset): Promise<{ error: string | null }> {
   if (asset.storage_path) {
