@@ -374,7 +374,7 @@ export default function ExperimentDetailPage() {
                   }}
                 />
                 <span className={styles.trafficText}>
-                  {trafficPct}% controle &nbsp;|&nbsp; {100 - trafficPct}% variante
+                  {trafficPct}% controle &nbsp;|&nbsp; {100 - trafficPct}% Variante
                 </span>
               </div>
             </div>
