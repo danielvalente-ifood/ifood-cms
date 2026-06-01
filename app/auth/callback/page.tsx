@@ -5,36 +5,32 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { isAllowedDomain, syncUserProfile } from '@/lib/auth';
 
-// Guarda module-level: o code PKCE só pode ser trocado uma vez. Sem isso o
-// double-invoke do useEffect (React StrictMode em dev) dispara um 2º exchange
-// com o mesmo code já consumido → erro → bounce para /login.
-let exchangedCode: string | null = null;
+// Promise module-level: o code PKCE só pode ser trocado UMA vez. Compartilhar a
+// mesma promise entre os dois invokes do useEffect (React StrictMode em dev)
+// garante um único exchange — ambos os mounts aguardam o mesmo resultado e
+// fazem o redirect (idempotente). Em page load real o módulo reinicia → null.
+let exchangePromise: ReturnType<typeof supabase.auth.exchangeCodeForSession> | null = null;
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function handleCallback() {
+    async function run() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const oauthError = params.get('error');
 
       if (oauthError) {
+        console.error('[Callback] OAuth error:', oauthError);
         router.replace('/login');
         return;
       }
 
-      // Já trocado nesta sessão de página — não repete.
-      if (code && exchangedCode === code) return;
-
-      // PKCE: troca o ?code= pela sessão explicitamente (detectSessionInUrl
-      // está desligado, então este é o único ponto de exchange).
       if (code) {
-        exchangedCode = code;
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (cancelled) return;
+        if (!exchangePromise) {
+          exchangePromise = supabase.auth.exchangeCodeForSession(code);
+        }
+        const { data, error } = await exchangePromise;
 
         if (error || !data.session) {
           console.error('[Callback] exchangeCodeForSession falhou:', error?.message);
@@ -55,10 +51,8 @@ export default function AuthCallback() {
         return;
       }
 
-      // Sem code: talvez a sessão já exista (revisita). Senão volta ao login.
+      // Sem code: sessão já pode existir (revisita direta). Senão volta ao login.
       const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
-
       if (session && isAllowedDomain(session.user.email)) {
         router.replace('/');
       } else {
@@ -66,9 +60,7 @@ export default function AuthCallback() {
       }
     }
 
-    handleCallback();
-
-    return () => { cancelled = true; };
+    run();
   }, [router]);
 
   return (
