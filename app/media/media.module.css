@@ -630,20 +630,24 @@
 /* ---- Detail panel ---- */
 
 .detailPanel {
-  width: 280px;
+  width: 340px;
   flex-shrink: 0;
-  background: var(--bg-primary);
-  border-left: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--bg-primary) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: none;
+  border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   position: fixed;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  right: 8px;
+  top: 8px;
+  bottom: 8px;
   overflow-y: auto;
   z-index: 40;
+  box-shadow: var(--shadow-lg);
   animation: slideInRight 180ms ease-out;
 }
 
