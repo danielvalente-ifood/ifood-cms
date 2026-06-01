@@ -143,3 +143,68 @@ export async function fetchAssets(verticalId: string | null | undefined): Promis
   const { data } = await query;
   return (data as Asset[]) ?? [];
 }
+
+import type { Vertical } from '@/types/database';
+
+export interface MediaFolder {
+  /** null = Global (assets sem vertical) */
+  vertical: Vertical | null;
+  slug: string;
+  name: string;
+  color: string | null;
+  count: number;
+  /** até 4 URLs de imagem (mais recentes) para o collage de capa */
+  thumbs: string[];
+  /** created_at mais recente da pasta, ou null se vazia */
+  updated: string | null;
+}
+
+const GLOBAL_FOLDER = { slug: 'global', name: 'Global' };
+
+/**
+ * Agrupa todos os assets por vertical (+ Global) para a visão de pastas.
+ * Retorna uma pasta por vertical mesmo que vazia, mais a pasta Global.
+ */
+export async function fetchMediaFolders(): Promise<MediaFolder[]> {
+  const [{ data: verticals }, { data: assets }] = await Promise.all([
+    supabase.from('verticals').select('*').order('name'),
+    supabase
+      .from('assets')
+      .select('id, file_url, file_type, vertical_id, created_at')
+      .order('created_at', { ascending: false }),
+  ]);
+
+  const rows = (assets ?? []) as Pick<Asset, 'id' | 'file_url' | 'file_type' | 'vertical_id' | 'created_at'>[];
+
+  const build = (vertical: Vertical | null): MediaFolder => {
+    const vid = vertical?.id ?? null;
+    const group = rows.filter((a) => (a.vertical_id ?? null) === vid);
+    const thumbs = group
+      .filter((a) => getMediaType(a.file_type) === 'image')
+      .slice(0, 4)
+      .map((a) => a.file_url);
+    return {
+      vertical,
+      slug: vertical?.slug ?? GLOBAL_FOLDER.slug,
+      name: vertical?.name ?? GLOBAL_FOLDER.name,
+      color: vertical?.color ?? null,
+      count: group.length,
+      thumbs,
+      updated: group[0]?.created_at ?? null,
+    };
+  };
+
+  const verticalFolders = ((verticals ?? []) as Vertical[]).map((v) => build(v));
+  return [...verticalFolders, build(null)];
+}
+
+/** Resolve um slug de pasta para o vertical_id (null = global, undefined = inválido) */
+export async function resolveFolderVertical(
+  slug: string,
+): Promise<{ verticalId: string | null; name: string; slug: string } | undefined> {
+  if (slug === 'global') return { verticalId: null, name: 'Global', slug: 'global' };
+  const { data } = await supabase.from('verticals').select('*').eq('slug', slug).single();
+  if (!data) return undefined;
+  const v = data as Vertical;
+  return { verticalId: v.id, name: v.name, slug: v.slug };
+}
