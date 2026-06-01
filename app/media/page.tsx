@@ -215,7 +215,7 @@ export default function MediaPage() {
           </div>
           <div className={styles.headerRight}>
             <button className={styles.btnUpload} onClick={() => fileInputRef.current?.click()}>
-              <Icon name="add-plus-circle" size={16} />
+              <Icon name="upload" size={16} />
               Upload
             </button>
             <input
@@ -283,7 +283,7 @@ export default function MediaPage() {
           onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
         >
           <div className={styles.dropIcon}>
-            <Icon name="add-plus-circle" size={28} />
+            <Icon name="upload" size={28} />
           </div>
           <p>Arraste arquivos aqui ou <strong>clique para selecionar</strong></p>
           <span>Imagens, vídeos e PDFs · máx. 50 MB por arquivo</span>
