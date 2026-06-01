@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from '@/components/Icon/Icon';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import {
   fetchAssets,
@@ -118,10 +119,10 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
             aria-label="Buscar mídia"
           />
 
-          <button className={styles.uploadBtn} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()} loading={uploading}>
             <Icon name="upload" size={14} />
-            {uploading ? 'Enviando…' : 'Upload'}
-          </button>
+            Upload
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
