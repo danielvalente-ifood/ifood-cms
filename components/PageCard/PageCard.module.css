@@ -76,14 +76,14 @@
 .authorAvatar {
   width: 22px;
   height: 22px;
-  border-radius: 20px;
+  border-radius: 6px;
   object-fit: cover;
 }
 
 .authorAvatarFallback {
   width: 22px;
   height: 22px;
-  border-radius: 20px;
+  border-radius: 6px;
   background: var(--brand);
   color: var(--text-inverse);
   display: flex;
