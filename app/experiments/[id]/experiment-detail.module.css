@@ -266,9 +266,10 @@
   background: var(--bg-hover);
 }
 
-.blockItemActive {
+.blockItemActive,
+.blockItemActive:hover {
   border-color: var(--brand);
-  background: var(--bg-active);
+  background: var(--bg-primary);
 }
 
 .blockIcon {
