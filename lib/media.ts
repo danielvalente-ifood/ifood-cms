@@ -232,7 +232,15 @@ export async function fetchMediaFolders(): Promise<MediaFolder[]> {
   };
 
   const verticalFolders = ((verticals ?? []) as Vertical[]).map((v) => build(v));
-  return [...verticalFolders, build(null)];
+  const all = [build(null), ...verticalFolders];
+
+  // Ordem fixa das pastas: Global, Delivery, Salão, iFood Pago, Logística, Ads
+  const ORDER = ['global', 'delivery', 'salao', 'ifood-pago', 'logistica', 'ads'];
+  return all.sort((a, b) => {
+    const ia = ORDER.indexOf(a.slug);
+    const ib = ORDER.indexOf(b.slug);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
 }
 
 /** Resolve um slug de pasta para o vertical_id (null = global, undefined = inválido) */
