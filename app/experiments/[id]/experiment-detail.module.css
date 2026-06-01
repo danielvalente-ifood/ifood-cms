@@ -143,10 +143,10 @@
 }
 
 .trafficLabel {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-primary);
-  line-height: 16px;
-  font-weight: var(--weight-regular);
+  line-height: 20px;
+  font-weight: var(--weight-medium);
 }
 
 .trafficSaving {
