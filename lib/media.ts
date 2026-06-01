@@ -172,6 +172,10 @@ export interface MediaFolder {
 
 const GLOBAL_FOLDER = { slug: 'global', name: 'Global' };
 
+/** Rótulos exibidos na seção Mídia (override do verticals.name) */
+const FOLDER_LABELS: Record<string, string> = { 'ifood-pago': 'Pago' };
+const folderLabel = (slug: string, fallback: string) => FOLDER_LABELS[slug] ?? fallback;
+
 /**
  * Agrupa todos os assets por vertical (+ Global) para a visão de pastas.
  * Inclui tamanho total e os membros com acesso a cada pasta.
@@ -221,7 +225,7 @@ export async function fetchMediaFolders(): Promise<MediaFolder[]> {
     return {
       vertical,
       slug: vertical?.slug ?? GLOBAL_FOLDER.slug,
-      name: vertical?.name ?? GLOBAL_FOLDER.name,
+      name: folderLabel(vertical?.slug ?? GLOBAL_FOLDER.slug, vertical?.name ?? GLOBAL_FOLDER.name),
       color: vertical?.color ?? null,
       count: group.length,
       sizeBytes: group.reduce((sum, a) => sum + (a.file_size ?? 0), 0),
@@ -251,5 +255,5 @@ export async function resolveFolderVertical(
   const { data } = await supabase.from('verticals').select('*').eq('slug', slug).single();
   if (!data) return undefined;
   const v = data as Vertical;
-  return { verticalId: v.id, name: v.name, slug: v.slug };
+  return { verticalId: v.id, name: folderLabel(v.slug, v.name), slug: v.slug };
 }
