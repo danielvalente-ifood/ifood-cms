@@ -56,6 +56,21 @@ export default function MediaFolderPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+  const panelRef = useRef<HTMLElement>(null);
+
+  // ---- Fecha o painel ao clicar fora (ignora cliques em cards/diálogos) ----
+  useEffect(() => {
+    if (!selectedAsset) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (panelRef.current?.contains(target)) return;       // dentro do painel
+      if (target.closest('[data-asset-card]')) return;       // clicou num card (troca seleção)
+      if (target.closest('[role="dialog"]')) return;         // diálogo de exclusão
+      setSelectedAsset(null);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [selectedAsset]);
 
   // ---- Resolve folder ----
   useEffect(() => {
@@ -312,6 +327,7 @@ export default function MediaFolderPage() {
                 <div
                   key={asset.id}
                   className={`${styles.assetCard} ${selectedAsset?.id === asset.id ? styles.assetCardSelected : ''}`}
+                  data-asset-card
                   onClick={() => selectAsset(asset)}
                   role="button" tabIndex={0}
                   aria-label={asset.file_name ?? 'arquivo'}
@@ -336,6 +352,7 @@ export default function MediaFolderPage() {
                 <div
                   key={asset.id}
                   className={`${styles.listRow} ${selectedAsset?.id === asset.id ? styles.listRowSelected : ''}`}
+                  data-asset-card
                   onClick={() => selectAsset(asset)}
                   role="button" tabIndex={0}
                   aria-label={asset.file_name ?? 'arquivo'}
@@ -355,7 +372,7 @@ export default function MediaFolderPage() {
 
       {/* Painel Asset Details */}
       {selectedAsset && (
-        <aside className={styles.detailPanel} aria-label="Detalhes do arquivo">
+        <aside ref={panelRef} className={styles.detailPanel} aria-label="Detalhes do arquivo">
           <div className={styles.detailHeader}>
             <span className={styles.detailHeaderTitle}>Detalhes do Asset</span>
             <button className={styles.detailCloseBtn} onClick={() => setSelectedAsset(null)} aria-label="Fechar painel">
