@@ -255,7 +255,7 @@ export default function MediaFolderPage() {
         {/* Toolbar: busca + tipo */}
         <div className={styles.toolbar}>
           <div className={styles.searchWrap}>
-            <span className={styles.searchIcon}><Icon name="barchart-default" size={14} /></span>
+            <span className={styles.searchIcon}><Icon name="search" size={14} /></span>
             <input className={styles.searchInput} type="search" placeholder="Buscar por nome…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Buscar arquivos" />
           </div>
           <div className={styles.typeFilter} role="group" aria-label="Filtrar por tipo">
