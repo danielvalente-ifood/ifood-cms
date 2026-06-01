@@ -259,7 +259,7 @@ export default function MediaPage() {
           <div className={styles.uploadProgress}>
             {uploads.map((u, i) => (
               <div key={i} className={styles.uploadItem}>
-                <Icon name={u.status === 'done' ? 'eye-on' : u.status === 'error' ? 'eye-off' : 'file-default'} size={14} />
+                <Icon name={u.status === 'done' ? 'eye-on' : u.status === 'error' ? 'close-x' : 'file-default'} size={14} />
                 <span className={styles.uploadItemName}>{u.name}</span>
                 <span className={styles.uploadItemStatus}>
                   {u.status === 'uploading' ? 'Enviando…' : u.status === 'done' ? 'Concluído' : 'Erro'}
@@ -368,7 +368,7 @@ export default function MediaPage() {
                         onClick={e => { e.stopPropagation(); copyUrl(asset.file_url); }}
                         aria-label="Copiar URL"
                       >
-                        <Icon name="eye-on" size={14} />
+                        <Icon name="copy-default" size={14} />
                       </button>
                       <button
                         className={`${styles.overlayBtn} ${styles.overlayBtnDanger}`}
@@ -376,7 +376,7 @@ export default function MediaPage() {
                         onClick={e => { e.stopPropagation(); setDeleteTarget(asset); }}
                         aria-label="Excluir arquivo"
                       >
-                        <Icon name="eye-off" size={14} />
+                        <Icon name="delete-dustbin-01" size={14} />
                       </button>
                     </div>
                   </div>
@@ -414,7 +414,7 @@ export default function MediaPage() {
                     onClick={e => { e.stopPropagation(); copyUrl(asset.file_url); }}
                     aria-label="Copiar URL"
                   >
-                    <Icon name="eye-on" size={14} />
+                    <Icon name="copy-default" size={14} />
                   </button>
                   <button
                     className={`${styles.listAction} ${styles.listActionDanger}`}
@@ -422,7 +422,7 @@ export default function MediaPage() {
                     onClick={e => { e.stopPropagation(); setDeleteTarget(asset); }}
                     aria-label="Excluir arquivo"
                   >
-                    <Icon name="eye-off" size={14} />
+                    <Icon name="delete-dustbin-01" size={14} />
                   </button>
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function MediaPage() {
 
           <div className={styles.detailActions}>
             <button className={styles.btnCopyUrl} onClick={() => copyUrl(selectedAsset.file_url)}>
-              <Icon name="eye-on" size={14} />
+              <Icon name="copy-default" size={14} />
               {copied ? 'Copiado!' : 'Copiar URL'}
             </button>
             <button className={styles.btnSave} onClick={handleSave} disabled={saving}>
@@ -493,7 +493,7 @@ export default function MediaPage() {
               {saving ? 'Salvando…' : 'Salvar nome'}
             </button>
             <button className={styles.btnDelete} onClick={() => setDeleteTarget(selectedAsset)} disabled={deleting}>
-              <Icon name="eye-off" size={14} />
+              <Icon name="delete-dustbin-01" size={14} />
               Excluir arquivo
             </button>
           </div>
