@@ -129,7 +129,7 @@
 .trafficCard {
   background: var(--home-card-bg);
   border-radius: 16px;
-  padding: 28px 32px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -143,11 +143,10 @@
 }
 
 .trafficLabel {
-  font-size: 20px;
+  font-size: 12px;
   color: var(--text-primary);
-  line-height: 24px;
-  font-weight: var(--weight-bold);
-  letter-spacing: -0.3px;
+  line-height: 16px;
+  font-weight: var(--weight-regular);
 }
 
 .trafficSaving {
@@ -224,9 +223,9 @@
 }
 
 .trafficText {
-  font-size: 14px;
+  font-size: 10px;
   color: var(--text-secondary);
-  line-height: 20px;
+  line-height: 16px;
   font-weight: var(--weight-regular);
 }
 
