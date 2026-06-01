@@ -225,7 +225,19 @@ export default function MediaFolderPage() {
 
   const renderThumb = (asset: Asset, size: 'sm' | 'lg' = 'sm') => {
     if (getMediaType(asset.file_type) === 'image') {
-      return <img src={asset.file_url} alt={asset.alt_text ?? asset.file_name ?? ''} loading="lazy" onLoad={fitOnLoad} />;
+      const isSvg = asset.file_type === 'image/svg+xml';
+      // SVG: sempre contain (preserva proporção, nunca estica) + cache-bust p/
+      // garantir os bytes corrigidos. Raster: cover/natural via fitOnLoad.
+      const src = isSvg ? `${asset.file_url}?ar=1` : asset.file_url;
+      return (
+        <img
+          src={src}
+          alt={asset.alt_text ?? asset.file_name ?? ''}
+          loading="lazy"
+          onLoad={isSvg ? undefined : fitOnLoad}
+          style={isSvg ? { objectFit: 'contain' } : undefined}
+        />
+      );
     }
     return <span className={styles.assetThumbIcon}><Icon name="file-default" size={size === 'lg' ? 40 : 28} /></span>;
   };
@@ -388,7 +400,7 @@ export default function MediaFolderPage() {
 
           <div className={styles.detailPreview}>
             {getMediaType(selectedAsset.file_type) === 'image'
-              ? <img src={selectedAsset.file_url} alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''} />
+              ? <img src={selectedAsset.file_type === 'image/svg+xml' ? `${selectedAsset.file_url}?ar=1` : selectedAsset.file_url} alt={selectedAsset.alt_text ?? selectedAsset.file_name ?? ''} />
               : <span className={styles.detailPreviewIcon}><Icon name="file-default" size={48} /></span>}
           </div>
 
