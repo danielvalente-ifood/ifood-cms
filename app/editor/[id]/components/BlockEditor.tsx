@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Block } from '@/types/database';
 import styles from '../editor.module.css';
+import { SectionConfigPanel } from './SectionConfigPanel';
 import { HeroEditor } from './editors/HeroEditor';
 import { VisionEditor } from './editors/VisionEditor';
 import { GrowthEditor } from './editors/GrowthEditor';
@@ -136,6 +137,7 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       </div>
       {!collapsed && (
         <div className={styles.blockBody}>
+          {!readOnly && <SectionConfigPanel block={block} onUpdate={onUpdate!} />}
           {renderEditor()}
         </div>
       )}

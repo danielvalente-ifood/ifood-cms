@@ -92,11 +92,23 @@ export type BlockType =
 // Block base
 // =============================================
 
+/** Configuração estrutural rápida de uma seção (painel estilo Relume). */
+export interface SectionConfig {
+  name?: string;
+  prompt?: string;
+  headerType?: string;                 // tipo de layout/header
+  style?: 'normal' | 'card';
+  assetType?: 'image' | 'video';
+  assetPosition?: 'left' | 'right';
+  contentType?: 'button' | 'form' | 'none';
+}
+
 interface BaseBlock<T extends BlockType, D> {
   id: string;
   type: T;
   data: D;
   theme?: number;
+  config?: SectionConfig;
 }
 
 // =============================================

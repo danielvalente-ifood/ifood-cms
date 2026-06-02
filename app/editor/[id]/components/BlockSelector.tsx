@@ -93,10 +93,38 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
 /** Tempo total da animação de fechamento sequenciada (200ms delay + 550ms duração). */
 const CLOSE_ANIMATION_MS = 750;
 
+// Mini-mock de layout por variante (índice 0/1/2 → asset esq/dir/full).
+function PreviewSkeleton({ index }: { index: number }) {
+  const variant = index % 3; // 0 = asset esquerda, 1 = direita, 2 = full
+  const asset = <span className={styles.previewAsset} />;
+  const text = (
+    <span className={styles.previewText}>
+      <span className={styles.previewBar} style={{ width: '70%' }} />
+      <span className={styles.previewBar} style={{ width: '90%' }} />
+      <span className={styles.previewBar} style={{ width: '50%' }} />
+      <span className={styles.previewChip} />
+    </span>
+  );
+  if (variant === 2) {
+    return <span className={`${styles.previewMock} ${styles.previewMockFull}`}>{asset}{text}</span>;
+  }
+  return (
+    <span className={styles.previewMock}>
+      {variant === 0 ? <>{asset}{text}</> : <>{text}{asset}</>}
+    </span>
+  );
+}
+
 export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSelectorProps) {
   const [pendingType, setPendingType] = useState<BlockType | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [query, setQuery] = useState('');
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filteredOptions = blockOptions.filter((o) => {
+    const q = query.trim().toLowerCase();
+    return !q || o.label.toLowerCase().includes(q) || o.description.toLowerCase().includes(q);
+  });
 
   useEffect(() => {
     return () => {
@@ -151,19 +179,42 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
         role="dialog"
         aria-label="Adicionar bloco"
       >
-        <h2>Adicionar bloco</h2>
+        <h2>Adicionar</h2>
+        <div className={styles.selectorSearch}>
+          <Icon name="search" size={14} />
+          <input
+            type="search"
+            placeholder="Buscar componente…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Buscar componente"
+          />
+        </div>
         <div className={styles.selectorGrid}>
-          {blockOptions.map((opt) => (
-            <button key={opt.type} className={styles.selectorItem} onClick={() => onSelect(opt.type)}>
-              <span className={styles.selectorItemIcon}>
-                <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
-              </span>
-              <div className={styles.selectorItemInfo}>
-                <h3>{opt.label}</h3>
-                <p>{opt.description}</p>
-              </div>
-            </button>
-          ))}
+          {filteredOptions.map((opt) => {
+            const disabled = isDisabled(opt.type);
+            return (
+              <button
+                key={opt.type}
+                className={styles.selectorItem}
+                onClick={() => handleCategoryClick(opt.type)}
+                disabled={disabled}
+                title={disabled ? 'Já adicionado nesta página' : undefined}
+              >
+                <span className={styles.selectorItemIcon}>
+                  <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
+                </span>
+                <div className={styles.selectorItemInfo}>
+                  <h3>{opt.label}</h3>
+                  <p>{disabled ? 'Já adicionado' : opt.description}</p>
+                </div>
+                <Icon name="chevron-right" size={16} />
+              </button>
+            );
+          })}
+          {filteredOptions.length === 0 && (
+            <p className={styles.selectorEmpty}>Nenhum componente encontrado.</p>
+          )}
         </div>
       </aside>
 
@@ -185,7 +236,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
           <h2>Layout de {pendingOption.label}</h2>
           <p className={styles.variantSubtitle}>Escolha uma das opções</p>
           <div className={styles.variantList}>
-            {variants.map((v) => (
+            {variants.map((v, i) => (
               <button
                 key={v.id}
                 type="button"
@@ -193,8 +244,9 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
                 onClick={() => handleVariantSelect(v.id)}
               >
                 <div className={styles.variantPreview} aria-hidden="true">
-                  <span className={styles.variantPreviewLabel}>{v.label}</span>
+                  <PreviewSkeleton index={i} />
                 </div>
+                <span className={styles.variantCardLabel}>{v.label}</span>
                 <span className={styles.variantCardDesc}>{v.description}</span>
               </button>
             ))}
