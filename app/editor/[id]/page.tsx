@@ -77,6 +77,8 @@ export default function EditorPage() {
   const [showBlockSelector, setShowBlockSelector] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number>(-1);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [zoom, setZoom] = useState(100);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -122,8 +124,12 @@ export default function EditorPage() {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const { type } = event.data || {};
+      const { type, payload } = event.data || {};
       if (type === 'landing:ready') setIframeReady(true);
+      // Clique numa seção no canvas abre o painel de edição (estilo Relume)
+      if (type === 'landing:block-selected' && payload?.blockId) {
+        setSelectedBlockId(payload.blockId);
+      }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
@@ -460,6 +466,9 @@ export default function EditorPage() {
 
   const iframeSrc = `${LANDING_URL}/p/${page.slug}?edit=true`;
 
+  const selIndex = selectedBlockId ? blocks.findIndex((b) => b.id === selectedBlockId) : -1;
+  const selectedBlock = selIndex >= 0 ? blocks[selIndex] : null;
+
   const getBlocksForGroup = (key: GroupKey): Block[] => {
     if (key === 'hero') return grouped.hero;
     if (key === 'footer') return grouped.footer;
@@ -480,6 +489,37 @@ export default function EditorPage() {
             <span className={styles.pageSlug}>/{page.slug}</span>
           </div>
         </div>
+
+        {/* Centro: device + zoom */}
+        <div className={styles.viewportBar}>
+          <div className={styles.deviceGroup} role="group" aria-label="Dispositivo">
+            {([
+              { v: 'desktop', icon: 'window-fullscreen' },
+              { v: 'tablet', icon: 'window-dock-top' },
+              { v: 'mobile', icon: 'window-dock-bottom' },
+            ] as const).map((d) => (
+              <button
+                key={d.v}
+                className={`${styles.deviceBtn} ${device === d.v ? styles.deviceBtnActive : ''}`}
+                onClick={() => setDevice(d.v)}
+                aria-label={d.v}
+                aria-pressed={device === d.v}
+              >
+                <Icon name={d.icon} size={16} />
+              </button>
+            ))}
+          </div>
+          <span className={styles.viewportDivider} />
+          <select
+            className={styles.zoomSelect}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            aria-label="Zoom"
+          >
+            {[50, 75, 100, 125].map((z) => <option key={z} value={z}>{z}%</option>)}
+          </select>
+        </div>
+
         <div className={styles.topBarRight}>
           {canEdit ? (
             <>
@@ -509,148 +549,110 @@ export default function EditorPage() {
 
       {/* Main editor area */}
       <div className={styles.editorBody}>
-        {/* Preview */}
-        <div className={styles.iframeContainer}>
-          <iframe
-            ref={iframeRef}
-            src={iframeSrc}
-            className={styles.iframe}
-            title="Preview"
-          />
-          {!iframeReady && (
-            <div className={styles.iframeLoading}>Carregando preview...</div>
-          )}
-        </div>
-
-        {/* Side panel */}
-        <div className={`${styles.sidePanel} ${panelCollapsed ? styles.sidePanelCollapsed : ''}`}>
-          <div className={styles.panelHeader}>
-            <button className={styles.panelToggle} onClick={() => setPanelCollapsed(!panelCollapsed)} title={panelCollapsed ? 'Expandir' : 'Recolher'}>
-              <Icon name={panelCollapsed ? 'chevron-left' : 'chevron-right'} size={16} />
+        {/* Rail esquerdo: adicionar + IA */}
+        {canEdit && (
+          <div className={styles.rail}>
+            <button
+              className={styles.railBtn}
+              onClick={() => { setSelectedBlockId(null); openBlockSelector(); }}
+              aria-label="Adicionar bloco"
+              title="Adicionar bloco"
+            >
+              <Icon name="add-plus-circle" size={22} />
             </button>
-            {!panelCollapsed && <span className={styles.panelTitle}>Blocos</span>}
+            <button
+              className={`${styles.railBtn} ${showAiPanel ? styles.railBtnActive : ''}`}
+              onClick={() => setShowAiPanel((v) => !v)}
+              aria-label="Personalização com IA"
+              title="Personalização com IA"
+            >
+              <Icon name="bot" size={20} />
+              {aiEnabled && <span className={styles.railDot} />}
+            </button>
           </div>
+        )}
 
-          {!panelCollapsed && (
-            <div className={styles.panelContent}>
-              {/* AI Adaptation Config — only for editors */}
-              {canEdit && (
-                <div className={styles.aiSection}>
-                  <button
-                    className={styles.aiSectionToggle}
-                    onClick={() => setShowAiPanel(!showAiPanel)}
-                  >
-                    <Icon name="bot" size={16} />
-                    <span>Personalização com IA</span>
-                    <span className={`${styles.aiStatusDot} ${aiEnabled ? styles.aiStatusActive : ''}`} />
-                    <span style={{ marginLeft: 'auto', transform: showAiPanel ? 'rotate(180deg)' : 'none', transition: 'transform 150ms', display: 'inline-flex' }}>
-                      <Icon name="chevron-down" size={12} />
-                    </span>
-                  </button>
-
-                  {showAiPanel && (
-                    <div className={styles.aiPanelBody}>
-                      <label className={styles.aiToggleRow}>
-                        <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
-                        <button
-                          className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
-                          onClick={() => setAiEnabled(!aiEnabled)}
-                          role="switch"
-                          aria-checked={aiEnabled}
-                        >
-                          <span className={styles.aiToggleKnob} />
-                        </button>
-                      </label>
-
-                      {aiEnabled && (
-                        <>
-                          <div className={styles.aiPromptGroup}>
-                            <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
-                            <textarea
-                              className={styles.aiPromptInput}
-                              value={aiPrompt}
-                              onChange={(e) => setAiPrompt(e.target.value)}
-                              placeholder="Ex: Adapte o tom para ser mais informal quando a campanha for de redes sociais. Destaque benefícios financeiros para campanhas de Google Ads."
-                              rows={4}
-                            />
-                            <span className={styles.aiPromptHint}>
-                              A IA usará os UTM params (source, campaign, medium) para adaptar textos automaticamente.
-                            </span>
-                          </div>
-
-                          <button
-                            className={styles.aiSaveBtn}
-                            onClick={saveAiConfig}
-                            disabled={aiSaving}
-                          >
-                            {aiSaving ? 'Salvando...' : 'Salvar configuração'}
-                          </button>
-                        </>
-                      )}
-
-                      {!aiEnabled && (
-                        <button
-                          className={styles.aiSaveBtn}
-                          onClick={saveAiConfig}
-                          disabled={aiSaving}
-                        >
-                          {aiSaving ? 'Salvando...' : 'Salvar'}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {blocks.length === 0 ? (
-                <div className={styles.emptyEditor}>
-                  <p>Nenhum bloco</p>
-                  {canEdit && (
-                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
-                      + Adicionar
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  {blocks.map((block, index) => (
-                    <div key={block.id} id={`panel-block-${block.id}`} className={styles.blockWrapper}>
-                      <BlockEditor
-                        block={block}
-                        index={index}
-                        total={blocks.length}
-                        isSelected={selectedBlockId === block.id}
-                        onSelect={() => {
-                          setSelectedBlockId(block.id);
-                          sendToIframe('cms:select-block', { blockId: block.id });
-                        }}
-                        onUpdate={canEdit ? (updated) => updateBlock(index, updated) : undefined}
-                        onRemove={canEdit ? () => removeBlock(index) : undefined}
-                        onMove={canEdit ? (dir) => moveBlock(index, dir) : undefined}
-                        onDuplicate={canEdit ? () => duplicateBlock(index) : undefined}
-                        isDragging={dragIndex === index}
-                        isDragOver={dragOverIndex === index}
-                        onDragStart={canEdit ? () => handleDragStart(index) : undefined}
-                        onDragEnd={canEdit ? handleDragEnd : undefined}
-                        onDragOver={canEdit ? (e) => handleDragOver(e, index) : undefined}
-                        onDrop={canEdit ? () => handleDrop(index) : undefined}
-                      />
-                    </div>
-                  ))}
-
-                  {canEdit && (
-                    <button className={styles.addBlockBtn} onClick={() => openBlockSelector()}>
-                      + Adicionar bloco
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+        {/* Canvas: iframe com device + zoom */}
+        <div className={styles.canvas}>
+          <div
+            className={`${styles.frameWrap} ${styles[`frame_${device}`]}`}
+            style={{ transform: `scale(${zoom / 100})` }}
+          >
+            <iframe ref={iframeRef} src={iframeSrc} className={styles.iframe} title="Preview" />
+            {!iframeReady && <div className={styles.iframeLoading}>Carregando preview...</div>}
+          </div>
         </div>
       </div>
 
-      {/* Block selector modal */}
+      {/* Painel de edição flutuante (abre ao clicar na seção no canvas) */}
+      {canEdit && selectedBlock && selIndex >= 0 && (
+        <aside className={styles.editPanel} aria-label="Editar seção">
+          <div className={styles.editPanelHeader}>
+            <span>Editar seção</span>
+            <button
+              className={styles.addIconBtn}
+              onClick={() => { setSelectedBlockId(null); sendToIframe('cms:deselect', {}); }}
+              aria-label="Fechar"
+            >
+              <Icon name="close-x" size={16} />
+            </button>
+          </div>
+          <div className={styles.editPanelBody}>
+            <BlockEditor
+              block={selectedBlock}
+              index={selIndex}
+              total={blocks.length}
+              isSelected
+              onUpdate={(updated) => updateBlock(selIndex, updated)}
+              onRemove={() => { removeBlock(selIndex); setSelectedBlockId(null); }}
+              onMove={(dir) => moveBlock(selIndex, dir)}
+              onDuplicate={() => duplicateBlock(selIndex)}
+            />
+          </div>
+        </aside>
+      )}
+
+      {/* AI floating panel */}
+      {canEdit && showAiPanel && (
+        <aside className={styles.aiPanel} aria-label="Personalização com IA">
+          <div className={styles.editPanelHeader}>
+            <span>Personalização com IA</span>
+            <button className={styles.addIconBtn} onClick={() => setShowAiPanel(false)} aria-label="Fechar">
+              <Icon name="close-x" size={16} />
+            </button>
+          </div>
+          <div className={styles.aiPanelBody}>
+            <label className={styles.aiToggleRow}>
+              <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
+              <button
+                className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
+                onClick={() => setAiEnabled(!aiEnabled)}
+                role="switch"
+                aria-checked={aiEnabled}
+              >
+                <span className={styles.aiToggleKnob} />
+              </button>
+            </label>
+            {aiEnabled && (
+              <div className={styles.aiPromptGroup}>
+                <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
+                <textarea
+                  className={styles.aiPromptInput}
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="Ex: tom mais informal para redes sociais; destacar benefícios financeiros em Google Ads."
+                  rows={4}
+                />
+              </div>
+            )}
+            <button className={styles.aiSaveBtn} onClick={saveAiConfig} disabled={aiSaving}>
+              {aiSaving ? 'Salvando...' : 'Salvar configuração'}
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* Block selector flutuante */}
       {canEdit && showBlockSelector && (
         <BlockSelector
           onSelect={addBlock}
