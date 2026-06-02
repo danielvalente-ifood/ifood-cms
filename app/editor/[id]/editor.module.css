@@ -193,33 +193,81 @@
   gap: 8px;
 }
 
+/* Mesmo padrão da sidebar da plataforma (navItem) */
 .railBtn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: none;
-  background: #1A1B1C;
-  border-radius: var(--radius-re);
+  background: transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  color: var(--text-primary);
-  transition: filter var(--transition-fast);
+  color: var(--text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.railBtn:hover { filter: brightness(1.4); }
-.railBtnActive { filter: brightness(1.4); }
+.railBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.railBtn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.railBtnActive {
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+
+.railBtnActive:hover {
+  background: var(--brand-subtle-hover);
+  color: var(--brand-pressed);
+}
+
+.railIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
 
 .railDot {
   position: absolute;
-  top: 7px;
-  right: 7px;
+  top: 6px;
+  right: 6px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--color-success);
 }
+
+.railTooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  background: var(--bg-dark);
+  color: var(--text-inverse);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.railBtn:hover .railTooltip { opacity: 1; }
 
 /* ---- Canvas (iframe device + zoom) ---- */
 
