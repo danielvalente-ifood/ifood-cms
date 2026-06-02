@@ -207,7 +207,7 @@
   background: #1B1C1E;
   border-radius: var(--radius-re);
   cursor: pointer;
-  color: var(--text-primary);
+  color: #FFFFFF;
   transition: filter var(--transition-fast);
 }
 
