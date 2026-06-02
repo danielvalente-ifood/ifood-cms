@@ -4,8 +4,8 @@
 
 .editorLayout {
   min-height: 100vh;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: #121314;
+  color: #F5F5F5;
   display: flex;
   flex-direction: column;
 }
@@ -27,9 +27,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
-  height: 52px;
-  background: var(--bg-primary);
+  padding: 0 12px;
+  height: 64px;
+  background: transparent;
   border-bottom: none;
   position: sticky;
   top: 0;
@@ -47,35 +47,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-re);
   cursor: pointer;
-  color: var(--text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  color: #F5F5F5;
+  transition: background var(--transition-fast);
 }
 
-.backBtn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
+.backBtn:hover { background: #1B1C1E; }
 
 .pageTitle {
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: var(--weight-regular);
+  color: #F5F5F5;
   margin: 0;
-  line-height: 1;
+  line-height: 28px;
 }
 
 .pageSlug {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  line-height: 1;
-  margin-top: 2px;
+  font-size: 10px;
+  color: #666666;
+  line-height: 16px;
 }
 
 .topBarRight {
@@ -154,10 +149,10 @@
   height: 34px;
 }
 
+.btnPreview { color: #A3A3A3; }
 .btnPreview:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: var(--border-strong);
+  background: #1B1C1E;
+  color: #F5F5F5;
 }
 
 .readOnlyBadge {
@@ -278,7 +273,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px;
-  background: var(--bg-secondary);
+  background: #1B1C1E;
   border-radius: var(--radius-md);
 }
 
@@ -301,19 +296,20 @@
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.deviceBtn:hover { color: var(--text-primary); }
-.deviceBtnActive { background: var(--bg-primary); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.deviceBtn { color: #A3A3A3; }
+.deviceBtn:hover { color: #F5F5F5; }
+.deviceBtnActive { background: #2A2B2E; color: #F5F5F5; }
 
 .viewportDivider {
   width: 1px;
   height: 18px;
-  background: var(--border-default);
+  background: #2A2B2E;
 }
 
 .zoomSelect {
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: #A3A3A3;
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
