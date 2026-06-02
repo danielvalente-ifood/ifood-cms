@@ -556,18 +556,18 @@ export default function EditorPage() {
               className={styles.railBtn}
               onClick={() => { setSelectedBlockId(null); openBlockSelector(); }}
               aria-label="Adicionar bloco"
-              title="Adicionar bloco"
             >
-              <Icon name="plus-default" size={24} />
+              <span className={styles.railIcon}><Icon name="plus-default" size={20} /></span>
+              <span className={styles.railTooltip}>Adicionar bloco</span>
             </button>
             <button
               className={`${styles.railBtn} ${showAiPanel ? styles.railBtnActive : ''}`}
               onClick={() => setShowAiPanel((v) => !v)}
               aria-label="Personalização com IA"
-              title="Personalização com IA"
             >
-              <Icon name="bot" size={20} />
+              <span className={styles.railIcon}><Icon name="bot" size={20} /></span>
               {aiEnabled && <span className={styles.railDot} />}
+              <span className={styles.railTooltip}>Personalização com IA</span>
             </button>
           </div>
         )}
