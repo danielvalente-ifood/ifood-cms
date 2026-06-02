@@ -119,13 +119,13 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
   const panelRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // Abertura do painel
+  // Abertura do painel — fade suave + leve sobe
   useEffect(() => {
     if (panelRef.current) {
       gsap.fromTo(
         panelRef.current,
-        { x: -10, autoAlpha: 0 },
-        { x: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' },
+        { y: 6, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.22, ease: 'power1.out' },
       );
     }
   }, []);
