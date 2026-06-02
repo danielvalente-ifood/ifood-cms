@@ -208,22 +208,25 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
         {/* Corpo: navega dentro do mesmo painel */}
         <div className={styles.addBody}>
           {!pendingType ? (
-            <div className={styles.bentoGrid}>
+            <div className={styles.bentoList}>
               {filteredOptions.map((opt) => {
                 const disabled = isDisabled(opt.type);
                 const c = TYPE_COLORS[opt.type] ?? { bg: 'var(--bg-secondary)', fg: 'var(--text-secondary)' };
                 return (
                   <button
                     key={opt.type}
-                    className={styles.bentoTile}
+                    className={styles.bentoRow}
                     onClick={() => handleCategoryClick(opt.type)}
                     disabled={disabled}
                     title={disabled ? 'Já adicionado nesta página' : undefined}
                   >
                     <span className={styles.bentoIcon} style={{ color: c.fg }}>
-                      <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={22} />
+                      <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
                     </span>
                     <span className={styles.bentoLabel}>{opt.label}</span>
+                    <span className={styles.bentoChevron}>
+                      <Icon name="chevron-right" size={16} />
+                    </span>
                   </button>
                 );
               })}

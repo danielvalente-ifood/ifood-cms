@@ -850,45 +850,54 @@
 
 /* ---- Bento (categorias) ---- */
 
-.bentoGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.bentoTile {
+.bentoList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: 6px;
+}
+
+.bentoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
   border: none;
-  border-radius: var(--radius-re);
+  border-radius: var(--radius-md);
   background: #121314;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  aspect-ratio: 1 / 1;
-  justify-content: space-between;
-  transition: transform var(--transition-fast), filter var(--transition-fast);
+  width: 100%;
+  transition: filter var(--transition-fast);
 }
 
-.bentoTile:hover { transform: translateY(-2px); filter: brightness(1.08); }
-.bentoTile:disabled { opacity: 0.4; cursor: not-allowed; }
+.bentoRow:hover { filter: brightness(1.25); }
+.bentoRow:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .bentoIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
 .bentoLabel {
+  flex: 1;
+  min-width: 0;
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   color: var(--text-primary);
+}
+
+.bentoChevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 .variantList {
