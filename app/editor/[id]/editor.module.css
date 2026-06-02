@@ -4,8 +4,8 @@
 
 .editorLayout {
   min-height: 100vh;
-  background: #121314;
-  color: #F5F5F5;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
 }
@@ -53,23 +53,23 @@
   background: transparent;
   border-radius: var(--radius-re);
   cursor: pointer;
-  color: #F5F5F5;
+  color: var(--text-primary);
   transition: background var(--transition-fast);
 }
 
-.backBtn:hover { background: #1B1C1E; }
+.backBtn:hover { background: var(--bg-tertiary); }
 
 .pageTitle {
   font-size: 20px;
   font-weight: var(--weight-regular);
-  color: #F5F5F5;
+  color: var(--text-primary);
   margin: 0;
   line-height: 28px;
 }
 
 .pageSlug {
   font-size: 10px;
-  color: #666666;
+  color: var(--text-secondary);
   line-height: 16px;
 }
 
@@ -149,10 +149,10 @@
   height: 34px;
 }
 
-.btnPreview { color: #A3A3A3; }
+.btnPreview { color: var(--text-secondary); }
 .btnPreview:hover {
-  background: #1B1C1E;
-  color: #F5F5F5;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .readOnlyBadge {
@@ -199,10 +199,10 @@
   width: 44px;
   height: 44px;
   border: none;
-  background: #1B1C1E;
+  background: var(--bg-tertiary);
   border-radius: var(--radius-re);
   cursor: pointer;
-  color: #FFFFFF;
+  color: var(--text-primary);
   transition: filter var(--transition-fast);
 }
 
@@ -224,7 +224,7 @@
 .canvas {
   flex: 1;
   overflow: auto;
-  background: #161719;
+  background: var(--bg-tertiary);
   border-radius: var(--radius-re);
   display: flex;
   justify-content: center;
@@ -273,7 +273,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px;
-  background: #1B1C1E;
+  background: var(--bg-tertiary);
   border-radius: var(--radius-md);
 }
 
@@ -296,20 +296,20 @@
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.deviceBtn { color: #A3A3A3; }
-.deviceBtn:hover { color: #F5F5F5; }
-.deviceBtnActive { background: #2A2B2E; color: #F5F5F5; }
+.deviceBtn { color: var(--text-secondary); }
+.deviceBtn:hover { color: var(--text-primary); }
+.deviceBtnActive { background: var(--border-default); color: var(--text-primary); }
 
 .viewportDivider {
   width: 1px;
   height: 18px;
-  background: #2A2B2E;
+  background: var(--border-default);
 }
 
 .zoomSelect {
   border: none;
   background: transparent;
-  color: #A3A3A3;
+  color: var(--text-secondary);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -329,7 +329,7 @@
   width: 340px;
   max-width: calc(100vw - 32px);
   z-index: 60;
-  background: color-mix(in srgb, #1B1C1E 88%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-radius: var(--radius-lg);
@@ -825,7 +825,7 @@
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 96px);
   z-index: 1001;
-  background: color-mix(in srgb, #1B1C1E 85%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: none;
@@ -925,7 +925,7 @@
   padding: 10px 12px;
   border: none;
   border-radius: var(--radius-md);
-  background: #121314;
+  background: var(--bg-secondary);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -976,7 +976,7 @@
   padding: 12px;
   border: none;
   border-radius: var(--radius-re);
-  background: #121314;
+  background: var(--bg-secondary);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
