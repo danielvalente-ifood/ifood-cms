@@ -192,14 +192,12 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
       >
         {/* Header com back / título / fechar */}
         <div className={styles.addHeader}>
-          {pendingType ? (
+          {pendingType && (
             <button type="button" className={styles.addIconBtn} onClick={handleBack} aria-label="Voltar">
               <Icon name="chevron-left" size={18} />
             </button>
-          ) : (
-            <span style={{ width: 28 }} />
           )}
-          <span className={styles.addTitle}>
+          <span className={styles.addTitle} style={pendingType ? undefined : { paddingLeft: 12 }}>
             {pendingOption ? `${pendingOption.label}` : 'Adicionar'}
           </span>
           <button type="button" className={styles.addIconBtn} onClick={onClose} aria-label="Fechar">
