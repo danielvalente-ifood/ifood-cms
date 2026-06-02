@@ -329,7 +329,7 @@
   width: 340px;
   max-width: calc(100vw - 32px);
   z-index: 60;
-  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-radius: var(--radius-lg);
@@ -825,7 +825,7 @@
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 96px);
   z-index: 1001;
-  background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: none;
