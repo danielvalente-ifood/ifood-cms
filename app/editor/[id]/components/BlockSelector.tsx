@@ -216,7 +216,6 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
                   <button
                     key={opt.type}
                     className={styles.bentoTile}
-                    style={{ background: c.bg }}
                     onClick={() => handleCategoryClick(opt.type)}
                     disabled={disabled}
                     title={disabled ? 'Já adicionado nesta página' : undefined}
@@ -235,13 +234,11 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
           ) : (
             <div className={styles.variantList}>
               {filteredVariants.map((v, i) => {
-                const c = pendingType ? TYPE_COLORS[pendingType] : undefined;
                 return (
                   <button
                     key={v.id}
                     type="button"
                     className={styles.variantCard}
-                    style={c ? { background: c.bg } : undefined}
                     onClick={() => handleVariantSelect(v.id)}
                   >
                     <span className={styles.variantCardLabel}>{v.label}</span>
