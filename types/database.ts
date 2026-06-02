@@ -19,6 +19,9 @@ export interface Page {
   thumbnail_url: string | null;
   ai_adaptation_enabled: boolean;
   ai_adaptation_prompt: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -377,11 +380,14 @@ export interface Database {
     Tables: {
       pages: {
         Row: Page;
-        Insert: Omit<Page, 'id' | 'created_at' | 'updated_at' | 'vertical_id' | 'ai_adaptation_enabled' | 'ai_adaptation_prompt'> & {
+        Insert: Omit<Page, 'id' | 'created_at' | 'updated_at' | 'vertical_id' | 'ai_adaptation_enabled' | 'ai_adaptation_prompt' | 'meta_title' | 'meta_description' | 'og_image'> & {
           id?: string;
           vertical_id?: string | null;
           ai_adaptation_enabled?: boolean;
           ai_adaptation_prompt?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          og_image?: string | null;
           created_at?: string;
           updated_at?: string;
         };
