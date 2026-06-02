@@ -43,6 +43,8 @@
   gap: 16px;
 }
 
+.topBarLeft > div { margin-top: 8px; }
+
 .backBtn {
   display: flex;
   align-items: center;
