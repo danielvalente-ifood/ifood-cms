@@ -763,18 +763,11 @@
   backdrop-filter: blur(20px);
   border: none;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow: hidden;
-  animation: addPanelIn 160ms ease-out;
-}
-
-@keyframes addPanelIn {
-  from { transform: translateY(-6px) scale(0.99); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .addHeader {
