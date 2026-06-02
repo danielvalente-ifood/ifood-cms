@@ -9,6 +9,7 @@ import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
+import { FilterDropdown } from '@/components/ui/filter-dropdown';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
 import {
@@ -494,9 +495,9 @@ export default function EditorPage() {
         <div className={styles.viewportBar}>
           <div className={styles.deviceGroup} role="group" aria-label="Dispositivo">
             {([
-              { v: 'desktop', icon: 'window-fullscreen' },
-              { v: 'tablet', icon: 'window-dock-top' },
-              { v: 'mobile', icon: 'window-dock-bottom' },
+              { v: 'desktop', icon: 'monitor' },
+              { v: 'tablet', icon: 'tablet' },
+              { v: 'mobile', icon: 'smartphone' },
             ] as const).map((d) => (
               <button
                 key={d.v}
@@ -510,14 +511,13 @@ export default function EditorPage() {
             ))}
           </div>
           <span className={styles.viewportDivider} />
-          <select
-            className={styles.zoomSelect}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            aria-label="Zoom"
-          >
-            {[50, 75, 100, 125].map((z) => <option key={z} value={z}>{z}%</option>)}
-          </select>
+          <div className={styles.zoomDropdown}>
+            <FilterDropdown
+              options={[50, 75, 100, 125].map((z) => ({ value: String(z), label: `${z}%` }))}
+              value={String(zoom)}
+              onChange={(v) => setZoom(Number(v))}
+            />
+          </div>
         </div>
 
         <div className={styles.topBarRight}>
