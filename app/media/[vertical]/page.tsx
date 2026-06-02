@@ -77,7 +77,7 @@ export default function MediaFolderPage() {
     if (isOpen && panelRef.current) {
       gsap.fromTo(
         panelRef.current,
-        { xPercent: 8, autoAlpha: 0 },
+        { xPercent: -8, autoAlpha: 0 },
         { xPercent: 0, autoAlpha: 1, duration: 0.4, ease: 'power3.out' },
       );
     }
@@ -88,7 +88,7 @@ export default function MediaFolderPage() {
     const el = panelRef.current;
     if (!el) { setSelectedAsset(null); return; }
     gsap.to(el, {
-      xPercent: 8,
+      xPercent: -8,
       autoAlpha: 0,
       duration: 0.28,
       ease: 'power2.in',
