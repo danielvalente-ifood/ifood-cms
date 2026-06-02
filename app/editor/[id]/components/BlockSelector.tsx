@@ -21,6 +21,18 @@ interface BlockVariant {
   description: string;
 }
 
+// Cores bento por tipo de seção (fundo suave + ícone colorido)
+const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
+  hero: { bg: 'rgba(235,0,51,0.12)', fg: '#FF476F' },
+  vision: { bg: 'rgba(71,189,255,0.14)', fg: '#47BDFF' },
+  growth: { bg: 'rgba(31,173,104,0.14)', fg: '#1FAD68' },
+  integrated: { bg: 'rgba(255,195,71,0.16)', fg: '#FFC347' },
+  results: { bg: 'rgba(147,51,234,0.16)', fg: '#B679FF' },
+  faq: { bg: 'rgba(0,131,204,0.14)', fg: '#47BDFF' },
+  navbar: { bg: 'rgba(160,160,170,0.14)', fg: '#A3A3A3' },
+  footer: { bg: 'rgba(160,160,170,0.14)', fg: '#A3A3A3' },
+};
+
 const typeIcons: Record<string, string> = {
   navbar: 'burger-menu-three',
   hero: 'photo-image-default',
@@ -196,48 +208,50 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
         {/* Corpo: navega dentro do mesmo painel */}
         <div className={styles.addBody}>
           {!pendingType ? (
-            <>
+            <div className={styles.bentoGrid}>
               {filteredOptions.map((opt) => {
                 const disabled = isDisabled(opt.type);
+                const c = TYPE_COLORS[opt.type] ?? { bg: 'var(--bg-secondary)', fg: 'var(--text-secondary)' };
                 return (
                   <button
                     key={opt.type}
-                    className={styles.selectorItem}
+                    className={styles.bentoTile}
+                    style={{ background: c.bg }}
                     onClick={() => handleCategoryClick(opt.type)}
                     disabled={disabled}
                     title={disabled ? 'Já adicionado nesta página' : undefined}
                   >
-                    <span className={styles.selectorItemIcon}>
-                      <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
+                    <span className={styles.bentoIcon} style={{ color: c.fg }}>
+                      <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={22} />
                     </span>
-                    <div className={styles.selectorItemInfo}>
-                      <h3>{opt.label}</h3>
-                      <p>{disabled ? 'Já adicionado' : opt.description}</p>
-                    </div>
-                    <Icon name="chevron-right" size={16} />
+                    <span className={styles.bentoLabel}>{opt.label}</span>
                   </button>
                 );
               })}
               {filteredOptions.length === 0 && (
                 <p className={styles.selectorEmpty}>Nenhum componente encontrado.</p>
               )}
-            </>
+            </div>
           ) : (
             <div className={styles.variantList}>
-              {filteredVariants.map((v, i) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  className={styles.variantCard}
-                  onClick={() => handleVariantSelect(v.id)}
-                >
-                  <span className={styles.variantCardLabel}>{v.label}</span>
-                  <div className={styles.variantPreview} aria-hidden="true">
-                    <PreviewSkeleton index={i} />
-                  </div>
-                  <span className={styles.variantCardDesc}>{v.description}</span>
-                </button>
-              ))}
+              {filteredVariants.map((v, i) => {
+                const c = pendingType ? TYPE_COLORS[pendingType] : undefined;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    className={styles.variantCard}
+                    style={c ? { background: c.bg } : undefined}
+                    onClick={() => handleVariantSelect(v.id)}
+                  >
+                    <span className={styles.variantCardLabel}>{v.label}</span>
+                    <div className={styles.variantPreview} aria-hidden="true">
+                      <PreviewSkeleton index={i} />
+                    </div>
+                    <span className={styles.variantCardDesc}>{v.description}</span>
+                  </button>
+                );
+              })}
               {filteredVariants.length === 0 && (
                 <p className={styles.selectorEmpty}>Nenhum layout encontrado.</p>
               )}

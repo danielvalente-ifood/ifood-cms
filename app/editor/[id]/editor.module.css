@@ -849,6 +849,48 @@
   margin: 0;
 }
 
+/* ---- Bento (categorias) ---- */
+
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bentoTile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-re);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  aspect-ratio: 1 / 1;
+  justify-content: space-between;
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.bentoTile:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.bentoTile:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.bentoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bentoLabel {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
 .variantList {
   display: flex;
   flex-direction: column;
@@ -858,20 +900,20 @@
 .variantCard {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--border-default);
+  gap: 8px;
+  padding: 12px;
+  border: none;
   border-radius: var(--radius-re);
   background: var(--bg-secondary);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast), filter var(--transition-fast);
 }
 
 .variantCard:hover {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px var(--brand-subtle);
+  transform: translateY(-2px);
+  filter: brightness(1.08);
 }
 
 .variantCardLabel {
@@ -892,8 +934,8 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
   overflow: hidden;
   padding: 10px;
 }
