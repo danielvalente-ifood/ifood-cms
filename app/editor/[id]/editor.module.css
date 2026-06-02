@@ -224,7 +224,7 @@
 .canvas {
   flex: 1;
   overflow: auto;
-  background: var(--bg-tertiary);
+  background: #1A1B1C;
   border-radius: var(--radius-re);
   display: flex;
   justify-content: center;
