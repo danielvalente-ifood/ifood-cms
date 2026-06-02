@@ -284,7 +284,15 @@ export default function EditorPage() {
   };
 
   const openBlockSelector = (index?: number) => {
-    setInsertIndex(index !== undefined ? index : blocks.length);
+    if (index !== undefined) {
+      setInsertIndex(index);
+    } else if (selectedBlockId) {
+      // Insere abaixo da seção selecionada
+      const i = blocks.findIndex((b) => b.id === selectedBlockId);
+      setInsertIndex(i >= 0 ? i + 1 : blocks.length);
+    } else {
+      setInsertIndex(blocks.length);
+    }
     setShowBlockSelector(true);
   };
 
@@ -331,7 +339,7 @@ export default function EditorPage() {
     newBlocks[index] = updatedBlock;
     setBlocks(newBlocks);
     setSaved(false);
-    sendToIframe('cms:update-block', { blockId: updatedBlock.id, data: updatedBlock.data });
+    sendToIframe('cms:update-block', { blockId: updatedBlock.id, data: updatedBlock.data, config: updatedBlock.config });
   };
 
   const removeBlock = (index: number) => {

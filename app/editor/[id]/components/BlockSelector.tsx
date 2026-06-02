@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { BlockType } from '@/types/database';
 import { Icon } from '@/components/Icon/Icon';
 import styles from '../editor.module.css';
@@ -90,19 +90,36 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   ],
 };
 
-/** Tempo total da animação de fechamento sequenciada (200ms delay + 550ms duração). */
-const CLOSE_ANIMATION_MS = 750;
+// Mini-mock de layout por variante (índice 0/1/2 → asset esq/dir/full).
+function PreviewSkeleton({ index }: { index: number }) {
+  const variant = index % 3; // 0 = asset esquerda, 1 = direita, 2 = full
+  const asset = <span className={styles.previewAsset} />;
+  const text = (
+    <span className={styles.previewText}>
+      <span className={styles.previewBar} style={{ width: '70%' }} />
+      <span className={styles.previewBar} style={{ width: '90%' }} />
+      <span className={styles.previewBar} style={{ width: '50%' }} />
+      <span className={styles.previewChip} />
+    </span>
+  );
+  if (variant === 2) {
+    return <span className={`${styles.previewMock} ${styles.previewMockFull}`}>{asset}{text}</span>;
+  }
+  return (
+    <span className={styles.previewMock}>
+      {variant === 0 ? <>{asset}{text}</> : <>{text}{asset}</>}
+    </span>
+  );
+}
 
 export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSelectorProps) {
   const [pendingType, setPendingType] = useState<BlockType | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    };
-  }, []);
+  const filteredOptions = blockOptions.filter((o) => {
+    const q = query.trim().toLowerCase();
+    return !q || o.label.toLowerCase().includes(q) || o.description.toLowerCase().includes(q);
+  });
 
   const pendingOption = pendingType ? blockOptions.find((o) => o.type === pendingType) : null;
   const variants = pendingType ? BLOCK_VARIANTS[pendingType] : undefined;
@@ -111,7 +128,6 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
     SINGLETON_TYPES.includes(type) && existingTypes.includes(type);
 
   const handleCategoryClick = (type: BlockType) => {
-    if (isClosing) return;
     if (isDisabled(type)) return;
     const v = BLOCK_VARIANTS[type];
     if (v && v.length > 0) {
@@ -125,82 +141,110 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
     if (pendingType) {
       onSelect(pendingType, variantId);
       setPendingType(null);
-      setIsClosing(false);
     }
   };
 
   const handleBack = () => {
-    if (isClosing) return;
-    // Camada 1 começa a voltar imediatamente; camada 2 sai depois (delay no CSS).
-    setIsClosing(true);
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = setTimeout(() => {
-      setPendingType(null);
-      setIsClosing(false);
-      closeTimerRef.current = null;
-    }, CLOSE_ANIMATION_MS);
+    setPendingType(null);
+    setQuery('');
   };
+
+  const filteredVariants = (variants ?? []).filter((v) => {
+    const q = query.trim().toLowerCase();
+    return !q || v.label.toLowerCase().includes(q) || v.description.toLowerCase().includes(q);
+  });
 
   return (
     <>
-      <div className={styles.selectorOverlay} onClick={onClose} aria-hidden="true" />
+      <div className={styles.addOverlay} onClick={onClose} aria-hidden="true" />
 
       <aside
-        className={`${styles.selectorDrawer}${pendingType && !isClosing ? ` ${styles.selectorDrawerPushed}` : ''}`}
+        className={styles.addPanel}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Adicionar bloco"
+        aria-label="Adicionar componente"
       >
-        <h2>Adicionar bloco</h2>
-        <div className={styles.selectorGrid}>
-          {blockOptions.map((opt) => (
-            <button key={opt.type} className={styles.selectorItem} onClick={() => onSelect(opt.type)}>
-              <span className={styles.selectorItemIcon}>
-                <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
-              </span>
-              <div className={styles.selectorItemInfo}>
-                <h3>{opt.label}</h3>
-                <p>{opt.description}</p>
-              </div>
+        {/* Header com back / título / fechar */}
+        <div className={styles.addHeader}>
+          {pendingType ? (
+            <button type="button" className={styles.addIconBtn} onClick={handleBack} aria-label="Voltar">
+              <Icon name="chevron-left" size={18} />
             </button>
-          ))}
+          ) : (
+            <span style={{ width: 28 }} />
+          )}
+          <span className={styles.addTitle}>
+            {pendingOption ? `${pendingOption.label}` : 'Adicionar'}
+          </span>
+          <button type="button" className={styles.addIconBtn} onClick={onClose} aria-label="Fechar">
+            <Icon name="close-x" size={18} />
+          </button>
+        </div>
+
+        {/* Busca */}
+        <div className={styles.addSearch}>
+          <Icon name="search" size={14} />
+          <input
+            type="search"
+            placeholder="Buscar…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Buscar"
+          />
+        </div>
+
+        {/* Corpo: navega dentro do mesmo painel */}
+        <div className={styles.addBody}>
+          {!pendingType ? (
+            <>
+              {filteredOptions.map((opt) => {
+                const disabled = isDisabled(opt.type);
+                return (
+                  <button
+                    key={opt.type}
+                    className={styles.selectorItem}
+                    onClick={() => handleCategoryClick(opt.type)}
+                    disabled={disabled}
+                    title={disabled ? 'Já adicionado nesta página' : undefined}
+                  >
+                    <span className={styles.selectorItemIcon}>
+                      <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
+                    </span>
+                    <div className={styles.selectorItemInfo}>
+                      <h3>{opt.label}</h3>
+                      <p>{disabled ? 'Já adicionado' : opt.description}</p>
+                    </div>
+                    <Icon name="chevron-right" size={16} />
+                  </button>
+                );
+              })}
+              {filteredOptions.length === 0 && (
+                <p className={styles.selectorEmpty}>Nenhum componente encontrado.</p>
+              )}
+            </>
+          ) : (
+            <div className={styles.variantList}>
+              {filteredVariants.map((v, i) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={styles.variantCard}
+                  onClick={() => handleVariantSelect(v.id)}
+                >
+                  <span className={styles.variantCardLabel}>{v.label}</span>
+                  <div className={styles.variantPreview} aria-hidden="true">
+                    <PreviewSkeleton index={i} />
+                  </div>
+                  <span className={styles.variantCardDesc}>{v.description}</span>
+                </button>
+              ))}
+              {filteredVariants.length === 0 && (
+                <p className={styles.selectorEmpty}>Nenhum layout encontrado.</p>
+              )}
+            </div>
+          )}
         </div>
       </aside>
-
-      {pendingType && pendingOption && variants && (
-        <aside
-          className={`${styles.variantDrawer}${isClosing ? ` ${styles.variantDrawerClosing}` : ''}`}
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-label={`Escolher layout de ${pendingOption.label}`}
-        >
-          <button
-            type="button"
-            className={styles.variantBack}
-            onClick={handleBack}
-            aria-label="Voltar"
-          >
-            ← Voltar
-          </button>
-          <h2>Layout de {pendingOption.label}</h2>
-          <p className={styles.variantSubtitle}>Escolha uma das opções</p>
-          <div className={styles.variantList}>
-            {variants.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                className={styles.variantCard}
-                onClick={() => handleVariantSelect(v.id)}
-              >
-                <div className={styles.variantPreview} aria-hidden="true">
-                  <span className={styles.variantPreviewLabel}>{v.label}</span>
-                </div>
-                <span className={styles.variantCardDesc}>{v.description}</span>
-              </button>
-            ))}
-          </div>
-        </aside>
-      )}
     </>
   );
 }
