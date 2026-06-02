@@ -758,7 +758,7 @@
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 96px);
   z-index: 1001;
-  background: var(--bg-primary);
+  background: #1B1C1E;
   border: none;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -863,6 +863,7 @@
   padding: 14px;
   border: none;
   border-radius: var(--radius-re);
+  background: #121314;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -903,7 +904,7 @@
   padding: 12px;
   border: none;
   border-radius: var(--radius-re);
-  background: var(--bg-secondary);
+  background: #121314;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
