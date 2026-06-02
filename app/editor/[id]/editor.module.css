@@ -30,7 +30,7 @@
   padding: 0 16px;
   height: 52px;
   background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: none;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -93,7 +93,7 @@
 .btnOutline {
   padding: 7px 14px;
   background: transparent;
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -143,7 +143,7 @@
   gap: 6px;
   padding: 7px 14px;
   background: transparent;
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -166,7 +166,7 @@
   gap: 6px;
   padding: 6px 14px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   color: var(--text-secondary);
@@ -222,7 +222,7 @@
   width: 320px;
   flex-shrink: 0;
   background: var(--bg-primary);
-  border-right: 1px solid var(--border-default);
+  border-right: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -239,7 +239,7 @@
   gap: 8px;
   padding: 0 12px;
   height: 44px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: none;
   flex-shrink: 0;
 }
 
@@ -298,7 +298,7 @@
 
 .aiSection {
   margin-bottom: 8px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: none;
   padding-bottom: 8px;
 }
 
@@ -407,7 +407,7 @@
 .aiPromptInput {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid var(--border-default);
+  border: none;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -497,11 +497,11 @@
 }
 
 .blockCard {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  border: none;
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .blockCard:hover {
@@ -509,8 +509,7 @@
 }
 
 .blockCardSelected {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px var(--brand-subtle);
+  background: var(--brand-subtle);
 }
 
 .blockCardDragging {
@@ -617,8 +616,8 @@
 
 .blockBody {
   padding: 12px;
-  border-top: 1px solid var(--border-default);
-  background: var(--bg-secondary);
+  border-top: none;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -642,7 +641,7 @@
 
 .selectorModal {
   background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: 12px;
   padding: 24px;
   width: 480px;
@@ -675,7 +674,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   cursor: pointer;
@@ -760,7 +759,7 @@
   max-height: calc(100vh - 96px);
   z-index: 1001;
   background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 16px;
@@ -813,7 +812,7 @@
   gap: 8px;
   padding: 0 12px;
   height: 36px;
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -991,10 +990,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
+  padding: 0;
   border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  background: transparent;
+  border: none;
 }
 
 .cfgTitle {
@@ -1015,7 +1014,7 @@
   display: flex;
   gap: 2px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   padding: 3px;
 }
@@ -1074,7 +1073,7 @@
 .fieldSelect {
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid var(--border-default);
+  border: none;
   background: var(--bg-primary);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -1105,7 +1104,7 @@
 .arrayItem {
   padding: 10px;
   background: var(--bg-primary);
-  border: 1px solid var(--border-default);
+  border: none;
   border-radius: var(--radius-md);
   position: relative;
   display: flex;
@@ -1164,7 +1163,7 @@
 .card {
   background: var(--bg-primary);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-default);
+  border: none;
   overflow: hidden;
 }
 
