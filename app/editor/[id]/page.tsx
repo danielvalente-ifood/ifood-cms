@@ -558,7 +558,7 @@ export default function EditorPage() {
               aria-label="Adicionar bloco"
               title="Adicionar bloco"
             >
-              <Icon name="add-plus-circle" size={22} />
+              <Icon name="plus-default" size={24} />
             </button>
             <button
               className={`${styles.railBtn} ${showAiPanel ? styles.railBtnActive : ''}`}

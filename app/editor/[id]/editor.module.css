@@ -180,21 +180,20 @@
 .editorBody {
   display: flex;
   flex: 1;
+  gap: 16px;
   overflow: hidden;
   height: calc(100vh - 52px);
+  padding: 10px 10px 10px 16px;
 }
 
 /* ---- Rail esquerdo ---- */
 
 .rail {
-  width: 56px;
   flex-shrink: 0;
-  background: var(--bg-primary);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 12px 0;
 }
 
 .railBtn {
@@ -202,18 +201,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
-  background: transparent;
-  border-radius: var(--radius-md);
+  background: #1B1C1E;
+  border-radius: var(--radius-re);
   cursor: pointer;
   color: var(--text-primary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: filter var(--transition-fast);
 }
 
-.railBtn:hover { background: var(--bg-secondary); }
-.railBtnActive { background: var(--bg-secondary); }
+.railBtn:hover { filter: brightness(1.4); }
+.railBtnActive { filter: brightness(1.4); }
 
 .railDot {
   position: absolute;
@@ -230,7 +229,8 @@
 .canvas {
   flex: 1;
   overflow: auto;
-  background: var(--bg-secondary);
+  background: #161719;
+  border-radius: var(--radius-re);
   display: flex;
   justify-content: center;
   padding: 20px;
