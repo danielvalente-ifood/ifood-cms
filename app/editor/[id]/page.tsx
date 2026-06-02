@@ -494,9 +494,6 @@ export default function EditorPage() {
               <span className={styles.saveStatus}>
                 {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
               </span>
-              <button className={styles.btnOutline} onClick={() => saveDraft(blocks)} disabled={saving || saved}>
-                Salvar rascunho
-              </button>
               <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
                 Publicar
               </button>
