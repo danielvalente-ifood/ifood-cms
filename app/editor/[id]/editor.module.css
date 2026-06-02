@@ -218,10 +218,11 @@
    ---------------------------------------------------------------- */
 
 .sidePanel {
+  order: -1; /* painel sempre à esquerda */
   width: 320px;
   flex-shrink: 0;
   background: var(--bg-primary);
-  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -752,7 +753,7 @@
 
 .addPanel {
   position: fixed;
-  left: 16px;
+  left: 336px; /* à direita do painel lateral esquerdo (320px) */
   top: 64px;
   width: 340px;
   max-width: calc(100vw - 32px);

@@ -634,7 +634,7 @@
   flex-direction: column;
   gap: 16px;
   position: fixed;
-  right: 8px;
+  left: 72px;
   top: 8px;
   bottom: 8px;
   overflow-y: auto;
