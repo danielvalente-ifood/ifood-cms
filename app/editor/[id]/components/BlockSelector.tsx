@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import gsap from 'gsap';
 import type { BlockType } from '@/types/database';
 import { Icon } from '@/components/Icon/Icon';
 import styles from '../editor.module.css';
@@ -20,18 +21,6 @@ interface BlockVariant {
   label: string;
   description: string;
 }
-
-// Cores bento por tipo de seção (fundo suave + ícone colorido)
-const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
-  hero: { bg: 'rgba(235,0,51,0.12)', fg: '#FF476F' },
-  vision: { bg: 'rgba(71,189,255,0.14)', fg: '#47BDFF' },
-  growth: { bg: 'rgba(31,173,104,0.14)', fg: '#1FAD68' },
-  integrated: { bg: 'rgba(255,195,71,0.16)', fg: '#FFC347' },
-  results: { bg: 'rgba(147,51,234,0.16)', fg: '#B679FF' },
-  faq: { bg: 'rgba(0,131,204,0.14)', fg: '#47BDFF' },
-  navbar: { bg: 'rgba(160,160,170,0.14)', fg: '#A3A3A3' },
-  footer: { bg: 'rgba(160,160,170,0.14)', fg: '#A3A3A3' },
-};
 
 const typeIcons: Record<string, string> = {
   navbar: 'burger-menu-three',
@@ -127,6 +116,30 @@ function PreviewSkeleton({ index }: { index: number }) {
 export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSelectorProps) {
   const [pendingType, setPendingType] = useState<BlockType | null>(null);
   const [query, setQuery] = useState('');
+  const panelRef = useRef<HTMLElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Abertura do painel
+  useEffect(() => {
+    if (panelRef.current) {
+      gsap.fromTo(
+        panelRef.current,
+        { x: -10, autoAlpha: 0 },
+        { x: 0, autoAlpha: 1, duration: 0.3, ease: 'power3.out' },
+      );
+    }
+  }, []);
+
+  // Transição ao navegar entre níveis (categorias ⇄ layouts)
+  useEffect(() => {
+    if (bodyRef.current) {
+      gsap.fromTo(
+        bodyRef.current,
+        { x: pendingType ? 18 : -18, autoAlpha: 0 },
+        { x: 0, autoAlpha: 1, duration: 0.28, ease: 'power3.out' },
+      );
+    }
+  }, [pendingType]);
 
   const filteredOptions = blockOptions.filter((o) => {
     const q = query.trim().toLowerCase();
@@ -171,6 +184,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
       <div className={styles.addOverlay} onClick={onClose} aria-hidden="true" />
 
       <aside
+        ref={panelRef}
         className={styles.addPanel}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -206,12 +220,11 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
         </div>
 
         {/* Corpo: navega dentro do mesmo painel */}
-        <div className={styles.addBody}>
+        <div ref={bodyRef} className={styles.addBody}>
           {!pendingType ? (
             <div className={styles.bentoList}>
               {filteredOptions.map((opt) => {
                 const disabled = isDisabled(opt.type);
-                const c = TYPE_COLORS[opt.type] ?? { bg: 'var(--bg-secondary)', fg: 'var(--text-secondary)' };
                 return (
                   <button
                     key={opt.type}
@@ -220,7 +233,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
                     disabled={disabled}
                     title={disabled ? 'Já adicionado nesta página' : undefined}
                   >
-                    <span className={styles.bentoIcon} style={{ color: c.fg }}>
+                    <span className={styles.bentoIcon}>
                       <Icon name={typeIcons[opt.type] || 'grid-dashboard-bento'} size={20} />
                     </span>
                     <span className={styles.bentoLabel}>{opt.label}</span>
