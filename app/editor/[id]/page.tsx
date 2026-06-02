@@ -10,6 +10,7 @@ import { BlockEditor } from './components/BlockEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
+import { ImageUpload } from './components/ImageUpload';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
 import {
@@ -93,6 +94,13 @@ export default function EditorPage() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiSaving, setAiSaving] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
+
+  // SEO
+  const [showSeoPanel, setShowSeoPanel] = useState(false);
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [ogImage, setOgImage] = useState('');
+  const [seoSaving, setSeoSaving] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     hero: true,
     content: true,
@@ -153,6 +161,9 @@ export default function EditorPage() {
       setPage(pageData);
       setAiEnabled(pageData.ai_adaptation_enabled ?? false);
       setAiPrompt(pageData.ai_adaptation_prompt ?? '');
+      setMetaTitle(pageData.meta_title ?? '');
+      setMetaDescription(pageData.meta_description ?? '');
+      setOgImage(pageData.og_image ?? '');
 
       // Load vertical slug for media organization
       if (pageData.vertical_id) {
@@ -284,6 +295,20 @@ export default function EditorPage() {
       showToast('Config IA salva', 'success');
     }
     setAiSaving(false);
+  };
+
+  const saveSeo = async () => {
+    setSeoSaving(true);
+    const { error } = await supabase
+      .from('pages')
+      .update({
+        meta_title: metaTitle || null,
+        meta_description: metaDescription || null,
+        og_image: ogImage || null,
+      })
+      .eq('id', pageId);
+    showToast(error ? 'Erro ao salvar SEO' : 'SEO salvo', error ? 'error' : 'success');
+    setSeoSaving(false);
   };
 
   const toggleGroup = (key: string) => {
@@ -569,6 +594,14 @@ export default function EditorPage() {
               {aiEnabled && <span className={styles.railDot} />}
               <span className={styles.railTooltip}>Personalização com IA</span>
             </button>
+            <button
+              className={`${styles.railBtn} ${showSeoPanel ? styles.railBtnActive : ''}`}
+              onClick={() => setShowSeoPanel((v) => !v)}
+              aria-label="SEO da página"
+            >
+              <span className={styles.railIcon}><Icon name="search" size={20} /></span>
+              <span className={styles.railTooltip}>SEO da página</span>
+            </button>
           </div>
         )}
 
@@ -647,6 +680,45 @@ export default function EditorPage() {
             )}
             <button className={styles.aiSaveBtn} onClick={saveAiConfig} disabled={aiSaving}>
               {aiSaving ? 'Salvando...' : 'Salvar configuração'}
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* SEO floating panel */}
+      {canEdit && showSeoPanel && (
+        <aside className={styles.aiPanel} aria-label="SEO da página">
+          <div className={styles.editPanelHeader}>
+            <span>SEO da página</span>
+            <button className={styles.addIconBtn} onClick={() => setShowSeoPanel(false)} aria-label="Fechar">
+              <Icon name="close-x" size={16} />
+            </button>
+          </div>
+          <div className={styles.editPanelBody}>
+            <div className={styles.cfgField}>
+              <label className={styles.fieldLabel}>Meta title</label>
+              <input
+                className={styles.fieldInput}
+                value={metaTitle}
+                placeholder={page.name}
+                onChange={(e) => setMetaTitle(e.target.value)}
+              />
+            </div>
+            <div className={styles.cfgField} style={{ marginTop: 12 }}>
+              <label className={styles.fieldLabel}>Meta description</label>
+              <textarea
+                className={styles.fieldTextarea}
+                value={metaDescription}
+                placeholder="Resumo da página para buscadores e redes sociais"
+                rows={3}
+                onChange={(e) => setMetaDescription(e.target.value)}
+              />
+            </div>
+            <div className={styles.cfgField} style={{ marginTop: 12 }}>
+              <ImageUpload label="Imagem de compartilhamento (OG)" value={ogImage} onChange={setOgImage} />
+            </div>
+            <button className={styles.aiSaveBtn} style={{ marginTop: 16 }} onClick={saveSeo} disabled={seoSaving}>
+              {seoSaving ? 'Salvando...' : 'Salvar SEO'}
             </button>
           </div>
         </aside>
