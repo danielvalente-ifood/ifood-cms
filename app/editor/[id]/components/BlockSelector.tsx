@@ -91,25 +91,22 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   ],
 };
 
-// Mini-mock de layout por variante (índice 0/1/2 → asset esq/dir/full).
-function PreviewSkeleton({ index }: { index: number }) {
-  const variant = index % 3; // 0 = asset esquerda, 1 = direita, 2 = full
-  const asset = <span className={styles.previewAsset} />;
-  const text = (
-    <span className={styles.previewText}>
-      <span className={styles.previewBar} style={{ width: '70%' }} />
-      <span className={styles.previewBar} style={{ width: '90%' }} />
-      <span className={styles.previewBar} style={{ width: '50%' }} />
-      <span className={styles.previewChip} />
-    </span>
-  );
-  if (variant === 2) {
-    return <span className={`${styles.previewMock} ${styles.previewMockFull}`}>{asset}{text}</span>;
-  }
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
+
+// Preview real: renderiza o componente isolado (rota /preview/[type] do
+// landing) num iframe escalado. Render base 1280px → escala p/ caber no card.
+function PreviewFrame({ type }: { type: BlockType }) {
   return (
-    <span className={styles.previewMock}>
-      {variant === 0 ? <>{asset}{text}</> : <>{text}{asset}</>}
-    </span>
+    <div className={styles.previewFrameWrap}>
+      <iframe
+        src={`${LANDING_URL}/preview/${type}`}
+        className={styles.previewFrame}
+        title={`Preview ${type}`}
+        loading="lazy"
+        scrolling="no"
+        tabIndex={-1}
+      />
+    </div>
   );
 }
 
@@ -247,7 +244,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
             </div>
           ) : (
             <div className={styles.variantList}>
-              {filteredVariants.map((v, i) => {
+              {filteredVariants.map((v) => {
                 return (
                   <button
                     key={v.id}
@@ -257,7 +254,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
                   >
                     <span className={styles.variantCardLabel}>{v.label}</span>
                     <div className={styles.variantPreview} aria-hidden="true">
-                      <PreviewSkeleton index={i} />
+                      {pendingType && <PreviewFrame type={pendingType} />}
                     </div>
                     <span className={styles.variantCardDesc}>{v.description}</span>
                   </button>
