@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
+import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
@@ -21,9 +22,12 @@ import {
   BLOCK_TYPE_LABELS,
   createBlock,
   duplicateBlock as duplicateBlockConfig,
+  heroDefaults,
+  beneficiosDefaults,
   type GroupKey,
   type ContentType,
 } from './block-config';
+import type { HeroVariant } from '@/types/database';
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
 
@@ -76,6 +80,8 @@ export default function EditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  // Card selecionado dentro de um bloco com itens (ex: benefícios)
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [showBlockSelector, setShowBlockSelector] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number>(-1);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -138,6 +144,12 @@ export default function EditorPage() {
       // Clique numa seção no canvas abre o painel de edição (estilo Relume)
       if (type === 'landing:block-selected' && payload?.blockId) {
         setSelectedBlockId(payload.blockId);
+        setSelectedCardIndex(null);
+      }
+      // Clique num card específico (ex: benefícios) → edição daquele card
+      if (type === 'landing:card-selected' && payload?.blockId) {
+        setSelectedBlockId(payload.blockId);
+        setSelectedCardIndex(typeof payload.cardIndex === 'number' ? payload.cardIndex : null);
       }
     };
     window.addEventListener('message', handler);
@@ -403,8 +415,8 @@ export default function EditorPage() {
     setSaved(false);
   };
 
-  const addBlock = (type: BlockType) => {
-    const newBlock = createEmptyBlock(type);
+  const addBlock = (type: BlockType, variantId?: string) => {
+    const newBlock = createEmptyBlock(type, variantId);
     const newBlocks = [...blocks];
     if (insertIndex >= 0) {
       newBlocks.splice(insertIndex, 0, newBlock);
@@ -412,10 +424,19 @@ export default function EditorPage() {
       newBlocks.push(newBlock);
     }
     setBlocks(newBlocks);
-    setShowBlockSelector(false);
-    setInsertIndex(-1);
     setSaved(false);
-    setSelectedBlockId(newBlock.id);
+    // Mantém o painel de inserção aberto e NÃO abre o painel de edição.
+    // O painel de edição (direita) só abre ao clicar no componente no canvas.
+    setInsertIndex(-1);
+    // Fecha o painel de inserção (BlockSelector) ao inserir um elemento.
+    setShowBlockSelector(false);
+    // Fecha os painéis flutuantes (IA / SEO) ao inserir um elemento.
+    setShowAiPanel(false);
+    setShowSeoPanel(false);
+    // Fecha o painel de edição do componente (direita), se aberto.
+    setSelectedBlockId(null);
+    setSelectedCardIndex(null);
+    sendToIframe('cms:deselect', {});
   };
 
   const handleSelectTheme = (groupKey: GroupKey, type: BlockType, theme: number) => {
@@ -621,26 +642,42 @@ export default function EditorPage() {
       {canEdit && selectedBlock && selIndex >= 0 && (
         <aside className={styles.editPanel} aria-label="Editar seção">
           <div className={styles.editPanelHeader}>
-            <span>Editar seção</span>
+            <span>
+              {selectedBlock.type === 'beneficios' && selectedCardIndex !== null
+                ? `Editar card ${selectedCardIndex + 1}`
+                : 'Editar seção'}
+            </span>
             <button
               className={styles.addIconBtn}
-              onClick={() => { setSelectedBlockId(null); sendToIframe('cms:deselect', {}); }}
+              onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
               aria-label="Fechar"
             >
               <Icon name="close-x" size={16} />
             </button>
           </div>
           <div className={styles.editPanelBody}>
-            <BlockEditor
-              block={selectedBlock}
-              index={selIndex}
-              total={blocks.length}
-              isSelected
-              onUpdate={(updated) => updateBlock(selIndex, updated)}
-              onRemove={() => { removeBlock(selIndex); setSelectedBlockId(null); }}
-              onMove={(dir) => moveBlock(selIndex, dir)}
-              onDuplicate={() => duplicateBlock(selIndex)}
-            />
+            {selectedBlock.type === 'beneficios' ? (
+              <BeneficiosEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+                onCardIndexChange={(i) => {
+                  setSelectedCardIndex(i);
+                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                }}
+              />
+            ) : (
+              <BlockEditor
+                block={selectedBlock}
+                index={selIndex}
+                total={blocks.length}
+                isSelected
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                onRemove={() => { removeBlock(selIndex); setSelectedBlockId(null); }}
+                onMove={(dir) => moveBlock(selIndex, dir)}
+                onDuplicate={() => duplicateBlock(selIndex)}
+              />
+            )}
           </div>
         </aside>
       )}
@@ -753,11 +790,18 @@ function formatTime(date: Date): string {
 }
 
 
-function createEmptyBlock(type: BlockType): Block {
+function createEmptyBlock(type: BlockType, variantId?: string): Block {
   const id = `block-${type}-${Date.now()}`;
+  if (type === 'hero') {
+    return { id, type, data: heroDefaults((variantId as HeroVariant) || 'full') } as Block;
+  }
+  if (type === 'beneficios') {
+    return { id, type, data: beneficiosDefaults((variantId as any) || 'cards') } as Block;
+  }
   const templates: Record<BlockType, any> = {
     navbar: { logo: '', cta_text: 'CTA', cta_link: '#', items: [] },
-    hero: { title: ['Título principal'], description: 'Descrição do hero', cta_text: 'Saiba mais', cta_link: '#', background_image: '', logo_decoration: '' },
+    hero: heroDefaults('full'),
+    beneficios: beneficiosDefaults('cards'),
     vision: { badge: 'Badge', title: ['Título'], ratings_count: '0', ratings_text: '', avatars: [], cards: [] },
     growth: { badge: 'Badge', title: ['Título'], tabs: [] },
     integrated: { badge: 'Badge', title: 'Título', image: '', features: [] },

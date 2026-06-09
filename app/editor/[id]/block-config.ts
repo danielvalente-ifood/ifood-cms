@@ -2,6 +2,11 @@ import type {
   Block,
   BlockType,
   HeroData,
+  HeroVariant,
+  HeroCTA,
+  BeneficiosData,
+  BeneficioCard,
+  BeneficioCTA,
   VisionData,
   GrowthData,
   IntegratedData,
@@ -12,15 +17,16 @@ import type {
 
 export type GroupKey = 'hero' | 'content' | 'footer';
 
-export type ContentType = 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
+export type ContentType = 'beneficios' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['vision', 'growth', 'integrated', 'results', 'faq'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'vision', 'growth', 'integrated', 'results', 'faq'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   navbar: 'Navbar',
   hero: 'Hero',
+  beneficios: 'Benefícios',
   vision: 'Prova Social',
   growth: 'Growth',
   integrated: 'Features',
@@ -30,6 +36,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
 };
 
 export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
+  { type: 'beneficios', label: 'Benefícios' },
   { type: 'vision', label: 'Prova Social' },
   { type: 'growth', label: 'Growth' },
   { type: 'integrated', label: 'Features' },
@@ -44,14 +51,95 @@ export function getGroupKey(type: BlockType): GroupKey | null {
   return null;
 }
 
-const HERO_DEFAULTS: HeroData = {
-  title: [],
-  description: '',
-  cta_text: '',
-  cta_link: '',
-  background_image: '',
-  logo_decoration: '',
-};
+export const HERO_VARIANTS: HeroVariant[] = ['full', 'slider', 'centered', 'split-image', 'split-form'];
+
+const HERO_TITLE = ['Atraia mais clientes e venda', 'mais com o Comer Fora'];
+const HERO_DESCRIPTION =
+  'Delivery, salão, pagamentos e logística em um só lugar. Conecte sua operação, amplifique seu crescimento e ofereça a melhor experiência aos seus clientes.';
+const HERO_CTAS: HeroCTA[] = [
+  { text: 'Começar agora', link: '#', style: 'primary' },
+  { text: 'Saiba mais', link: '#', style: 'secondary' },
+];
+
+/** Defaults por variante de Hero — seed ao adicionar o bloco. */
+export function heroDefaults(variant: HeroVariant = 'full'): HeroData {
+  switch (variant) {
+    case 'slider':
+      return {
+        variant,
+        title: HERO_TITLE,
+        description: HERO_DESCRIPTION,
+        ctas: HERO_CTAS,
+        background_image: '',
+        slider: true,
+        slides: [
+          { title: HERO_TITLE, description: HERO_DESCRIPTION, ctas: HERO_CTAS, background_image: '' },
+          { title: ['Cresça com inteligência', 'e dados na sua mão'], description: HERO_DESCRIPTION, ctas: HERO_CTAS, background_image: '' },
+        ],
+      };
+    case 'centered':
+      return { variant, title: HERO_TITLE, description: HERO_DESCRIPTION, ctas: HERO_CTAS };
+    case 'split-image':
+      return { variant, title: HERO_TITLE, description: HERO_DESCRIPTION, ctas: HERO_CTAS, assetPosition: 'right', image: '' };
+    case 'split-form':
+      return {
+        variant,
+        title: HERO_TITLE,
+        description: HERO_DESCRIPTION,
+        assetPosition: 'right',
+        form: {
+          title: 'Fale com a gente',
+          subtitle: 'Preencha e retornaremos em breve.',
+          label: 'E-mail',
+          placeholder: 'seu@email.com',
+          button_text: 'Quero saber mais',
+          legal: 'Ao continuar, você concorda com nossos termos e política de privacidade.',
+          legal_link_text: 'Saiba mais',
+          legal_link: '#',
+        },
+      };
+    case 'full':
+    default:
+      return { variant: 'full', title: HERO_TITLE, description: HERO_DESCRIPTION, ctas: HERO_CTAS, background_image: '' };
+  }
+}
+
+export type BeneficiosVariant = 'cards' | 'cards-action';
+
+const BENEFICIOS_TITLE = ['A maior base de clientes do Brasil', 'está a um clique do seu salão'];
+const BENEFICIOS_CARDS: BeneficioCard[] = [
+  {
+    icon: 'grid-dashboard-bento',
+    title: 'Visão 360 do cliente',
+    description:
+      'Gerencie pedidos online e experiências presenciais no mesmo lugar. Dados unificados, gestão simplificada, crescimento amplificado.',
+  },
+  {
+    icon: 'barchart-default',
+    title: 'Operação unificada',
+    description:
+      'Conheça o histórico completo: o que pedem online, quando visitam o salão, preferências e ticket médio.',
+  },
+  {
+    icon: 'plugin-addon-puzzle',
+    title: 'Crescimento amplificado',
+    description:
+      'Recebimento automático, entregas eficientes e ferramentas de gestão que conversam entre si. Sem integrações complexas, sem dor de cabeça.',
+  },
+];
+const BENEFICIOS_CTAS: BeneficioCTA[] = [
+  { text: 'Saiba mais', link: '#', style: 'primary' },
+  { text: 'Ver detalhes', link: '#', style: 'secondary' },
+];
+
+/** Defaults por variante de Benefícios — seed ao adicionar o bloco. */
+export function beneficiosDefaults(variant: BeneficiosVariant = 'cards'): BeneficiosData {
+  const cards = BENEFICIOS_CARDS.map((c) => ({
+    ...c,
+    ...(variant === 'cards-action' ? { ctas: BENEFICIOS_CTAS.map((x) => ({ ...x })) } : {}),
+  }));
+  return { badge: 'Visão integrada', title: [...BENEFICIOS_TITLE], cards };
+}
 
 const VISION_DEFAULTS: VisionData = {
   badge: '',
@@ -102,11 +190,13 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createBlock(type: BlockType, theme: number): Block {
+export function createBlock(type: BlockType, theme: number, variant?: string): Block {
   const id = generateId();
   switch (type) {
     case 'hero':
-      return { id, type: 'hero', data: { ...HERO_DEFAULTS }, theme };
+      return { id, type: 'hero', data: heroDefaults((variant as HeroVariant) || 'full'), theme };
+    case 'beneficios':
+      return { id, type: 'beneficios', data: beneficiosDefaults((variant as BeneficiosVariant) || 'cards'), theme };
     case 'vision':
       return { id, type: 'vision', data: { ...VISION_DEFAULTS }, theme };
     case 'growth':

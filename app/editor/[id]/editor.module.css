@@ -368,9 +368,9 @@
   outline: none;
 }
 
-/* ---- Painel de edição flutuante (esquerda) ---- */
+/* ---- Painéis flutuantes ---- */
 
-.editPanel,
+/* AI / SEO — ancorados à esquerda (disparados pelo rail) */
 .aiPanel {
   position: fixed;
   left: 72px;
@@ -387,6 +387,26 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideInLeft 200ms ease-out;
+}
+
+/* Edição do componente selecionado — flutuante à direita.
+   Convive com o painel de inserção (à esquerda) sem sobrepor. */
+.editPanel {
+  position: fixed;
+  right: 16px;
+  top: 64px;
+  bottom: 16px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  z-index: 60;
+  background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInRight 200ms ease-out;
 }
 
 .editPanelHeader {
@@ -614,19 +634,16 @@
 }
 
 .blockCard {
-  background: var(--bg-secondary);
+  background: transparent;
   border: none;
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: background var(--transition-fast);
 }
 
-.blockCard:hover {
-  border-color: var(--border-strong);
-}
-
+/* Dentro do edit panel o bloco já é o único selecionado — sem fundo de destaque */
 .blockCardSelected {
-  background: var(--brand-subtle);
+  background: transparent;
 }
 
 .blockCardDragging {
@@ -683,15 +700,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: var(--weight-bold);
-  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  background: var(--brand-subtle);
+  border-radius: var(--radius-md);
+  color: var(--brand);
   flex-shrink: 0;
-  font-family: var(--font-mono);
 }
 
 .blockActions {
@@ -1129,10 +1143,12 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0;
+  padding: 0 0 16px;
+  margin-bottom: 4px;
   border-radius: var(--radius-md);
   background: transparent;
   border: none;
+  border-bottom: 1px solid var(--border-default);
 }
 
 .cfgTitle {
@@ -1153,7 +1169,7 @@
   display: flex;
   gap: 2px;
   background: var(--bg-secondary);
-  border: none;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   padding: 3px;
 }
@@ -1191,6 +1207,11 @@
   to { transform: translateX(-12px); opacity: 0; }
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 /* ----------------------------------------------------------------
    Inputs genéricos usados dentro dos editors de bloco
    ---------------------------------------------------------------- */
@@ -1211,22 +1232,29 @@
 .fieldTextarea,
 .fieldSelect {
   width: 100%;
-  padding: 7px 10px;
-  border: none;
+  padding: 9px 11px;
+  border: 1px solid var(--border-default);
   background: var(--bg-primary);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   color: var(--text-primary);
   font-family: inherit;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   line-height: 1.4;
+}
+
+.fieldInput:hover,
+.fieldTextarea:hover,
+.fieldSelect:hover {
+  border-color: var(--border-strong);
 }
 
 .fieldInput:focus,
 .fieldTextarea:focus,
 .fieldSelect:focus {
   outline: none;
-  border-color: var(--border-active);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent);
 }
 
 .fieldInput::placeholder,
@@ -1239,11 +1267,80 @@
   min-height: 72px;
 }
 
+/* Select com seta custom (remove a nativa) */
+.fieldSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+/* Linha com dois campos lado a lado */
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Seção de array (lista de itens repetíveis: cards, depoimentos, etc.) */
+.arraySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-default);
+}
+
+.arraySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.arraySectionTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+/* Botão "+ Item" / "+ Card" / "+ Linha" */
+.addItemBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.addItemBtn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-subtle);
+}
+
 /* array de itens dentro de editors */
 .arrayItem {
-  padding: 10px;
+  padding: 12px;
+  padding-right: 36px;
   background: var(--bg-primary);
-  border: none;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   position: relative;
   display: flex;

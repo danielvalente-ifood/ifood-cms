@@ -25,6 +25,7 @@ interface BlockVariant {
 const typeIcons: Record<string, string> = {
   navbar: 'burger-menu-three',
   hero: 'photo-image-default',
+  beneficios: 'grid-dashboard-bento',
   vision: 'barchart-default',
   growth: 'rocket-ship',
   integrated: 'plugin-addon-puzzle',
@@ -35,6 +36,7 @@ const typeIcons: Record<string, string> = {
 
 const blockOptions: { type: BlockType; label: string; description: string }[] = [
   { type: 'hero', label: 'Hero', description: 'Seção principal com título e CTA' },
+  { type: 'beneficios', label: 'Benefícios', description: 'Cards de benefícios (2 a 5)' },
   { type: 'vision', label: 'Social Proof', description: 'Números e credibilidade' },
   { type: 'growth', label: 'Growth', description: 'Cards com tabs (slider)' },
   { type: 'integrated', label: 'Features', description: 'Lista de funcionalidades' },
@@ -50,9 +52,15 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
  */
 const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   hero: [
-    { id: 'hero-1', label: 'Layout 1', description: 'Texto à esquerda, imagem à direita' },
-    { id: 'hero-2', label: 'Layout 2', description: 'Centralizado com background full' },
-    { id: 'hero-3', label: 'Layout 3', description: 'Vídeo de fundo + CTA flutuante' },
+    { id: 'full', label: 'Full (imersivo)', description: 'Imagem de fundo, altura total. Pode virar slider (até 3).' },
+    { id: 'slider', label: 'Slider', description: 'Altura média, carrossel de até 3 banners.' },
+    { id: 'centered', label: 'Centralizado', description: 'Compacto, fundo sólido, tudo centralizado.' },
+    { id: 'split-image', label: 'Split com imagem', description: 'Texto à esquerda, card de imagem à direita.' },
+    { id: 'split-form', label: 'Split com formulário', description: 'Texto à esquerda, captura de lead à direita.' },
+  ],
+  beneficios: [
+    { id: 'cards', label: 'Cards', description: 'Ícone, título e descrição (2 a 5 cards).' },
+    { id: 'cards-action', label: 'Cards com ação', description: 'Cards com CTAs no rodapé (2 a 5 cards).' },
   ],
   vision: [
     { id: 'vision-1', label: 'Layout 1', description: 'Cards horizontais com badges' },
@@ -95,13 +103,16 @@ const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:300
 
 // Preview real: renderiza o componente isolado (rota /preview/[type] do
 // landing) num iframe escalado. Render base 1280px → escala p/ caber no card.
-function PreviewFrame({ type }: { type: BlockType }) {
+function PreviewFrame({ type, variantId }: { type: BlockType; variantId?: string }) {
+  const src = variantId
+    ? `${LANDING_URL}/preview/${type}?variant=${encodeURIComponent(variantId)}`
+    : `${LANDING_URL}/preview/${type}`;
   return (
     <div className={styles.previewFrameWrap}>
       <iframe
-        src={`${LANDING_URL}/preview/${type}`}
+        src={src}
         className={styles.previewFrame}
-        title={`Preview ${type}`}
+        title={`Preview ${type} ${variantId ?? ''}`}
         loading="lazy"
         scrolling="no"
         tabIndex={-1}
@@ -178,8 +189,9 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
 
   return (
     <>
-      <div className={styles.addOverlay} onClick={onClose} aria-hidden="true" />
-
+      {/* Sem overlay: o painel de inserção fica persistente e o canvas
+          permanece clicável para selecionar componentes já inseridos.
+          Fecha apenas pelo botão X. */}
       <aside
         ref={panelRef}
         className={styles.addPanel}
@@ -254,7 +266,7 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
                   >
                     <span className={styles.variantCardLabel}>{v.label}</span>
                     <div className={styles.variantPreview} aria-hidden="true">
-                      {pendingType && <PreviewFrame type={pendingType} />}
+                      {pendingType && <PreviewFrame type={pendingType} variantId={v.id} />}
                     </div>
                     <span className={styles.variantCardDesc}>{v.description}</span>
                   </button>

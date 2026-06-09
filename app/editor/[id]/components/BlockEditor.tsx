@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import type { Block } from '@/types/database';
 import styles from '../editor.module.css';
-import { SectionConfigPanel } from './SectionConfigPanel';
+import { Icon } from '@/components/Icon/Icon';
 import { HeroEditor } from './editors/HeroEditor';
+import { BeneficiosEditor } from './editors/BeneficiosEditor';
 import { VisionEditor } from './editors/VisionEditor';
 import { GrowthEditor } from './editors/GrowthEditor';
 import { IntegratedEditor } from './editors/IntegratedEditor';
@@ -34,6 +35,7 @@ interface BlockEditorProps {
 const typeLabels: Record<string, string> = {
   navbar: 'Navbar',
   hero: 'Hero',
+  beneficios: 'Benefícios',
   vision: 'Social Proof',
   growth: 'Growth',
   integrated: 'Features',
@@ -43,14 +45,15 @@ const typeLabels: Record<string, string> = {
 };
 
 const typeIcons: Record<string, string> = {
-  navbar: 'N',
-  hero: 'H',
-  vision: 'V',
-  growth: 'G',
-  integrated: 'I',
-  results: 'R',
-  faq: 'F',
-  footer: 'Ft',
+  navbar: 'burger-menu-three',
+  hero: 'photo-image-default',
+  beneficios: 'grid-dashboard-bento',
+  vision: 'barchart-default',
+  growth: 'rocket-ship',
+  integrated: 'plugin-addon-puzzle',
+  results: 'text-quotes-paragraph',
+  faq: 'file-02-question-mark',
+  footer: 'window-dock-bottom',
 };
 
 export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop }: BlockEditorProps) {
@@ -68,6 +71,7 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
     const updateHandler = onUpdate || (() => {});
     switch (block.type) {
       case 'hero': return <HeroEditor block={block} onUpdate={updateHandler} />;
+      case 'beneficios': return <BeneficiosEditor block={block} onUpdate={updateHandler} />;
       case 'vision': return <VisionEditor block={block} onUpdate={updateHandler} />;
       case 'growth': return <GrowthEditor block={block} onUpdate={updateHandler} />;
       case 'integrated': return <IntegratedEditor block={block} onUpdate={updateHandler} />;
@@ -87,28 +91,9 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
     >
       <div className={styles.blockHeader} onClick={() => { setCollapsed(!collapsed); onSelect?.(); }}>
         <div className={styles.blockType}>
-          {!readOnly && (
-            <div
-              className={styles.dragHandle}
-              draggable
-              onDragStart={(e) => {
-                e.stopPropagation();
-                onDragStart?.();
-              }}
-              onDragEnd={(e) => {
-                e.stopPropagation();
-                onDragEnd?.();
-              }}
-              title="Arrastar para reordenar"
-            >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="5" cy="3" r="1.5" /><circle cx="11" cy="3" r="1.5" />
-                <circle cx="5" cy="8" r="1.5" /><circle cx="11" cy="8" r="1.5" />
-                <circle cx="5" cy="13" r="1.5" /><circle cx="11" cy="13" r="1.5" />
-              </svg>
-            </div>
-          )}
-          <div className={styles.blockTypeIcon}>{typeIcons[block.type] || '?'}</div>
+          <div className={styles.blockTypeIcon}>
+            <Icon name={typeIcons[block.type] || 'grid-dashboard-bento'} size={16} />
+          </div>
           {typeLabels[block.type] || block.type}
         </div>
         {!readOnly && (
@@ -137,7 +122,6 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       </div>
       {!collapsed && (
         <div className={styles.blockBody}>
-          {!readOnly && <SectionConfigPanel block={block} onUpdate={onUpdate!} />}
           {renderEditor()}
         </div>
       )}

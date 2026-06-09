@@ -74,6 +74,7 @@ export interface PageContent {
 export type Block =
   | NavbarBlock
   | HeroBlock
+  | BeneficiosBlock
   | VisionBlock
   | GrowthBlock
   | IntegratedBlock
@@ -84,6 +85,7 @@ export type Block =
 export type BlockType =
   | 'navbar'
   | 'hero'
+  | 'beneficios'
   | 'vision'
   | 'growth'
   | 'integrated'
@@ -137,17 +139,81 @@ export type NavbarBlock = BaseBlock<'navbar', NavbarData>;
 // Hero
 // =============================================
 
-export interface HeroData {
+export type HeroVariant = 'full' | 'slider' | 'centered' | 'split-image' | 'split-form';
+
+export interface HeroCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary';
+}
+
+export interface HeroSlide {
   title: string[];
   description: string;
-  cta_text: string;
-  cta_link: string;
-  background_image: string;
-  logo_decoration: string;
-  variant?: 'image-left' | 'image-right' | 'image-overlay' | 'full-width';
+  ctas?: HeroCTA[];
+  background_image?: string;
+}
+
+export interface HeroForm {
+  title: string;
+  subtitle: string;
+  label: string;
+  placeholder: string;
+  button_text: string;
+  legal: string;
+  legal_link_text: string;
+  legal_link: string;
+}
+
+export interface HeroData {
+  variant?: HeroVariant;
+  title: string[];
+  description: string;
+  ctas?: HeroCTA[];
+  /** full / slider — imagem de fundo (banner único) */
+  background_image?: string;
+  /** split-image — imagem do card */
+  image?: string;
+  /** split-image / split-form — posição do card */
+  assetPosition?: 'left' | 'right';
+  /** full / slider — modo carrossel */
+  slider?: boolean;
+  /** full / slider — slides (máx. 3) */
+  slides?: HeroSlide[];
+  /** split-form — campos do formulário */
+  form?: HeroForm;
 }
 
 export type HeroBlock = BaseBlock<'hero', HeroData>;
+
+// =============================================
+// Benefícios (cards)
+// =============================================
+
+export interface BeneficioCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary';
+}
+
+export interface BeneficioCard {
+  /** nome do ícone da biblioteca fixa (/public/icons) */
+  icon: string;
+  title: string;
+  description: string;
+  /** CTAs opcionais por card (0, 1 ou 2) */
+  ctas?: BeneficioCTA[];
+}
+
+export interface BeneficiosData {
+  badge?: string;
+  title: string[];
+  description?: string;
+  /** mínimo 2, máximo 5 cards */
+  cards: BeneficioCard[];
+}
+
+export type BeneficiosBlock = BaseBlock<'beneficios', BeneficiosData>;
 
 // =============================================
 // Vision (Social Proof)
