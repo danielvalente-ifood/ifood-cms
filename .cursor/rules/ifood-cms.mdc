@@ -1,0 +1,32 @@
+---
+description: Convenções do projeto iFood CMS
+alwaysApply: true
+---
+
+# iFood CMS
+
+CMS interno do iFood: criação e gestão de landing pages, analytics e experimentos.
+Renderização das páginas publicadas fica no app separado `ifood-landing` (`/p/{slug}`).
+
+## Stack
+- Next.js 15 (App Router) + React 19 + TypeScript (strict)
+- Supabase (auth Google, Postgres + RLS, storage). Use `@supabase/supabase-js`.
+- GSAP (animações). Porta dev 3000 / start 3001.
+
+## Estrutura
+- `app/` rotas (server components por padrão; `"use client"` só quando necessário)
+- `components/` (PascalCase, `.tsx`) · `lib/` clients/utils · `hooks/` · `types/database.ts`
+- `supabase/migrations/` schema versionado
+- Path alias: `@/*` → raiz do projeto
+
+## Regras
+- NÃO edite migrations existentes em `supabase/migrations/` — crie uma nova.
+- Mantenha `types/database.ts` sincronizado ao alterar o schema.
+- Autorização real vive no RLS do Postgres (funções `SECURITY DEFINER`), não só no front.
+- Auth Google é PKCE com troca manual do code em `/auth/callback`
+  (`detectSessionInUrl: false`); não mexer sem entender o fluxo.
+
+## Git
+- Branch principal `main`; features em `feature/*`, fixes em `fix/*`.
+- Conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+- Sempre via PR — nunca push direto em `main`.
