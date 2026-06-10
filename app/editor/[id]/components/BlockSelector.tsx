@@ -22,6 +22,8 @@ interface BlockVariant {
 
 const blockOptions: { type: BlockType; label: string; description: string; icon: string }[] = [
   { type: 'hero', label: 'Hero', description: 'Seção principal com título e CTA', icon: '🏠' },
+  { type: 'promo', label: 'Banner Promo', description: 'Banner com efeito cortina', icon: '🎯' },
+  { type: 'content', label: 'Seção de Conteúdo', description: 'Texto + imagem lado a lado', icon: '🖼️' },
   { type: 'vision', label: 'Social Proof', description: 'Números e credibilidade', icon: '📊' },
   { type: 'growth', label: 'Growth', description: 'Cards com tabs (slider)', icon: '📈' },
   { type: 'integrated', label: 'Features', description: 'Lista de funcionalidades', icon: '⚡' },
@@ -36,6 +38,14 @@ const blockOptions: { type: BlockType; label: string; description: string; icon:
  * TODO: ligar cada variantId a um template real quando o renderer estiver pronto.
  */
 const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
+  promo: [
+    { id: 'promo-centered', label: 'Centralizado', description: 'Texto e CTAs centralizados (efeito cortina)' },
+    { id: 'promo-split', label: 'Com imagem', description: 'Texto à esquerda + imagem à direita' },
+  ],
+  content: [
+    { id: 'content-image-left', label: 'Imagem esquerda', description: 'Imagem à esquerda, texto à direita' },
+    { id: 'content-image-right', label: 'Imagem direita', description: 'Texto à esquerda, imagem à direita' },
+  ],
   hero: [
     { id: 'hero-1', label: 'Layout 1', description: 'Texto à esquerda, imagem à direita' },
     { id: 'hero-2', label: 'Layout 2', description: 'Centralizado com background full' },

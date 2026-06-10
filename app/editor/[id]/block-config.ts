@@ -8,6 +8,8 @@ import type {
   ResultsData,
   FAQData,
   FooterData,
+  PromoData,
+  ContentData,
 } from '@/types/database';
 
 export type GroupKey = 'hero' | 'content' | 'footer';
@@ -27,6 +29,8 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   results: 'Depoimentos',
   faq: 'FAQ',
   footer: 'Footer',
+  promo: 'Banner Promo',
+  content: 'Seção de Conteúdo',
 };
 
 export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
@@ -95,6 +99,38 @@ const FOOTER_DEFAULTS: FooterData = {
   columns: [],
 };
 
+export function promoDefaults(layout: 'centered' | 'split' = 'centered'): PromoData {
+  return {
+    layout,
+    assetPosition: 'right',
+    backgroundType: 'color',
+    backgroundColor: '#272727',
+    backgroundImage: '',
+    contentColor: 'light',
+    curtain: true,
+    title: ['Título do banner'],
+    description: '',
+    image: '',
+    ctas: [
+      { text: 'Ativar agora', link: '#', style: 'primary' },
+      { text: 'Saiba mais', link: '#', style: 'secondary' },
+    ],
+  };
+}
+
+export function contentDefaults(variant: 'image-left' | 'image-right' = 'image-left'): ContentData {
+  return {
+    assetPosition: variant === 'image-left' ? 'left' : 'right',
+    badge: '',
+    title: ['Título da seção'],
+    description: '',
+    image: '',
+    ctas: [
+      { text: 'Ativar agora', link: '#', style: 'primary' },
+    ],
+  };
+}
+
 function generateId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -119,6 +155,10 @@ export function createBlock(type: BlockType, theme: number): Block {
       return { id, type: 'faq', data: { ...FAQ_DEFAULTS }, theme };
     case 'footer':
       return { id, type: 'footer', data: { ...FOOTER_DEFAULTS }, theme };
+    case 'promo':
+      return { id, type: 'promo', data: promoDefaults('centered'), theme };
+    case 'content':
+      return { id, type: 'content', data: contentDefaults('image-left'), theme };
     default:
       throw new Error(`Block type not supported: ${type}`);
   }

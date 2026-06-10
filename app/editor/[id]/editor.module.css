@@ -410,6 +410,144 @@
   font-family: 'iFood RC Textos', var(--font-body);
 }
 
+/* ---- Block wrapper (page.tsx spacing between cards) ---- */
+
+.blockWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ---- Block card (BlockEditor component) ---- */
+
+.blockCard {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--border-subtle, #e8e8e8);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 150ms, border-color 150ms;
+}
+
+.blockCard:hover {
+  border-color: var(--border-default, #d0d0d0);
+}
+
+.blockCardSelected {
+  border-color: #EB0033;
+  box-shadow: 0 0 0 1px #EB0033;
+}
+
+.blockCardDragging {
+  opacity: 0.5;
+}
+
+.blockCardDragOver {
+  border-color: #EB0033;
+  border-style: dashed;
+}
+
+.blockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+}
+
+.blockHeader:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+.blockType {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #141414);
+  font-family: 'iFood RC Textos', var(--font-body);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text-disabled, #aaa);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.blockTypeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #f0f0f0;
+  color: var(--text-secondary, #555);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.blockActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.blockActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary, #555);
+  transition: background 150ms, color 150ms;
+}
+
+.blockActionBtn:hover:not(:disabled) {
+  background: rgba(0,0,0,0.06);
+  color: var(--text-primary, #141414);
+}
+
+.blockActionBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.blockActionBtnDanger:hover:not(:disabled) {
+  background: rgba(235, 0, 51, 0.08);
+  color: #EB0033;
+}
+
+.blockBody {
+  padding: 12px;
+  border-top: 1px solid var(--border-subtle, #e8e8e8);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ---- Category accordion (inside Content picker) ---- */
 
 .categoryItem {
@@ -636,6 +774,565 @@
   cursor: not-allowed;
 }
 
+/* ---- Side panel sub-structure (panelHeader, panelToggle, panelContent) ---- */
+
+.sidePanelCollapsed {
+  width: 44px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 0;
+  flex-shrink: 0;
+}
+
+.panelToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary, #555);
+  transition: background 150ms, color 150ms;
+  flex-shrink: 0;
+}
+
+.panelToggle:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--text-primary, #141414);
+}
+
+.panelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #141414);
+  font-family: 'iFood RC Textos', var(--font-body);
+  line-height: 1;
+}
+
+.panelContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- AI section toggle row ---- */
+
+.aiSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-subtle, #e8e8e8);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.aiSectionToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #141414);
+  text-align: left;
+}
+
+.aiSectionToggle:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+.aiStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+  transition: background 150ms;
+}
+
+.aiStatusActive {
+  background: #22c55e;
+}
+
+/* ---- Empty editor + add block button ---- */
+
+.emptyEditor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--text-secondary, #555);
+  font-size: 14px;
+}
+
+.addBlockBtn {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #555);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 150ms, color 150ms, background 150ms;
+  text-align: center;
+}
+
+.addBlockBtn:hover {
+  border-color: #EB0033;
+  color: #EB0033;
+  background: rgba(235, 0, 51, 0.04);
+}
+
+/* ---- Read-only badge ---- */
+
+.readOnlyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #555);
+}
+
+/* ---- Form fields ---- */
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  font-family: 'iFood RC Textos', var(--font-body);
+  line-height: 1;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 8px 10px;
+  background: #f5f5f5;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-primary, #141414);
+  font-family: inherit;
+  transition: background 150ms, border-color 150ms;
+  box-sizing: border-box;
+}
+
+.fieldInput:focus {
+  outline: none;
+  background: #ebebeb;
+  border-color: transparent;
+}
+
+.fieldInput::placeholder {
+  color: var(--text-disabled, #aaa);
+}
+
+.fieldTextarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: #f5f5f5;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-primary, #141414);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: background 150ms;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.fieldTextarea:focus {
+  outline: none;
+  background: #ebebeb;
+}
+
+.fieldTextarea::placeholder {
+  color: var(--text-disabled, #aaa);
+}
+
+.fieldRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.fieldRow .fieldGroup {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Segmented control ---- */
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.segmentBtn {
+  flex: 1;
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 150ms, color 150ms;
+  white-space: nowrap;
+}
+
+.segmentBtnActive {
+  background: #fff;
+  color: var(--text-primary, #141414);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ---- Array item management ---- */
+
+.arraySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.arraySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.arraySectionTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  font-family: 'iFood RC Textos', var(--font-body);
+  line-height: 1;
+}
+
+.arrayItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #f7f7f7;
+  border-radius: 8px;
+  position: relative;
+}
+
+.addItemBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 150ms, color 150ms;
+  white-space: nowrap;
+}
+
+.addItemBtn:hover {
+  border-color: var(--brand, #EB0033);
+  color: var(--brand, #EB0033);
+}
+
+.removeItemBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 150ms, color 150ms;
+  padding: 0;
+  line-height: 1;
+}
+
+.removeItemBtn:hover {
+  background: rgba(235, 0, 51, 0.08);
+  color: #EB0033;
+}
+
+.selectorEmpty {
+  font-size: 12px;
+  color: var(--text-disabled, #aaa);
+  text-align: center;
+  padding: 8px 0;
+  margin: 0;
+}
+
+/* ---- Block selector drawer ---- */
+
+.selectorOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 100;
+  animation: fadeIn 200ms ease;
+}
+
+.selectorDrawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 340px;
+  background: #fff;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInRight 200ms ease;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  transition: transform 200ms ease;
+}
+
+.selectorDrawer h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #141414);
+  margin: 0;
+  padding: 20px 20px 16px;
+  font-family: 'iFood RC Textos', var(--font-body);
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.selectorDrawerPushed {
+  transform: translateX(-100%);
+}
+
+.selectorList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selectorItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  transition: background 150ms;
+}
+
+.selectorItem:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.selectorItemDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.selectorItemIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.selectorItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.selectorItemInfo h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #141414);
+  margin: 0;
+  font-family: 'iFood RC Textos', var(--font-body);
+}
+
+.selectorItemInfo p {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  margin: 0;
+  font-family: 'iFood RC Textos', var(--font-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Variant drawer (layout picker) ---- */
+
+.variantDrawer {
+  position: fixed;
+  top: 0;
+  right: 340px; /* pushes from selector drawer width */
+  bottom: 0;
+  width: 340px;
+  background: #fff;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.10);
+  animation: slideInRight 200ms ease;
+}
+
+.variantDrawer h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #141414);
+  margin: 0;
+  padding: 16px 20px 12px;
+  font-family: 'iFood RC Textos', var(--font-body);
+}
+
+.variantDrawerClosing {
+  animation: slideOutRight 200ms ease forwards;
+}
+
+.variantBack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 20px 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  font-family: inherit;
+  transition: color 150ms;
+}
+
+.variantBack:hover {
+  color: var(--text-primary, #141414);
+}
+
+.variantSubtitle {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  padding: 0 20px 12px;
+  margin: 0;
+}
+
+.variantList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variantCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  transition: border-color 150ms;
+  overflow: hidden;
+}
+
+.variantCard:hover {
+  border-color: #EB0033;
+}
+
+.variantPreview {
+  background: #f5f5f5;
+  height: 100px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.variantPreviewLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  font-family: 'iFood RC Textos', var(--font-body);
+}
+
+.variantCardDesc {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  padding: 8px 12px;
+  font-family: 'iFood RC Textos', var(--font-body);
+}
+
 /* ---- Toast ---- */
 
 .toast {
@@ -663,4 +1360,14 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }

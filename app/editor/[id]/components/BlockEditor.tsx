@@ -11,6 +11,8 @@ import { ResultsEditor } from './editors/ResultsEditor';
 import { FAQEditor } from './editors/FAQEditor';
 import { NavbarEditor } from './editors/NavbarEditor';
 import { FooterEditor } from './editors/FooterEditor';
+import { PromoBannerEditor } from './editors/PromoBannerEditor';
+import { ContentEditor } from './editors/ContentEditor';
 
 interface BlockEditorProps {
   block: Block;
@@ -39,6 +41,8 @@ const typeLabels: Record<string, string> = {
   results: 'Depoimentos',
   faq: 'FAQ',
   footer: 'Footer',
+  promo: 'Banner Promo',
+  content: 'Seção de Conteúdo',
 };
 
 const typeIcons: Record<string, string> = {
@@ -50,6 +54,8 @@ const typeIcons: Record<string, string> = {
   results: 'R',
   faq: 'F',
   footer: 'Ft',
+  promo: 'P',
+  content: 'C',
 };
 
 export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop }: BlockEditorProps) {
@@ -74,6 +80,10 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       case 'faq': return <FAQEditor block={block} onUpdate={updateHandler} />;
       case 'navbar': return <NavbarEditor block={block} onUpdate={updateHandler} />;
       case 'footer': return <FooterEditor block={block} onUpdate={updateHandler} />;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      case 'promo': return <PromoBannerEditor block={block as any} onUpdate={updateHandler as any} />;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      case 'content': return <ContentEditor block={block as any} onUpdate={updateHandler as any} />;
       default: return <p>Editor não disponível para este tipo de bloco</p>;
     }
   };

@@ -65,7 +65,9 @@ export type Block =
   | IntegratedBlock
   | ResultsBlock
   | FAQBlock
-  | FooterBlock;
+  | FooterBlock
+  | PromoBlock
+  | ContentBlock;
 
 export type BlockType =
   | 'navbar'
@@ -75,7 +77,9 @@ export type BlockType =
   | 'integrated'
   | 'results'
   | 'faq'
-  | 'footer';
+  | 'footer'
+  | 'promo'
+  | 'content';
 
 // =============================================
 // Block base
@@ -260,6 +264,53 @@ export interface FooterLink {
 }
 
 export type FooterBlock = BaseBlock<'footer', FooterData>;
+
+// =============================================
+// Promo Banner
+// =============================================
+
+export interface PromoCTA {
+  text: string;
+  link: string;
+  style: 'primary' | 'secondary';
+}
+
+export interface PromoData {
+  layout?: 'centered' | 'split';
+  assetPosition?: 'left' | 'right';
+  backgroundType?: 'color' | 'image';
+  backgroundColor?: string;
+  backgroundImage?: string;
+  contentColor?: 'light' | 'dark';
+  curtain?: boolean;
+  title: string[];
+  description?: string;
+  image?: string;
+  ctas?: PromoCTA[];
+}
+
+export type PromoBlock = BaseBlock<'promo', PromoData>;
+
+// =============================================
+// Content Section
+// =============================================
+
+export interface ContentCTA {
+  text: string;
+  link: string;
+  style: 'primary' | 'secondary';
+}
+
+export interface ContentData {
+  assetPosition?: 'left' | 'right';
+  badge?: string;
+  title: string[];
+  description?: string;
+  image?: string;
+  ctas?: ContentCTA[];
+}
+
+export type ContentBlock = BaseBlock<'content', ContentData>;
 
 // =============================================
 // User Management (RBAC)
