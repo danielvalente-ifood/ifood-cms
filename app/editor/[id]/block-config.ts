@@ -7,6 +7,10 @@ import type {
   BeneficiosData,
   BeneficioCard,
   BeneficioCTA,
+  ContentData,
+  ContentCTA,
+  PromoData,
+  PromoCTA,
   VisionData,
   GrowthData,
   IntegratedData,
@@ -17,16 +21,18 @@ import type {
 
 export type GroupKey = 'hero' | 'content' | 'footer';
 
-export type ContentType = 'beneficios' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
+export type ContentType = 'beneficios' | 'content' | 'promo' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['beneficios', 'vision', 'growth', 'integrated', 'results', 'faq'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'vision', 'growth', 'integrated', 'results', 'faq'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   navbar: 'Navbar',
   hero: 'Hero',
   beneficios: 'Benefícios',
+  content: 'Conteúdo',
+  promo: 'Banner promocional',
   vision: 'Prova Social',
   growth: 'Growth',
   integrated: 'Features',
@@ -37,6 +43,8 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
 
 export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
   { type: 'beneficios', label: 'Benefícios' },
+  { type: 'content', label: 'Conteúdo' },
+  { type: 'promo', label: 'Banner promocional' },
   { type: 'vision', label: 'Prova Social' },
   { type: 'growth', label: 'Growth' },
   { type: 'integrated', label: 'Features' },
@@ -141,6 +149,58 @@ export function beneficiosDefaults(variant: BeneficiosVariant = 'cards'): Benefi
   return { badge: 'Visão integrada', title: [...BENEFICIOS_TITLE], cards };
 }
 
+export type ContentVariant = 'image-left' | 'image-right';
+
+const CONTENT_TITLE = ['Atraia clientes do delivery', 'para o salão'];
+const CONTENT_DESCRIPTION = 'Ative sua base de clientes delivery para visitarem seu restaurante.';
+const CONTENT_CTAS: ContentCTA[] = [
+  { text: 'Ativar agora', link: '#', style: 'primary' },
+  { text: 'Saiba mais', link: '#', style: 'secondary' },
+];
+
+/** Defaults por variante de Conteúdo — seed ao adicionar o bloco. */
+export function contentDefaults(variant: ContentVariant = 'image-left'): ContentData {
+  return {
+    badge: 'Comer fora',
+    title: [...CONTENT_TITLE],
+    description: CONTENT_DESCRIPTION,
+    image: '',
+    assetPosition: variant === 'image-right' ? 'right' : 'left',
+    ctas: CONTENT_CTAS.map((c) => ({ ...c })),
+  };
+}
+
+export type PromoVariant = 'centered' | 'split';
+
+const PROMO_TITLE = [
+  'Seus clientes do delivery agora',
+  'podem viver a experiência completa',
+  'com você',
+];
+const PROMO_DESCRIPTION =
+  'Uma plataforma que organiza atendimento, pedidos, pagamentos e gestão do salão em um único fluxo, pensado para o ritmo real do restaurante.';
+const PROMO_CTAS: PromoCTA[] = [
+  { text: 'Ativar agora', link: '#', style: 'primary' },
+  { text: 'Saiba mais', link: '#', style: 'secondary' },
+];
+
+/** Defaults por variante de Banner promocional — seed ao adicionar o bloco. */
+export function promoDefaults(variant: PromoVariant = 'centered'): PromoData {
+  return {
+    layout: variant,
+    title: [...PROMO_TITLE],
+    description: PROMO_DESCRIPTION,
+    backgroundType: 'color',
+    backgroundColor: '#272727',
+    backgroundImage: '',
+    image: '',
+    assetPosition: 'right',
+    contentColor: 'light',
+    curtain: true,
+    ctas: PROMO_CTAS.map((c) => ({ ...c })),
+  };
+}
+
 const VISION_DEFAULTS: VisionData = {
   badge: '',
   title: [],
@@ -197,6 +257,10 @@ export function createBlock(type: BlockType, theme: number, variant?: string): B
       return { id, type: 'hero', data: heroDefaults((variant as HeroVariant) || 'full'), theme };
     case 'beneficios':
       return { id, type: 'beneficios', data: beneficiosDefaults((variant as BeneficiosVariant) || 'cards'), theme };
+    case 'content':
+      return { id, type: 'content', data: contentDefaults((variant as ContentVariant) || 'image-left'), theme };
+    case 'promo':
+      return { id, type: 'promo', data: promoDefaults((variant as PromoVariant) || 'centered'), theme };
     case 'vision':
       return { id, type: 'vision', data: { ...VISION_DEFAULTS }, theme };
     case 'growth':

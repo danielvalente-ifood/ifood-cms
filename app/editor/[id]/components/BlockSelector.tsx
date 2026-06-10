@@ -26,6 +26,8 @@ const typeIcons: Record<string, string> = {
   navbar: 'burger-menu-three',
   hero: 'photo-image-default',
   beneficios: 'grid-dashboard-bento',
+  content: 'text-quotes-paragraph',
+  promo: 'photo-image-default',
   vision: 'barchart-default',
   growth: 'rocket-ship',
   integrated: 'plugin-addon-puzzle',
@@ -37,6 +39,8 @@ const typeIcons: Record<string, string> = {
 const blockOptions: { type: BlockType; label: string; description: string }[] = [
   { type: 'hero', label: 'Hero', description: 'Seção principal com título e CTA' },
   { type: 'beneficios', label: 'Benefícios', description: 'Cards de benefícios (2 a 5)' },
+  { type: 'content', label: 'Conteúdo', description: 'Imagem + texto, 2 colunas' },
+  { type: 'promo', label: 'Banner promocional', description: 'Fundo cor/imagem + efeito cortina' },
   { type: 'vision', label: 'Social Proof', description: 'Números e credibilidade' },
   { type: 'growth', label: 'Growth', description: 'Cards com tabs (slider)' },
   { type: 'integrated', label: 'Features', description: 'Lista de funcionalidades' },
@@ -61,6 +65,14 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   beneficios: [
     { id: 'cards', label: 'Cards', description: 'Ícone, título e descrição (2 a 5 cards).' },
     { id: 'cards-action', label: 'Cards com ação', description: 'Cards com CTAs no rodapé (2 a 5 cards).' },
+  ],
+  content: [
+    { id: 'image-left', label: 'Imagem à esquerda', description: 'Card de imagem à esquerda, texto à direita.' },
+    { id: 'image-right', label: 'Imagem à direita', description: 'Texto à esquerda, card de imagem à direita.' },
+  ],
+  promo: [
+    { id: 'centered', label: 'Centralizado', description: 'Texto e CTAs centralizados sobre o fundo.' },
+    { id: 'split', label: 'Com imagem', description: 'Texto à esquerda, card de imagem à direita.' },
   ],
   vision: [
     { id: 'vision-1', label: 'Layout 1', description: 'Cards horizontais com badges' },

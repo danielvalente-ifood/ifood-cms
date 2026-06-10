@@ -745,6 +745,40 @@
   color: var(--color-error-text);
 }
 
+/* ---- ações de seção no painel de edição (com texto + ícone) ---- */
+.blockActions.panelActions {
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 16px;
+  padding-top: 8px;
+}
+
+.blockActions.panelActions .blockActionBtn {
+  width: 100%;
+  height: 36px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  border-radius: 6px;
+}
+
+.blockActions.panelActions .blockActionBtn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.blockActions.panelActions .blockActionBtnDanger {
+  color: var(--color-error-text);
+}
+
+.blockActions.panelActions .blockActionBtnDanger:hover:not(:disabled) {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
 .blockBody {
   padding: 12px;
   border-top: none;

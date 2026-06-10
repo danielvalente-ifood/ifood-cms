@@ -647,13 +647,55 @@ export default function EditorPage() {
                 ? `Editar card ${selectedCardIndex + 1}`
                 : 'Editar seção'}
             </span>
-            <button
-              className={styles.addIconBtn}
-              onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
-              aria-label="Fechar"
-            >
-              <Icon name="close-x" size={16} />
-            </button>
+            <div className={styles.blockActions}>
+              {/* Ações padronizadas da seção — ocultas só no modo card do Benefícios */}
+              {!(selectedBlock.type === 'beneficios' && selectedCardIndex !== null) && (
+                <>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => moveBlock(selIndex, 'up')}
+                    disabled={selIndex === 0}
+                    aria-label="Mover acima"
+                    title="Mover acima"
+                  >
+                    <Icon name="chevron-big-up" size={16} />
+                  </button>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => moveBlock(selIndex, 'down')}
+                    disabled={selIndex === blocks.length - 1}
+                    aria-label="Mover abaixo"
+                    title="Mover abaixo"
+                  >
+                    <Icon name="chevron-big-down" size={16} />
+                  </button>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => duplicateBlock(selIndex)}
+                    aria-label="Duplicar"
+                    title="Duplicar"
+                  >
+                    <Icon name="copy-default" size={16} />
+                  </button>
+                  <button
+                    className={`${styles.blockActionBtn} ${styles.blockActionBtnDanger}`}
+                    onClick={() => { removeBlock(selIndex); setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                    aria-label="Deletar seção"
+                    title="Deletar seção"
+                  >
+                    <Icon name="delete-dustbin-01" size={16} />
+                  </button>
+                </>
+              )}
+              <button
+                className={styles.blockActionBtn}
+                onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                aria-label="Fechar"
+                title="Fechar"
+              >
+                <Icon name="close-x" size={16} />
+              </button>
+            </div>
           </div>
           <div className={styles.editPanelBody}>
             {selectedBlock.type === 'beneficios' ? (
@@ -672,10 +714,8 @@ export default function EditorPage() {
                 index={selIndex}
                 total={blocks.length}
                 isSelected
+                chromeless
                 onUpdate={(updated) => updateBlock(selIndex, updated)}
-                onRemove={() => { removeBlock(selIndex); setSelectedBlockId(null); }}
-                onMove={(dir) => moveBlock(selIndex, dir)}
-                onDuplicate={() => duplicateBlock(selIndex)}
               />
             )}
           </div>

@@ -75,6 +75,8 @@ export type Block =
   | NavbarBlock
   | HeroBlock
   | BeneficiosBlock
+  | ContentBlock
+  | PromoBlock
   | VisionBlock
   | GrowthBlock
   | IntegratedBlock
@@ -86,6 +88,8 @@ export type BlockType =
   | 'navbar'
   | 'hero'
   | 'beneficios'
+  | 'content'
+  | 'promo'
   | 'vision'
   | 'growth'
   | 'integrated'
@@ -214,6 +218,63 @@ export interface BeneficiosData {
 }
 
 export type BeneficiosBlock = BaseBlock<'beneficios', BeneficiosData>;
+
+// =============================================
+// Content (seção 2 colunas: imagem + texto)
+// =============================================
+
+export interface ContentCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary';
+}
+
+export interface ContentData {
+  badge?: string;
+  /** título multi-linha (uma string por linha) */
+  title: string[];
+  description?: string;
+  /** imagem do card; vazio = placeholder */
+  image?: string;
+  /** posição do card de imagem — única variação de layout */
+  assetPosition?: 'left' | 'right';
+  /** 0, 1 ou 2 CTAs (botões) */
+  ctas?: ContentCTA[];
+}
+
+export type ContentBlock = BaseBlock<'content', ContentData>;
+
+// =============================================
+// Promo Banner (fundo cor/imagem + efeito cortina)
+// =============================================
+
+export interface PromoCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary';
+}
+
+export interface PromoData {
+  /** centered = texto centralizado · split = texto + card de imagem */
+  layout?: 'centered' | 'split';
+  title: string[];
+  description?: string;
+  /** fundo: cor hex única ou imagem */
+  backgroundType?: 'color' | 'image';
+  backgroundColor?: string;
+  backgroundImage?: string;
+  /** split — imagem do card e posição */
+  image?: string;
+  assetPosition?: 'left' | 'right';
+  /** esquema do conteúdo: light (fundo escuro) · dark (fundo claro) */
+  contentColor?: 'light' | 'dark';
+  /** efeito cortina (sticky/parallax estilo nubank) */
+  curtain?: boolean;
+  /** 0, 1 ou 2 CTAs */
+  ctas?: PromoCTA[];
+}
+
+export type PromoBlock = BaseBlock<'promo', PromoData>;
 
 // =============================================
 // Vision (Social Proof)

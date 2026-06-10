@@ -6,6 +6,8 @@ import styles from '../editor.module.css';
 import { Icon } from '@/components/Icon/Icon';
 import { HeroEditor } from './editors/HeroEditor';
 import { BeneficiosEditor } from './editors/BeneficiosEditor';
+import { ContentEditor } from './editors/ContentEditor';
+import { PromoBannerEditor } from './editors/PromoBannerEditor';
 import { VisionEditor } from './editors/VisionEditor';
 import { GrowthEditor } from './editors/GrowthEditor';
 import { IntegratedEditor } from './editors/IntegratedEditor';
@@ -30,12 +32,17 @@ interface BlockEditorProps {
   onDragEnd?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: () => void;
+  /** Renderiza apenas os campos do editor, sem o card/cabeçalho/ações internas.
+   *  Usado no painel flutuante, que já provê título e ações padronizadas. */
+  chromeless?: boolean;
 }
 
 const typeLabels: Record<string, string> = {
   navbar: 'Navbar',
   hero: 'Hero',
   beneficios: 'Benefícios',
+  content: 'Conteúdo',
+  promo: 'Banner promocional',
   vision: 'Social Proof',
   growth: 'Growth',
   integrated: 'Features',
@@ -48,6 +55,8 @@ const typeIcons: Record<string, string> = {
   navbar: 'burger-menu-three',
   hero: 'photo-image-default',
   beneficios: 'grid-dashboard-bento',
+  content: 'text-quotes-paragraph',
+  promo: 'photo-image-default',
   vision: 'barchart-default',
   growth: 'rocket-ship',
   integrated: 'plugin-addon-puzzle',
@@ -56,7 +65,7 @@ const typeIcons: Record<string, string> = {
   footer: 'window-dock-bottom',
 };
 
-export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop }: BlockEditorProps) {
+export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop, chromeless }: BlockEditorProps) {
   const [collapsed, setCollapsed] = useState(true);
 
   // Auto-expand when selected from iframe
@@ -72,6 +81,8 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
     switch (block.type) {
       case 'hero': return <HeroEditor block={block} onUpdate={updateHandler} />;
       case 'beneficios': return <BeneficiosEditor block={block} onUpdate={updateHandler} />;
+      case 'content': return <ContentEditor block={block} onUpdate={updateHandler} />;
+      case 'promo': return <PromoBannerEditor block={block} onUpdate={updateHandler} />;
       case 'vision': return <VisionEditor block={block} onUpdate={updateHandler} />;
       case 'growth': return <GrowthEditor block={block} onUpdate={updateHandler} />;
       case 'integrated': return <IntegratedEditor block={block} onUpdate={updateHandler} />;
@@ -82,6 +93,12 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       default: return <p>Editor não disponível para este tipo de bloco</p>;
     }
   };
+
+  // Modo chromeless: apenas os campos do editor (sem card/cabeçalho/ações).
+  // O painel flutuante já provê título + ações padronizadas no header.
+  if (chromeless) {
+    return <>{renderEditor()}</>;
+  }
 
   return (
     <div
