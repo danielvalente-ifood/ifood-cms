@@ -28,6 +28,7 @@ const typeIcons: Record<string, string> = {
   beneficios: 'grid-dashboard-bento',
   content: 'text-quotes-paragraph',
   promo: 'photo-image-default',
+  stacked: 'grid-dashboard-bento',
   vision: 'barchart-default',
   growth: 'rocket-ship',
   integrated: 'plugin-addon-puzzle',
@@ -41,6 +42,7 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
   { type: 'beneficios', label: 'Benefícios', description: 'Cards de benefícios (2 a 5)' },
   { type: 'content', label: 'Conteúdo', description: 'Imagem + texto, 2 colunas' },
   { type: 'promo', label: 'Banner promocional', description: 'Fundo cor/imagem + efeito cortina' },
+  { type: 'stacked', label: 'Cards Empilhados', description: 'Cards que empilham no scroll (3 a 8)' },
   { type: 'vision', label: 'Social Proof', description: 'Números e credibilidade' },
   { type: 'growth', label: 'Growth', description: 'Cards com tabs (slider)' },
   { type: 'integrated', label: 'Features', description: 'Lista de funcionalidades' },
@@ -73,6 +75,9 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   promo: [
     { id: 'centered', label: 'Centralizado', description: 'Texto e CTAs centralizados sobre o fundo.' },
     { id: 'split', label: 'Com imagem', description: 'Texto à esquerda, card de imagem à direita.' },
+  ],
+  stacked: [
+    { id: 'media', label: 'Mídia + texto', description: 'Cards empilham no scroll; aberto = imagem + título, descrição e CTA (3 a 8).' },
   ],
   vision: [
     { id: 'vision-1', label: 'Layout 1', description: 'Cards horizontais com badges' },

@@ -8,6 +8,7 @@ import { useRole } from '@/hooks/useRole';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
 import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
+import { StackedEditor } from './components/editors/StackedEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
@@ -700,6 +701,16 @@ export default function EditorPage() {
           <div className={styles.editPanelBody}>
             {selectedBlock.type === 'beneficios' ? (
               <BeneficiosEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+                onCardIndexChange={(i) => {
+                  setSelectedCardIndex(i);
+                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                }}
+              />
+            ) : selectedBlock.type === 'stacked' ? (
+              <StackedEditor
                 block={selectedBlock}
                 onUpdate={(updated) => updateBlock(selIndex, updated)}
                 cardIndex={selectedCardIndex}

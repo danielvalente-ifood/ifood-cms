@@ -8,6 +8,7 @@ import { HeroEditor } from './editors/HeroEditor';
 import { BeneficiosEditor } from './editors/BeneficiosEditor';
 import { ContentEditor } from './editors/ContentEditor';
 import { PromoBannerEditor } from './editors/PromoBannerEditor';
+import { StackedEditor } from './editors/StackedEditor';
 import { VisionEditor } from './editors/VisionEditor';
 import { GrowthEditor } from './editors/GrowthEditor';
 import { IntegratedEditor } from './editors/IntegratedEditor';
@@ -83,6 +84,7 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       case 'beneficios': return <BeneficiosEditor block={block} onUpdate={updateHandler} />;
       case 'content': return <ContentEditor block={block} onUpdate={updateHandler} />;
       case 'promo': return <PromoBannerEditor block={block} onUpdate={updateHandler} />;
+      case 'stacked': return <StackedEditor block={block} onUpdate={updateHandler} />;
       case 'vision': return <VisionEditor block={block} onUpdate={updateHandler} />;
       case 'growth': return <GrowthEditor block={block} onUpdate={updateHandler} />;
       case 'integrated': return <IntegratedEditor block={block} onUpdate={updateHandler} />;

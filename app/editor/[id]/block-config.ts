@@ -11,6 +11,8 @@ import type {
   ContentCTA,
   PromoData,
   PromoCTA,
+  StackedData,
+  StackedCard,
   VisionData,
   GrowthData,
   IntegratedData,
@@ -21,10 +23,10 @@ import type {
 
 export type GroupKey = 'hero' | 'content' | 'footer';
 
-export type ContentType = 'beneficios' | 'content' | 'promo' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
+export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'vision', 'growth', 'integrated', 'results', 'faq'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
@@ -33,6 +35,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   beneficios: 'Benefícios',
   content: 'Conteúdo',
   promo: 'Banner promocional',
+  stacked: 'Cards Empilhados',
   vision: 'Prova Social',
   growth: 'Growth',
   integrated: 'Features',
@@ -45,6 +48,7 @@ export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
   { type: 'beneficios', label: 'Benefícios' },
   { type: 'content', label: 'Conteúdo' },
   { type: 'promo', label: 'Banner promocional' },
+  { type: 'stacked', label: 'Cards Empilhados' },
   { type: 'vision', label: 'Prova Social' },
   { type: 'growth', label: 'Growth' },
   { type: 'integrated', label: 'Features' },
@@ -201,6 +205,46 @@ export function promoDefaults(variant: PromoVariant = 'centered'): PromoData {
   };
 }
 
+export type StackedVariant = 'media';
+
+const STACKED_CARDS: StackedCard[] = [
+  {
+    label: 'Restaurantes com salão próprio',
+    title:
+      'O iFood Salão ajuda restaurantes que atendem presencialmente a terem uma operação mais simples, organizada e conectada.',
+    description:
+      'Centralize atendimento, pedidos, pagamentos e gestão da mesa em um único fluxo, reduzindo erros, agilizando o serviço e melhorando a experiência dos clientes do início ao fim.',
+    image: '',
+    cta: { text: 'Ativar agora', link: '#' },
+  },
+  {
+    label: 'Operações híbridas',
+    title: 'Atenda no salão e no delivery sem precisar trocar de sistema.',
+    description:
+      'Uma operação única para pedidos presenciais e online, com visão unificada de vendas, estoque e clientes em tempo real.',
+    image: '',
+    cta: { text: 'Ativar agora', link: '#' },
+  },
+  {
+    label: 'Grandes redes',
+    title: 'Padronize a operação de todas as suas lojas em um só lugar.',
+    description:
+      'Gestão centralizada, relatórios consolidados e controle fino por unidade — do balcão ao delivery, em qualquer escala.',
+    image: '',
+    cta: { text: 'Ativar agora', link: '#' },
+  },
+];
+
+/** Defaults de Cards Empilhados — seed ao adicionar o bloco (3 a 8 cards). */
+export function stackedDefaults(_variant: StackedVariant = 'media'): StackedData {
+  return {
+    badge: 'Otimize sua operação',
+    title: ['Pra quem é o iFood Salão'],
+    assetPosition: 'left',
+    cards: STACKED_CARDS.map((c) => ({ ...c, cta: c.cta ? { ...c.cta } : undefined })),
+  };
+}
+
 const VISION_DEFAULTS: VisionData = {
   badge: '',
   title: [],
@@ -261,6 +305,8 @@ export function createBlock(type: BlockType, theme: number, variant?: string): B
       return { id, type: 'content', data: contentDefaults((variant as ContentVariant) || 'image-left'), theme };
     case 'promo':
       return { id, type: 'promo', data: promoDefaults((variant as PromoVariant) || 'centered'), theme };
+    case 'stacked':
+      return { id, type: 'stacked', data: stackedDefaults((variant as StackedVariant) || 'media'), theme };
     case 'vision':
       return { id, type: 'vision', data: { ...VISION_DEFAULTS }, theme };
     case 'growth':

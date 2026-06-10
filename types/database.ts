@@ -82,7 +82,8 @@ export type Block =
   | IntegratedBlock
   | ResultsBlock
   | FAQBlock
-  | FooterBlock;
+  | FooterBlock
+  | StackedBlock;
 
 export type BlockType =
   | 'navbar'
@@ -90,6 +91,7 @@ export type BlockType =
   | 'beneficios'
   | 'content'
   | 'promo'
+  | 'stacked'
   | 'vision'
   | 'growth'
   | 'integrated'
@@ -275,6 +277,39 @@ export interface PromoData {
 }
 
 export type PromoBlock = BaseBlock<'promo', PromoData>;
+
+// =============================================
+// Stacked (cards empilhados scroll-driven, estilo Nubank)
+// =============================================
+
+export interface StackedCTA {
+  text: string;
+  link: string;
+}
+
+export interface StackedCard {
+  /** rótulo sempre visível (barra do card) */
+  label: string;
+  /** título grande exibido quando o card está aberto */
+  title: string;
+  description?: string;
+  /** imagem do card aberto */
+  image?: string;
+  /** botão opcional (outline) */
+  cta?: StackedCTA;
+}
+
+export interface StackedData {
+  badge?: string;
+  /** título da seção (uma linha por item) */
+  title: string[];
+  /** lado da imagem no card aberto */
+  assetPosition?: 'left' | 'right';
+  /** mínimo 3, máximo 8 cards */
+  cards: StackedCard[];
+}
+
+export type StackedBlock = BaseBlock<'stacked', StackedData>;
 
 // =============================================
 // Vision (Social Proof)
