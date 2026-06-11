@@ -56,49 +56,6 @@ function Segmented<T extends string>({
   );
 }
 
-/* ---- editor de linhas de título ---- */
-function LinesEditor({
-  value, onChange, label = 'Título (uma linha por campo)',
-}: {
-  value: string[];
-  onChange: (v: string[]) => void;
-  label?: string;
-}) {
-  const lines = value ?? [];
-  return (
-    <div className={styles.fieldGroup}>
-      <label className={styles.fieldLabel}>{label}</label>
-      {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: i < lines.length - 1 ? 6 : 0 }}>
-          <input
-            className={styles.fieldInput}
-            value={line}
-            placeholder={`Linha ${i + 1}`}
-            onChange={(e) => {
-              const next = [...lines];
-              next[i] = e.target.value;
-              onChange(next);
-            }}
-          />
-          {lines.length > 1 && (
-            <button
-              type="button"
-              className={styles.addItemBtn}
-              onClick={() => onChange(lines.filter((_, j) => j !== i))}
-              title="Remover linha"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      <button type="button" className={styles.addItemBtn} onClick={() => onChange([...lines, ''])} style={{ marginTop: 6 }}>
-        + Linha
-      </button>
-    </div>
-  );
-}
-
 /* ---- editor de CTAs (máx. 2) ---- */
 function CtasEditor({
   value, onChange,
@@ -172,11 +129,8 @@ function SlidesEditor({
           {slides.length > 1 && (
             <button type="button" className={styles.removeItemBtn} onClick={() => onChange(slides.filter((_, j) => j !== i))}>×</button>
           )}
-          <LinesEditor label={`Slide ${i + 1} — título`} value={s.title} onChange={(v) => setSlide(i, { title: v })} />
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Descrição</label>
-            <textarea className={styles.fieldTextarea} value={s.description} onChange={(e) => setSlide(i, { description: e.target.value })} />
-          </div>
+          <span className={styles.arraySectionTitle}>Slide {i + 1}</span>
+          <p className={styles.selectorEmpty}>Título e descrição: duplo-clique no preview.</p>
           <ImageUpload label="Imagem de fundo" value={s.background_image || ''} onChange={(url) => setSlide(i, { background_image: url })} />
           <CtasEditor value={s.ctas} onChange={(v) => setSlide(i, { ctas: v })} />
         </div>
@@ -245,12 +199,7 @@ export function HeroEditor({ block, onUpdate }: Props) {
         <SlidesEditor value={d.slides} onChange={(v) => update({ slides: v })} />
       ) : (
         <>
-          <LinesEditor value={d.title} onChange={(v) => update({ title: v })} />
-
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Descrição</label>
-            <textarea className={styles.fieldTextarea} value={d.description} onChange={(e) => update({ description: e.target.value })} />
-          </div>
+          <p className={styles.selectorEmpty}>Edite título e descrição com duplo-clique direto no preview.</p>
 
           {/* posição do card (split) */}
           {(variant === 'split-image' || variant === 'split-form') && (

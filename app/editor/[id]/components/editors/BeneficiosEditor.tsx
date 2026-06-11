@@ -76,49 +76,6 @@ function Segmented<T extends string>({
   );
 }
 
-/* ---- editor de linhas de título ---- */
-function LinesEditor({
-  value, onChange, label = 'Título (uma linha por campo)',
-}: {
-  value: string[];
-  onChange: (v: string[]) => void;
-  label?: string;
-}) {
-  const lines = value ?? [];
-  return (
-    <div className={styles.fieldGroup}>
-      <label className={styles.fieldLabel}>{label}</label>
-      {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: i < lines.length - 1 ? 6 : 0 }}>
-          <input
-            className={styles.fieldInput}
-            value={line}
-            placeholder={`Linha ${i + 1}`}
-            onChange={(e) => {
-              const next = [...lines];
-              next[i] = e.target.value;
-              onChange(next);
-            }}
-          />
-          {lines.length > 1 && (
-            <button
-              type="button"
-              className={styles.addItemBtn}
-              onClick={() => onChange(lines.filter((_, j) => j !== i))}
-              title="Remover linha"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      <button type="button" className={styles.addItemBtn} onClick={() => onChange([...lines, ''])} style={{ marginTop: 6 }}>
-        + Linha
-      </button>
-    </div>
-  );
-}
-
 /* ---- picker de ícone (biblioteca fixa) ---- */
 function IconPicker({
   value, onChange,
@@ -266,15 +223,7 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
 
         <IconPicker value={card.icon} onChange={(icon) => setCard(activeIndex, { icon })} />
 
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Título</label>
-          <input className={styles.fieldInput} value={card.title} onChange={(e) => setCard(activeIndex, { title: e.target.value })} />
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Descrição</label>
-          <textarea className={styles.fieldTextarea} value={card.description} onChange={(e) => setCard(activeIndex, { description: e.target.value })} />
-        </div>
+        <p className={styles.selectorEmpty}>Edite título e descrição do card com duplo-clique direto no preview.</p>
 
         <CtasEditor value={card.ctas} onChange={(v) => setCard(activeIndex, { ctas: v })} />
 
@@ -295,27 +244,7 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
   /* ====================== MODO SEÇÃO ====================== */
   return (
     <>
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Badge</label>
-        <input
-          className={styles.fieldInput}
-          value={d.badge ?? ''}
-          placeholder="Ex: Visão integrada"
-          onChange={(e) => update({ badge: e.target.value })}
-        />
-      </div>
-
-      <LinesEditor value={d.title} onChange={(v) => update({ title: v })} />
-
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Descrição (opcional)</label>
-        <textarea
-          className={styles.fieldTextarea}
-          value={d.description ?? ''}
-          placeholder="Texto de apoio abaixo do título"
-          onChange={(e) => update({ description: e.target.value })}
-        />
-      </div>
+      <p className={styles.selectorEmpty}>Edite badge, título e descrição com duplo-clique direto no preview.</p>
 
       <div className={styles.arraySection}>
         <div className={styles.arraySectionHeader}>

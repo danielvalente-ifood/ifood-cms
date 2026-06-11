@@ -55,16 +55,7 @@ export function GrowthEditor({ block, onUpdate }: Props) {
 
   return (
     <>
-      <div className={styles.fieldRow}>
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Badge</label>
-          <input className={styles.fieldInput} value={block.data.badge} onChange={(e) => update('badge', e.target.value)} />
-        </div>
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Título</label>
-          <input className={styles.fieldInput} value={block.data.title.join(' ')} onChange={(e) => update('title', [e.target.value])} />
-        </div>
-      </div>
+      <p className={styles.selectorEmpty}>Edite badge e título com duplo-clique direto no preview.</p>
 
       <div className={styles.arraySection}>
         <div className={styles.arraySectionHeader}>

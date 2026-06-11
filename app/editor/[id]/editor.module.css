@@ -69,6 +69,22 @@
   line-height: 20px;
 }
 
+/* Quando vira input (renomear): herda visual do h1, sem caixa */
+.pageTitleInput {
+  border: none;
+  outline: none;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  width: auto;
+  min-width: 160px;
+}
+
+.pageTitleInput:focus {
+  outline: none;
+  box-shadow: 0 1px 0 0 var(--border-default);
+}
+
 .pageSlug {
   font-size: 10px;
   color: var(--text-secondary);
@@ -394,7 +410,7 @@
 /* Painel inline: filho flex do .editorBody — empurra/encolhe o canvas em vez
    de flutuar por cima do conteúdo da página. */
 .editPanel {
-  flex: 0 0 360px;
+  flex: 0 0 300px;
   align-self: stretch;
   background: var(--bg-primary);
   border-radius: var(--radius-lg);
@@ -1221,8 +1237,8 @@
 .segmentBtn:hover { color: var(--text-primary); }
 
 .segmentBtnActive {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: #161719;
+  color: #fff;
   box-shadow: var(--shadow-sm);
 }
 

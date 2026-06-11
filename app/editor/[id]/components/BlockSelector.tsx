@@ -49,7 +49,7 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
   { type: 'results', label: 'Depoimentos', description: 'Testimonials de clientes' },
   { type: 'faq', label: 'FAQ', description: 'Perguntas e respostas' },
   { type: 'navbar', label: 'Navbar', description: 'Menu de navegação' },
-  { type: 'footer', label: 'Footer', description: 'Rodapé com links' },
+  // Footer é fixo em toda página — não selecionável no painel de adicionar.
 ];
 
 /**

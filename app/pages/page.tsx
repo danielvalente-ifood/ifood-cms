@@ -19,7 +19,10 @@ import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './pages.module.css';
 
-type PageWithVertical = Page & { vertical?: Vertical | null };
+type PageWithVertical = Page & {
+  vertical?: Vertical | null;
+  creator?: { full_name: string | null; avatar_url: string | null } | null;
+};
 
 export default function PagesPage() {
   const router = useRouter();
@@ -52,14 +55,18 @@ export default function PagesPage() {
 
   const fetchData = useCallback(async () => {
     const [{ data: pgs }, { data: verts }] = await Promise.all([
-      supabase.from('pages').select('*').order('updated_at', { ascending: false }),
+      supabase
+        .from('pages')
+        .select('*, creator:created_by(full_name, avatar_url)')
+        .order('updated_at', { ascending: false }),
       supabase.from('verticals').select('*').order('name'),
     ]);
 
     const vertMap = new Map((verts || []).map((v: Vertical) => [v.id, v]));
-    const pagesWithVerticals: PageWithVertical[] = (pgs || []).map((p: Page) => ({
+    const pagesWithVerticals: PageWithVertical[] = (pgs || []).map((p: any) => ({
       ...p,
       vertical: p.vertical_id ? vertMap.get(p.vertical_id) || null : null,
+      creator: p.creator || null,
     }));
 
     setPages(pagesWithVerticals);
@@ -120,6 +127,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
+      created_by: user?.id,
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -451,8 +459,8 @@ export default function PagesPage() {
               <PageCard
                 key={page.id}
                 page={page}
-                userName={userName}
-                userAvatar={userAvatar}
+                userName={page.creator?.full_name || 'Desconhecido'}
+                userAvatar={page.creator?.avatar_url || null}
                 formatDate={formatDate}
                 onClick={() => router.push(`/editor/${page.id}`)}
                 onStatusChange={canEdit ? (newStatus) => handleStatusChange(page, newStatus) : undefined}

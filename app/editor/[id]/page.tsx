@@ -58,7 +58,7 @@ type StructureGroup = {
 const STRUCTURE_GROUPS: StructureGroup[] = [
   { key: 'hero', label: 'Hero', icon: 'window-dock-top', singleton: true },
   { key: 'content', label: 'Content', icon: 'window-fullscreen', singleton: false },
-  { key: 'footer', label: 'Footer', icon: 'window-dock-bottom', singleton: true },
+  // Footer é fixo (padrão da página) — não aparece como seção editável.
 ];
 
 const HERO_SET = new Set<BlockType>(HERO_TYPES);
@@ -89,6 +89,8 @@ export default function EditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const [page, setPage] = useState<Page | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const [verticalSlug, setVerticalSlug] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,6 +331,45 @@ export default function EditorPage() {
     if (iframeRef.current) {
       iframeRef.current.src = iframeRef.current.src;
     }
+  };
+
+  // Gera um slug a partir do nome: minúsculas, sem acento, espaços → hífen.
+  const slugify = (s: string): string =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '') // remove acentos
+      .replace(/[^a-z0-9\s-]/g, '')    // só letras/números/espaço/hífen
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+  // Renomear a página: atualiza nome e slug juntos. O slug é derivado do nome
+  // pra manter a URL coerente com o título. Só persiste se mudou de fato.
+  const savePageName = async () => {
+    if (!page) return;
+    const nextName = nameDraft.trim();
+    setEditingName(false);
+    if (!nextName || nextName === page.name) return;
+
+    const nextSlug = slugify(nextName) || page.slug;
+    // Atualização otimista (UI + iframe re-renderizam com o novo slug)
+    const prevPage = page;
+    setPage({ ...page, name: nextName, slug: nextSlug });
+    // @ts-ignore
+    const { error } = await supabase
+      .from('pages')
+      .update({ name: nextName, slug: nextSlug })
+      .eq('id', pageId);
+    if (error) {
+      setPage(prevPage); // rollback (provável colisão de slug — unique constraint)
+      const msg = (error as { code?: string }).code === '23505'
+        ? 'Já existe uma página com esse nome'
+        : 'Não foi possível renomear';
+      showToast(msg, 'error');
+      return;
+    }
+    showToast('Nome atualizado', 'success');
   };
 
   const saveAiConfig = async () => {
@@ -581,7 +622,36 @@ export default function EditorPage() {
             <Icon name="chevron-left" size={20} />
           </button>
           <div>
-            <h1 className={styles.pageTitle}>{page.name}</h1>
+            {editingName ? (
+              <input
+                autoFocus
+                className={`${styles.pageTitle} ${styles.pageTitleInput}`}
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onBlur={savePageName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.currentTarget as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setEditingName(false);
+                  }
+                }}
+              />
+            ) : (
+              <h1
+                className={styles.pageTitle}
+                onClick={() => {
+                  if (!canEdit) return;
+                  setNameDraft(page.name);
+                  setEditingName(true);
+                }}
+                title={canEdit ? 'Clique para renomear' : undefined}
+                style={canEdit ? { cursor: 'pointer' } : undefined}
+              >
+                {page.name}
+              </h1>
+            )}
             <span className={styles.pageSlug}>/{page.slug}</span>
           </div>
         </div>

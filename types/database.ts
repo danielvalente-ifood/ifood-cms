@@ -22,6 +22,7 @@ export interface Page {
   meta_title: string | null;
   meta_description: string | null;
   og_image: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -405,10 +406,17 @@ export type ResultsBlock = BaseBlock<'results', ResultsData>;
 // FAQ
 // =============================================
 
+export interface FAQCta {
+  text: string;
+  link: string;
+}
+
 export interface FAQData {
   badge: string;
   title: string;
   description: string;
+  /** CTA opcional ("Não encontrei minha dúvida"). null/ausente = oculto. */
+  cta?: FAQCta | null;
   items: FAQItem[];
 }
 

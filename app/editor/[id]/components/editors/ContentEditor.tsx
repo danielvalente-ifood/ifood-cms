@@ -45,49 +45,6 @@ function Segmented<T extends string>({
   );
 }
 
-/* ---- editor de linhas de título ---- */
-function LinesEditor({
-  value, onChange, label = 'Título (uma linha por campo)',
-}: {
-  value: string[];
-  onChange: (v: string[]) => void;
-  label?: string;
-}) {
-  const lines = value ?? [];
-  return (
-    <div className={styles.fieldGroup}>
-      <label className={styles.fieldLabel}>{label}</label>
-      {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: i < lines.length - 1 ? 6 : 0 }}>
-          <input
-            className={styles.fieldInput}
-            value={line}
-            placeholder={`Linha ${i + 1}`}
-            onChange={(e) => {
-              const next = [...lines];
-              next[i] = e.target.value;
-              onChange(next);
-            }}
-          />
-          {lines.length > 1 && (
-            <button
-              type="button"
-              className={styles.addItemBtn}
-              onClick={() => onChange(lines.filter((_, j) => j !== i))}
-              title="Remover linha"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      <button type="button" className={styles.addItemBtn} onClick={() => onChange([...lines, ''])} style={{ marginTop: 6 }}>
-        + Linha
-      </button>
-    </div>
-  );
-}
-
 /* ---- editor de CTAs (0 a 2) ---- */
 function CtasEditor({
   value, onChange,
@@ -160,27 +117,7 @@ export function ContentEditor({ block, onUpdate }: Props) {
         options={[{ v: 'left', label: 'Esquerda' }, { v: 'right', label: 'Direita' }]}
       />
 
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Badge</label>
-        <input
-          className={styles.fieldInput}
-          value={d.badge ?? ''}
-          placeholder="Ex: Comer fora"
-          onChange={(e) => update({ badge: e.target.value })}
-        />
-      </div>
-
-      <LinesEditor value={d.title} onChange={(v) => update({ title: v })} />
-
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Descrição (opcional)</label>
-        <textarea
-          className={styles.fieldTextarea}
-          value={d.description ?? ''}
-          placeholder="Texto de apoio abaixo do título"
-          onChange={(e) => update({ description: e.target.value })}
-        />
-      </div>
+      <p className={styles.selectorEmpty}>Edite badge, título e descrição com duplo-clique direto no preview.</p>
 
       <ImageUpload label="Imagem" value={d.image || ''} onChange={(url) => update({ image: url })} />
 

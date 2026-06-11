@@ -274,17 +274,33 @@ const RESULTS_DEFAULTS: ResultsData = {
 };
 
 const FAQ_DEFAULTS: FAQData = {
-  badge: '',
-  title: '',
-  description: '',
-  items: [],
+  badge: 'FAQ',
+  title: 'Ficou com alguma dúvida?',
+  description: 'Encontre as respostas para suas principais dúvidas sobre produtos e serviços do iFood.',
+  cta: { text: 'Não encontrei minha dúvida', link: '#' },
+  items: [
+    { id: 1, question: 'Como funciona a promoção de 4 primeiras mensalidades grátis?', answer: 'A promoção oferece 4 meses gratuitos para novos parceiros que se cadastrarem na plataforma.' },
+    { id: 2, question: 'O que é o iFood Salão?', answer: 'O iFood Salão é a solução de delivery e gerenciamento para restaurantes e estabelecimentos de food service.' },
+    { id: 3, question: 'Posso ter uma operação integrada de delivery e Salão com o iFood?', answer: 'Sim! O iFood permite integrar delivery e atendimento no local em uma única operação.' },
+  ],
 };
 
 const FOOTER_DEFAULTS: FooterData = {
-  logo: '',
-  copyright: '',
-  social_links: [],
-  columns: [],
+  logo: '/images/ifood/logo_footer.svg',
+  copyright: '© Copyright 2026 - iFood - Todos os direitos reservados iFood com Agência de Restaurantes Online S.A',
+  social_links: [
+    { platform: 'facebook', url: '#', icon: '/images/ifood/logo-facebook.svg' },
+    { platform: 'instagram', url: '#', icon: '/images/ifood/logo-instagram.svg' },
+    { platform: 'linkedin', url: '#', icon: '/images/ifood/logo-linkedin.svg' },
+  ],
+  columns: [
+    { title: 'iFood', badge: null, links: [{ label: 'Portal do Parceiro', url: '#' }, { label: 'Carreiras no iFood', url: '#' }, { label: 'Blog para Parceiros', url: '#' }] },
+    { title: 'Saiba mais', badge: null, links: [{ label: 'Privacidade', url: '#' }, { label: 'Código de conduta', url: '#' }] },
+    { title: 'Delivery', badge: null, links: [{ label: 'Plataforma', url: '#' }, { label: 'Central de crescimento', url: '#' }, { label: 'Logística', url: '#' }, { label: 'Gestão de pedidos', url: '#' }] },
+    { title: 'Salão', badge: 'Novo', links: [{ label: 'Comer fora', url: '#' }, { label: 'PDV', url: '#' }, { label: 'CRM 360', url: '#' }, { label: 'Relatórios e Insights', url: '#' }, { label: 'Gestão financeira', url: '#' }] },
+    { title: 'iFood Ads', badge: null, links: [{ label: 'Plataforma de anúncios', url: '#' }, { label: 'Campanhas premium', url: '#' }, { label: 'Analytics para marcas', url: '#' }] },
+    { title: 'iFood Pago', badge: null, links: [{ label: 'Conta digital', url: '#' }, { label: 'Antecipação', url: '#' }, { label: 'Crédito', url: '#' }] },
+  ],
 };
 
 function generateId(): string {

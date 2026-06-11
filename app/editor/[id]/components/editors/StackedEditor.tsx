@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { StackedBlock, StackedCard, StackedCTA } from '@/types/database';
 import styles from '../../editor.module.css';
 import { Icon } from '@/components/Icon/Icon';
 import { ImageUpload } from '../ImageUpload';
+import { stackedDefaults } from '../../block-config';
 
 interface Props {
   block: StackedBlock;
@@ -55,52 +57,18 @@ function Segmented<T extends string>({
   );
 }
 
-/* ---- editor de linhas de título ---- */
-function LinesEditor({
-  value, onChange, label = 'Título da seção (uma linha por campo)',
-}: {
-  value: string[];
-  onChange: (v: string[]) => void;
-  label?: string;
-}) {
-  const lines = value ?? [];
-  return (
-    <div className={styles.fieldGroup}>
-      <label className={styles.fieldLabel}>{label}</label>
-      {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: i < lines.length - 1 ? 6 : 0 }}>
-          <input
-            className={styles.fieldInput}
-            value={line}
-            placeholder={`Linha ${i + 1}`}
-            onChange={(e) => {
-              const next = [...lines];
-              next[i] = e.target.value;
-              onChange(next);
-            }}
-          />
-          {lines.length > 1 && (
-            <button
-              type="button"
-              className={styles.addItemBtn}
-              onClick={() => onChange(lines.filter((_, j) => j !== i))}
-              title="Remover linha"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      <button type="button" className={styles.addItemBtn} onClick={() => onChange([...lines, ''])} style={{ marginTop: 6 }}>
-        + Linha
-      </button>
-    </div>
-  );
-}
-
 /* ---- StackedEditor ---- */
 export function StackedEditor({ block, onUpdate, cardIndex = null, onCardIndexChange }: Props) {
-  const d = block.data;
+  // Bloco legado / recém-criado pode chegar sem data — semeia os defaults
+  // pra evitar runtime error ao acessar d.cards.
+  const existing = block.data as StackedBlock['data'] | undefined;
+  const d = existing ?? stackedDefaults('media');
+
+  useEffect(() => {
+    if (!existing) onUpdate({ ...block, data: d });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block.id]);
+
   const cards = d.cards ?? [];
 
   const update = (patch: Partial<typeof d>) => onUpdate({ ...block, data: { ...d, ...patch } });
@@ -155,20 +123,7 @@ export function StackedEditor({ block, onUpdate, cardIndex = null, onCardIndexCh
           </div>
         )}
 
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Rótulo (barra do card)</label>
-          <input className={styles.fieldInput} value={card.label} onChange={(e) => setCard(activeIndex, { label: e.target.value })} />
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Título (aberto)</label>
-          <textarea className={styles.fieldTextarea} value={card.title} onChange={(e) => setCard(activeIndex, { title: e.target.value })} />
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Descrição</label>
-          <textarea className={styles.fieldTextarea} value={card.description ?? ''} onChange={(e) => setCard(activeIndex, { description: e.target.value })} />
-        </div>
+        <p className={styles.selectorEmpty}>Edite rótulo, título e descrição do card com duplo-clique direto no preview.</p>
 
         <ImageUpload label="Imagem" value={card.image || ''} onChange={(url) => setCard(activeIndex, { image: url })} />
 
@@ -215,17 +170,7 @@ export function StackedEditor({ block, onUpdate, cardIndex = null, onCardIndexCh
   /* ====================== MODO SEÇÃO ====================== */
   return (
     <>
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Badge</label>
-        <input
-          className={styles.fieldInput}
-          value={d.badge ?? ''}
-          placeholder="Ex: Otimize sua operação"
-          onChange={(e) => update({ badge: e.target.value })}
-        />
-      </div>
-
-      <LinesEditor value={d.title} onChange={(v) => update({ title: v })} />
+      <p className={styles.selectorEmpty}>Edite badge e título com duplo-clique direto no preview.</p>
 
       <Segmented
         label="Posição da imagem (card aberto)"

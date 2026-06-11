@@ -9,9 +9,13 @@ import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
 import { PageCard } from '@/components/PageCard/PageCard';
-import type { PageWithVertical } from '@/components/PageCard/PageCard';
 import type { Page, Vertical } from '@/types/database';
 import styles from './home.module.css';
+
+type PageWithVertical = Page & {
+  vertical?: Vertical | null;
+  creator?: { full_name: string | null; avatar_url: string | null } | null;
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,7 +28,7 @@ export default function HomePage() {
     const [{ data: pagesData }, { data: verticalsData }] = await Promise.all([
       supabase
         .from('pages')
-        .select('*')
+        .select('*, creator:created_by(full_name, avatar_url)')
         .order('updated_at', { ascending: false }),
       supabase.from('verticals').select('*'),
     ]);
@@ -34,11 +38,12 @@ export default function HomePage() {
     );
 
     const pagesWithVerticals: PageWithVertical[] = (pagesData || []).map(
-      (page: Page) => ({
+      (page: any) => ({
         ...page,
         vertical: page.vertical_id
           ? verticalsMap.get(page.vertical_id) || null
           : null,
+        creator: page.creator || null,
       })
     );
 
@@ -134,8 +139,8 @@ export default function HomePage() {
                   <PageCard
                     key={page.id}
                     page={page}
-                    userName={userName}
-                    userAvatar={userAvatar}
+                    userName={page.creator?.full_name || 'Desconhecido'}
+                    userAvatar={page.creator?.avatar_url || null}
                     formatDate={formatCardDate}
                     onClick={() => router.push(`/editor/${page.id}`)}
                   />

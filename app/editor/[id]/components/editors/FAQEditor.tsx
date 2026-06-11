@@ -29,20 +29,38 @@ export function FAQEditor({ block, onUpdate }: Props) {
 
   return (
     <>
-      <div className={styles.fieldRow}>
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Badge</label>
-          <input className={styles.fieldInput} value={block.data.badge} onChange={(e) => update('badge', e.target.value)} />
-        </div>
-        <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>Título</label>
-          <input className={styles.fieldInput} value={block.data.title} onChange={(e) => update('title', e.target.value)} />
-        </div>
-      </div>
+      <p className={styles.selectorEmpty}>Edite badge, título e descrição com duplo-clique direto no preview.</p>
 
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Descrição</label>
-        <textarea className={styles.fieldTextarea} value={block.data.description} onChange={(e) => update('description', e.target.value)} />
+      <div className={styles.arraySection}>
+        <div className={styles.arraySectionHeader}>
+          <span className={styles.arraySectionTitle}>Botão "Não encontrei minha dúvida"</span>
+          <button
+            className={styles.addItemBtn}
+            onClick={() => update('cta', block.data.cta ? null : { text: 'Não encontrei minha dúvida', link: '#' })}
+          >
+            {block.data.cta ? 'Ocultar' : 'Mostrar'}
+          </button>
+        </div>
+        {block.data.cta && (
+          <div className={styles.fieldRow}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Texto</label>
+              <input
+                className={styles.fieldInput}
+                value={block.data.cta.text}
+                onChange={(e) => update('cta', { text: e.target.value, link: block.data.cta?.link ?? '#' })}
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Link</label>
+              <input
+                className={styles.fieldInput}
+                value={block.data.cta.link}
+                onChange={(e) => update('cta', { text: block.data.cta?.text ?? 'Não encontrei minha dúvida', link: e.target.value })}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.arraySection}>
