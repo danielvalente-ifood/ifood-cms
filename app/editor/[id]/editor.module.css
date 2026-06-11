@@ -391,22 +391,17 @@
 
 /* Edição do componente selecionado — flutuante à direita.
    Convive com o painel de inserção (à esquerda) sem sobrepor. */
+/* Painel inline: filho flex do .editorBody — empurra/encolhe o canvas em vez
+   de flutuar por cima do conteúdo da página. */
 .editPanel {
-  position: fixed;
-  right: 16px;
-  top: 64px;
-  bottom: 16px;
-  width: 340px;
-  max-width: calc(100vw - 32px);
-  z-index: 60;
-  background: color-mix(in srgb, var(--bg-primary) 75%, transparent);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  flex: 0 0 360px;
+  align-self: stretch;
+  background: var(--bg-primary);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideInRight 200ms ease-out;
+  animation: slideInRight 180ms ease-out;
 }
 
 .editPanelHeader {

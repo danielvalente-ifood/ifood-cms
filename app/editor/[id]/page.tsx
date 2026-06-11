@@ -13,6 +13,7 @@ import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
 import { ImageUpload } from './components/ImageUpload';
+import { MediaPicker } from './components/MediaPicker';
 import { Icon } from '@/components/Icon/Icon';
 import styles from './editor.module.css';
 import {
@@ -31,6 +32,21 @@ import {
 import type { HeroVariant } from '@/types/database';
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
+
+/** Set imutável por path com índices (ex: 'cards.2.title'). */
+function setByPath(obj: any, path: string, value: any): any {
+  const keys = path.split('.');
+  const clone = Array.isArray(obj) ? [...obj] : { ...obj };
+  let cur: any = clone;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    const next = cur[k];
+    cur[k] = Array.isArray(next) ? [...next] : { ...(next ?? {}) };
+    cur = cur[k];
+  }
+  cur[keys[keys.length - 1]] = value;
+  return clone;
+}
 
 type StructureGroup = {
   key: GroupKey;
@@ -126,6 +142,9 @@ export default function EditorPage() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
+  const skipNextSyncRef = useRef(false);
+  const [imageEditTarget, setImageEditTarget] = useState<{ blockId: string; path: string } | null>(null);
+
   const sendToIframe = useCallback((type: string, payload: any) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage({ type, payload }, '*');
@@ -133,9 +152,14 @@ export default function EditorPage() {
   }, []);
 
   useEffect(() => {
-    if (iframeReady) {
-      sendToIframe('cms:update-all-blocks', { blocks });
+    if (!iframeReady) return;
+    // Edição inline nasce no próprio iframe — não reenviar de volta (resetaria
+    // o caret durante a digitação).
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
     }
+    sendToIframe('cms:update-all-blocks', { blocks });
   }, [blocks, iframeReady, sendToIframe]);
 
   useEffect(() => {
@@ -151,6 +175,22 @@ export default function EditorPage() {
       if (type === 'landing:card-selected' && payload?.blockId) {
         setSelectedBlockId(payload.blockId);
         setSelectedCardIndex(typeof payload.cardIndex === 'number' ? payload.cardIndex : null);
+      }
+      // Edição inline de texto no iframe → aplica no bloco SEM ecoar de volta
+      // (o iframe já mostra a mudança; ecoar resetaria o caret).
+      if (type === 'landing:content-edit' && payload?.blockId && typeof payload.path === 'string') {
+        skipNextSyncRef.current = true;
+        setBlocks((prev) =>
+          prev.map((b) =>
+            b.id === payload.blockId ? { ...b, data: setByPath(b.data, payload.path, payload.value) } : b
+          )
+        );
+        setSaved(false);
+      }
+      // Duplo-clique numa imagem no iframe → abre a biblioteca pra trocar
+      if (type === 'landing:image-edit-request' && payload?.blockId && typeof payload.path === 'string') {
+        setSelectedBlockId(payload.blockId);
+        setImageEditTarget({ blockId: payload.blockId, path: payload.path });
       }
     };
     window.addEventListener('message', handler);
@@ -385,6 +425,14 @@ export default function EditorPage() {
     setBlocks(newBlocks);
     setSaved(false);
     sendToIframe('cms:update-block', { blockId: updatedBlock.id, data: updatedBlock.data, config: updatedBlock.config });
+  };
+
+  // Aplica a imagem escolhida na biblioteca ao path solicitado (edição inline).
+  const applyInlineImage = (target: { blockId: string; path: string }, url: string) => {
+    const idx = blocks.findIndex((b) => b.id === target.blockId);
+    if (idx < 0) return;
+    const updated = { ...blocks[idx], data: setByPath(blocks[idx].data, target.path, url) };
+    updateBlock(idx, updated);
   };
 
   const removeBlock = (index: number) => {
@@ -637,9 +685,8 @@ export default function EditorPage() {
             {!iframeReady && <div className={styles.iframeLoading}>Carregando preview...</div>}
           </div>
         </div>
-      </div>
 
-      {/* Painel de edição flutuante (abre ao clicar na seção no canvas) */}
+      {/* Painel de edição (inline — empurra/encolhe o canvas, fica à direita) */}
       {canEdit && selectedBlock && selIndex >= 0 && (
         <aside className={styles.editPanel} aria-label="Editar seção">
           <div className={styles.editPanelHeader}>
@@ -732,6 +779,7 @@ export default function EditorPage() {
           </div>
         </aside>
       )}
+      </div>
 
       {/* AI floating panel */}
       {canEdit && showAiPanel && (
@@ -817,6 +865,15 @@ export default function EditorPage() {
         <BlockSelector
           onSelect={addBlock}
           onClose={() => { setShowBlockSelector(false); setInsertIndex(-1); }}
+        />
+      )}
+
+      {/* Troca de imagem inline (duplo-clique numa imagem no iframe) */}
+      {canEdit && imageEditTarget && (
+        <MediaPicker
+          accept="image"
+          onSelect={(url) => { applyInlineImage(imageEditTarget, url); setImageEditTarget(null); }}
+          onClose={() => setImageEditTarget(null)}
         />
       )}
 
