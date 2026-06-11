@@ -59,7 +59,11 @@ export function PageCard({
                 items={[
                   {
                     label: 'Configurações',
+<<<<<<< HEAD
                     icon: 'settings',
+=======
+                    icon: 'settings-gear',
+>>>>>>> 7e6d124 (feat: menu de ações com configurações de página nos cards)
                     onClick: onEditSettings,
                   },
                 ]}
