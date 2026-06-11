@@ -124,6 +124,32 @@ export default function PagesPage() {
     setSelectedPage(null);
   };
 
+  const ensureUserExists = async (userId: string) => {
+    // Verifica se o usuário existe em cms_users
+    const { data: existingUser } = await supabase
+      .from('cms_users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (!existingUser) {
+      // Se não existe, cria o registro
+      const { error } = await supabase.from('cms_users').insert({
+        id: userId,
+        email: user?.email || '',
+        full_name: user?.user_metadata?.full_name || '',
+        avatar_url: user?.user_metadata?.avatar_url || null,
+      });
+
+      if (error) {
+        console.error('Erro ao criar usuário em cms_users:', error);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   // ---- Create ----
   const handleCreate = async () => {
     if (!formName.trim() || !formSlug.trim()) {
@@ -131,7 +157,20 @@ export default function PagesPage() {
       return;
     }
 
+    if (!user?.id) {
+      setFormError('Usuário não autenticado');
+      return;
+    }
+
     setFormLoading(true);
+
+    // Garante que o usuário existe em cms_users
+    const userExists = await ensureUserExists(user.id);
+    if (!userExists) {
+      setFormError('Erro ao registrar usuário');
+      setFormLoading(false);
+      return;
+    }
 
     const { data: existing } = await supabase
       .from('pages')
@@ -148,7 +187,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
-      created_by: user?.id,
+      created_by: user.id,
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -170,6 +209,7 @@ export default function PagesPage() {
       page_id: newPage.id,
       content: { blocks: [] },
       version_type: 'draft',
+      edited_by: user.id,
     });
 
     setShowCreateModal(false);
