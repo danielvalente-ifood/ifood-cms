@@ -54,13 +54,23 @@ export default function PagesPage() {
   const [generatingThumbnail, setGeneratingThumbnail] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const [{ data: pgs }, { data: verts }] = await Promise.all([
-      supabase
+    // Tenta com join; se falhar (coluna criador não existe), faz query simples
+    const { data: joinedPages, error: joinError } = await supabase
+      .from('pages')
+      .select('*, creator:created_by(full_name, avatar_url)')
+      .order('updated_at', { ascending: false });
+
+    let pgs = joinedPages;
+    if (joinError && !joinedPages) {
+      // Fallback: coluna created_by não existe ainda
+      const { data: simplePages } = await supabase
         .from('pages')
-        .select('*, creator:created_by(full_name, avatar_url)')
-        .order('updated_at', { ascending: false }),
-      supabase.from('verticals').select('*').order('name'),
-    ]);
+        .select('*')
+        .order('updated_at', { ascending: false });
+      pgs = simplePages;
+    }
+
+    const { data: verts } = await supabase.from('verticals').select('*').order('name');
 
     const vertMap = new Map((verts || []).map((v: Vertical) => [v.id, v]));
     const pagesWithVerticals: PageWithVertical[] = (pgs || []).map((p: any) => ({

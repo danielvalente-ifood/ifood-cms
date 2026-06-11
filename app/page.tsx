@@ -25,13 +25,25 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const fetchPages = useCallback(async () => {
-    const [{ data: pagesData }, { data: verticalsData }] = await Promise.all([
-      supabase
+    // Tenta com join de criador; se falhar, faz query simples (compatível com bancos antigos)
+    let pagesData: any = [];
+    const { data: verticalsData } = await supabase.from('verticals').select('*');
+
+    const { data: joinedPages, error: joinError } = await supabase
+      .from('pages')
+      .select('*, creator:created_by(full_name, avatar_url)')
+      .order('updated_at', { ascending: false });
+
+    if (joinError && !joinedPages) {
+      // Coluna created_by não existe ou join falhou — query simples
+      const { data: simplePges } = await supabase
         .from('pages')
-        .select('*, creator:created_by(full_name, avatar_url)')
-        .order('updated_at', { ascending: false }),
-      supabase.from('verticals').select('*'),
-    ]);
+        .select('*')
+        .order('updated_at', { ascending: false });
+      pagesData = simplePges || [];
+    } else {
+      pagesData = joinedPages || [];
+    }
 
     const verticalsMap = new Map(
       (verticalsData || []).map((v: Vertical) => [v.id, v])
