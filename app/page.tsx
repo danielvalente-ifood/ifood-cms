@@ -29,10 +29,13 @@ export default function HomePage() {
   const [pages, setPages] = useState<PageWithVertical[]>([]);
   const [loading, setLoading] = useState(true);
   const [verticals, setVerticals] = useState<Vertical[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPage, setSelectedPage] = useState<PageWithVertical | null>(null);
   const [formName, setFormName] = useState('');
+  const [formSlug, setFormSlug] = useState('');
   const [formVerticalId, setFormVerticalId] = useState('');
+  const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
   const fetchPages = useCallback(async () => {
@@ -123,6 +126,83 @@ export default function HomePage() {
   const userName = getFirstName();
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormName(value);
+    setFormSlug(generateSlug(value));
+    setFormError('');
+  };
+
+  const resetForm = () => {
+    setFormName('');
+    setFormSlug('');
+    setFormVerticalId('');
+    setFormError('');
+    setFormLoading(false);
+    setSelectedPage(null);
+  };
+
+  const handleCreate = async () => {
+    if (!formName.trim() || !formSlug.trim()) {
+      setFormError('Nome e slug são obrigatórios');
+      return;
+    }
+
+    setFormLoading(true);
+
+    const { data: existing } = await supabase
+      .from('pages')
+      .select('id')
+      .eq('slug', formSlug);
+
+    if (existing && existing.length > 0) {
+      setFormError('Esse slug já está em uso');
+      setFormLoading(false);
+      return;
+    }
+
+    const insertData: any = {
+      name: formName.trim(),
+      slug: formSlug.trim(),
+      status: 'draft',
+      created_by: user?.id,
+    };
+    if (formVerticalId) {
+      insertData.vertical_id = formVerticalId;
+    }
+
+    const { data: newPage, error } = await supabase
+      .from('pages')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error || !newPage) {
+      setFormError('Erro ao criar página');
+      setFormLoading(false);
+      return;
+    }
+
+    await supabase.from('page_versions').insert({
+      page_id: newPage.id,
+      content: { blocks: [] },
+      version_type: 'draft',
+    });
+
+    setShowCreateModal(false);
+    resetForm();
+    showToast('Página criada com sucesso', 'success');
+    fetchPages();
+  };
+
   const openEditModal = (page: PageWithVertical) => {
     setSelectedPage(page);
     setFormName(page.name);
@@ -190,7 +270,7 @@ export default function HomePage() {
                 <h2 className={styles.sectionTitle}>Suas páginas</h2>
                 <div className={styles.sectionActions}>
                   {canEdit && (
-                    <Button variant="primary" onClick={() => router.push('/pages')}>
+                    <Button variant="primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
                       <Icon name="plus-default" size={16} />
                       Criar nova página
                     </Button>
@@ -286,6 +366,90 @@ export default function HomePage() {
               ))}
             </select>
           </div>
+        </div>
+      </Modal>
+
+      {/* Create Modal */}
+      <Modal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Nova Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={handleCreate} disabled={formLoading}>
+              {formLoading ? 'Criando...' : 'Criar página'}
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Nome da página
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formName}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="Ex: Página iFood Pago"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Slug (URL)
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formSlug}
+              onChange={(e) => { setFormSlug(e.target.value); setFormError(''); }}
+              placeholder="pagina-ifood-pago"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Vertical
+            </label>
+            <select
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formVerticalId}
+              onChange={(e) => setFormVerticalId(e.target.value)}
+            >
+              <option value="">Ecossistema (sem vertical)</option>
+              {verticals.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </select>
+          </div>
+          {formError && <p style={{ color: 'var(--color-error)', fontSize: '13px', margin: '0' }}>{formError}</p>}
         </div>
       </Modal>
     </div>
