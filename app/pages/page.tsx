@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { PageCard } from '@/components/PageCard/PageCard';
@@ -22,6 +23,7 @@ import styles from './pages.module.css';
 type PageWithVertical = Page & {
   vertical?: Vertical | null;
   creator?: { full_name: string | null; avatar_url: string | null } | null;
+  collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
 };
 
 export default function PagesPage() {
@@ -73,11 +75,19 @@ export default function PagesPage() {
     const { data: verts } = await supabase.from('verticals').select('*').order('name');
 
     const vertMap = new Map((verts || []).map((v: Vertical) => [v.id, v]));
-    const pagesWithVerticals: PageWithVertical[] = (pgs || []).map((p: any) => ({
-      ...p,
-      vertical: p.vertical_id ? vertMap.get(p.vertical_id) || null : null,
-      creator: p.creator || null,
-    }));
+
+    // Fetch collaborators for each page in parallel
+    const pagesWithVerticals: PageWithVertical[] = await Promise.all(
+      (pgs || []).map(async (p: any) => {
+        const collaborators = await getPageCollaborators(p.id);
+        return {
+          ...p,
+          vertical: p.vertical_id ? vertMap.get(p.vertical_id) || null : null,
+          creator: p.creator || null,
+          collaborators,
+        };
+      })
+    );
 
     setPages(pagesWithVerticals);
     setVerticals(verts || []);

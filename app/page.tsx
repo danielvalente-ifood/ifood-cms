@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import styles from './home.module.css';
 type PageWithVertical = Page & {
   vertical?: Vertical | null;
   creator?: { full_name: string | null; avatar_url: string | null } | null;
+  collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
 };
 
 export default function HomePage() {
@@ -49,13 +51,18 @@ export default function HomePage() {
       (verticalsData || []).map((v: Vertical) => [v.id, v])
     );
 
-    const pagesWithVerticals: PageWithVertical[] = (pagesData || []).map(
-      (page: any) => ({
-        ...page,
-        vertical: page.vertical_id
-          ? verticalsMap.get(page.vertical_id) || null
-          : null,
-        creator: page.creator || null,
+    // Fetch collaborators for each page in parallel
+    const pagesWithVerticals: PageWithVertical[] = await Promise.all(
+      (pagesData || []).map(async (page: any) => {
+        const collaborators = await getPageCollaborators(page.id);
+        return {
+          ...page,
+          vertical: page.vertical_id
+            ? verticalsMap.get(page.vertical_id) || null
+            : null,
+          creator: page.creator || null,
+          collaborators,
+        };
       })
     );
 

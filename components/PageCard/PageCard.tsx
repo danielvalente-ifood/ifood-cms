@@ -4,10 +4,12 @@ import { ReactNode } from 'react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { StatusType } from '@/components/ui/status-badge';
 import type { Page, Vertical } from '@/types/database';
+import { AvatarStack } from '@/components/AvatarStack/AvatarStack';
 import styles from './PageCard.module.css';
 
 export interface PageWithVertical extends Page {
   vertical?: Vertical | null;
+  collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
 }
 
 interface PageCardProps {
@@ -64,6 +66,11 @@ export function PageCard({
               </span>
             )}
             <span className={styles.authorName}>{userName}</span>
+            {page.collaborators && page.collaborators.length > 0 && (
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <AvatarStack avatars={page.collaborators} max={3} size={24} />
+              </div>
+            )}
           </div>
         </div>
       </div>

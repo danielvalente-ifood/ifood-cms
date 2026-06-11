@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
 import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
@@ -15,6 +16,7 @@ import { FilterDropdown } from '@/components/ui/filter-dropdown';
 import { ImageUpload } from './components/ImageUpload';
 import { MediaPicker } from './components/MediaPicker';
 import { Icon } from '@/components/Icon/Icon';
+import { AvatarStack } from '@/components/AvatarStack/AvatarStack';
 import styles from './editor.module.css';
 import {
   HERO_TYPES,
@@ -107,6 +109,7 @@ export default function EditorPage() {
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [zoom, setZoom] = useState(100);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [collaborators, setCollaborators] = useState<Array<{ id: string; full_name: string | null; avatar_url: string | null }>>([]);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -262,11 +265,13 @@ export default function EditorPage() {
   const saveDraft = useCallback(async (updatedBlocks: Block[], silent = false) => {
     setSaving(true);
     const content: PageContent = { blocks: updatedBlocks };
+    const { user } = useAuth();
 
     const { error } = await supabase.from('page_versions').insert({
       page_id: pageId,
       content: content as unknown as Record<string, unknown>,
       version_type: 'draft' as const,
+      edited_by: user?.id,
     } as any);
 
     if (error) {
@@ -296,6 +301,15 @@ export default function EditorPage() {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
   }, [blocks, saved, loading, saveDraft]);
+
+  // Busca colaboradores após salvar
+  useEffect(() => {
+    const fetchCollaborators = async () => {
+      const collabs = await getPageCollaborators(pageId);
+      setCollaborators(collabs);
+    };
+    fetchCollaborators();
+  }, [pageId, lastSavedAt]);
 
   const handlePublish = async () => {
     if (blocks.length === 0) {
@@ -652,7 +666,12 @@ export default function EditorPage() {
                 {page.name}
               </h1>
             )}
-            <span className={styles.pageSlug}>/{page.slug}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className={styles.pageSlug}>/{page.slug}</span>
+              {collaborators.length > 0 && (
+                <AvatarStack avatars={collaborators} max={3} size={24} />
+              )}
+            </div>
           </div>
         </div>
 
