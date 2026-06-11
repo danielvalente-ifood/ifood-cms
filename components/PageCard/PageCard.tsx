@@ -54,7 +54,7 @@ export function PageCard({
           />
           <span className={styles.cardDate}>{formatDate(page.updated_at)}</span>
           {onEditSettings && (
-            <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ marginLeft: 'auto', marginRight: '-8px' }} onClick={(e) => e.stopPropagation()}>
               <ActionMenu
                 items={[
                   {
