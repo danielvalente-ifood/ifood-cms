@@ -84,7 +84,8 @@ export type Block =
   | ResultsBlock
   | FAQBlock
   | FooterBlock
-  | StackedBlock;
+  | StackedBlock
+  | BigNumbersBlock;
 
 export type BlockType =
   | 'navbar'
@@ -98,7 +99,8 @@ export type BlockType =
   | 'integrated'
   | 'results'
   | 'faq'
-  | 'footer';
+  | 'footer'
+  | 'big-numbers';
 
 // =============================================
 // Block base
@@ -151,7 +153,7 @@ export type HeroVariant = 'full' | 'slider' | 'centered' | 'split-image' | 'spli
 export interface HeroCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary';
+  style?: 'primary' | 'secondary' | 'empty';
 }
 
 export interface HeroSlide {
@@ -200,7 +202,7 @@ export type HeroBlock = BaseBlock<'hero', HeroData>;
 export interface BeneficioCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary';
+  style?: 'primary' | 'secondary' | 'empty';
 }
 
 export interface BeneficioCard {
@@ -229,7 +231,7 @@ export type BeneficiosBlock = BaseBlock<'beneficios', BeneficiosData>;
 export interface ContentCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary';
+  style?: 'primary' | 'secondary' | 'empty';
 }
 
 export interface ContentData {
@@ -254,7 +256,7 @@ export type ContentBlock = BaseBlock<'content', ContentData>;
 export interface PromoCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary';
+  style?: 'primary' | 'secondary' | 'empty';
 }
 
 export interface PromoData {
@@ -427,6 +429,29 @@ export interface FAQItem {
 }
 
 export type FAQBlock = BaseBlock<'faq', FAQData>;
+
+// =============================================
+// Big Numbers
+// =============================================
+
+export interface BigNumbersStat {
+  /** Valor numérico em destaque — ex: "120 milhões", "+450 mil" */
+  value: string;
+  /** Nome do ícone da biblioteca fixa (/public/icons) */
+  icon: string;
+  /** Rótulo descritivo — ex: "Pedidos no app" */
+  label: string;
+}
+
+export interface BigNumbersData {
+  badge?: string;
+  /** Título centralizado (string simples, não array) */
+  title: string;
+  /** Mínimo 3, máximo 5 stats */
+  stats: BigNumbersStat[];
+}
+
+export type BigNumbersBlock = BaseBlock<'big-numbers', BigNumbersData>;
 
 // =============================================
 // Footer

@@ -94,7 +94,7 @@ function CtasEditor({
             label="Estilo"
             value={c.style ?? 'primary'}
             onChange={(v) => setCta(i, { style: v })}
-            options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }]}
+            options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }, { v: 'empty', label: 'Vazio' }]}
           />
         </div>
       ))}

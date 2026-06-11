@@ -34,6 +34,7 @@ const typeIcons: Record<string, string> = {
   integrated: 'plugin-addon-puzzle',
   results: 'text-quotes-paragraph',
   faq: 'file-02-question-mark',
+  'big-numbers': 'barchart-default',
   footer: 'window-dock-bottom',
 };
 
@@ -48,6 +49,7 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
   { type: 'integrated', label: 'Features', description: 'Lista de funcionalidades' },
   { type: 'results', label: 'Depoimentos', description: 'Testimonials de clientes' },
   { type: 'faq', label: 'FAQ', description: 'Perguntas e respostas' },
+  { type: 'big-numbers', label: 'Big Numbers', description: 'Estatísticas em destaque (3 a 5 itens)' },
   { type: 'navbar', label: 'Navbar', description: 'Menu de navegação' },
   // Footer é fixo em toda página — não selecionável no painel de adicionar.
 ];
@@ -80,29 +82,22 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
     { id: 'media', label: 'Mídia + texto', description: 'Cards empilham no scroll; aberto = imagem + título, descrição e CTA (3 a 8).' },
   ],
   vision: [
-    { id: 'vision-1', label: 'Layout 1', description: 'Cards horizontais com badges' },
-    { id: 'vision-2', label: 'Layout 2', description: 'Grid 2x2 com ícones' },
-    { id: 'vision-3', label: 'Layout 3', description: 'Carrossel com depoimentos' },
+    { id: 'vision-1', label: 'Social Proof', description: 'Números, ratings e credibilidade' },
   ],
   growth: [
-    { id: 'growth-1', label: 'Layout 1', description: 'Tabs horizontais clássico' },
-    { id: 'growth-2', label: 'Layout 2', description: 'Steps numerados verticais' },
-    { id: 'growth-3', label: 'Layout 3', description: 'Cards expansíveis' },
+    { id: 'growth-1', label: 'Growth', description: 'Cards com tabs deslizantes' },
   ],
   integrated: [
-    { id: 'integrated-1', label: 'Layout 1', description: 'Grid de cards com ícones' },
-    { id: 'integrated-2', label: 'Layout 2', description: 'Lista vertical com screenshots' },
-    { id: 'integrated-3', label: 'Layout 3', description: 'Bento grid assimétrico' },
+    { id: 'integrated-1', label: 'Features', description: 'Lista de funcionalidades com ícones' },
   ],
   results: [
-    { id: 'results-1', label: 'Layout 1', description: 'Carrossel horizontal com avatares' },
-    { id: 'results-2', label: 'Layout 2', description: 'Grid de cards com aspas grandes' },
-    { id: 'results-3', label: 'Layout 3', description: 'Vídeo principal + thumbnails' },
+    { id: 'results-1', label: 'Depoimentos', description: 'Testimonials de clientes' },
   ],
   faq: [
-    { id: 'faq-1', label: 'Layout 1', description: 'Accordion simples vertical' },
-    { id: 'faq-2', label: 'Layout 2', description: 'Duas colunas com busca' },
-    { id: 'faq-3', label: 'Layout 3', description: 'Tabs por categoria' },
+    { id: 'faq-1', label: 'FAQ', description: 'Accordion de perguntas e respostas' },
+  ],
+  'big-numbers': [
+    { id: 'default', label: 'Grade horizontal', description: 'Estatísticas em destaque lado a lado (3 a 5 itens).' },
   ],
   navbar: [
     { id: 'navbar-1', label: 'Layout 1', description: 'Logo + menu central + CTA direita' },
@@ -180,8 +175,12 @@ export function BlockSelector({ onSelect, onClose, existingTypes = [] }: BlockSe
   const handleCategoryClick = (type: BlockType) => {
     if (isDisabled(type)) return;
     const v = BLOCK_VARIANTS[type];
-    if (v && v.length > 0) {
+    if (v && v.length > 1) {
+      // Múltiplas variantes — mostra o picker
       setPendingType(type);
+    } else if (v && v.length === 1) {
+      // Única variante — adiciona direto sem mostrar picker
+      onSelect(type, v[0].id);
     } else {
       onSelect(type);
     }

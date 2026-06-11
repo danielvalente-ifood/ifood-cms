@@ -22,7 +22,7 @@ import styles from './pages.module.css';
 
 type PageWithVertical = Page & {
   vertical?: Vertical | null;
-  creator?: { full_name: string | null; avatar_url: string | null } | null;
+  creator?: { id?: string; full_name: string | null; avatar_url: string | null } | null;
   collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
 };
 
@@ -60,7 +60,7 @@ export default function PagesPage() {
     // Tenta com join; se falhar (coluna criador não existe), faz query simples
     const { data: joinedPages, error: joinError } = await supabase
       .from('pages')
-      .select('*, creator:created_by(full_name, avatar_url)')
+      .select('*, creator:created_by(id, full_name, avatar_url)')
       .order('updated_at', { ascending: false });
 
     let pgs = joinedPages;
@@ -124,35 +124,24 @@ export default function PagesPage() {
     setSelectedPage(null);
   };
 
-  const ensureUserExists = async (userId: string) => {
+  // Garante que o usuário existe em cms_users e retorna o cms_users.id (diferente do auth uid!)
+  const ensureUserExists = async (): Promise<string | null> => {
     try {
-      // Tenta criar ou atualizar o usuário (upsert)
-      const insertData: any = {
-        id: userId,
-        email: user?.email || '',
-        full_name: user?.user_metadata?.full_name || '',
-      };
+      const { data: cmsUserId, error } = await supabase.rpc('upsert_current_user', {
+        email_input: user?.email || '',
+        full_name_input: user?.user_metadata?.full_name || '',
+        avatar_url_input: user?.user_metadata?.avatar_url || null,
+      });
 
-      // Só inclui avatar_url se tiver valor
-      if (user?.user_metadata?.avatar_url) {
-        insertData.avatar_url = user.user_metadata.avatar_url;
+      if (error) {
+        console.error('Erro ao garantir usuário em cms_users:', JSON.stringify(error));
+        return null;
       }
 
-      const { error: upsertError, data } = await supabase
-        .from('cms_users')
-        .upsert(insertData, { onConflict: 'id' });
-
-      if (upsertError) {
-        console.error('Erro ao garantir usuário em cms_users:', JSON.stringify(upsertError));
-        // Continua mesmo com erro - o banco pode deixar passar
-        return true;
-      }
-
-      return true;
+      return cmsUserId as string;
     } catch (err) {
       console.error('Erro inesperado em ensureUserExists:', err);
-      // Continua mesmo com erro - não bloqueia a criação da página
-      return true;
+      return null;
     }
   };
 
@@ -170,6 +159,14 @@ export default function PagesPage() {
 
     setFormLoading(true);
 
+    // Garante que o usuário existe em cms_users e retorna cms_users.id
+    const cmsUserId = await ensureUserExists();
+    if (!cmsUserId) {
+      setFormError('Erro ao registrar usuário no sistema');
+      setFormLoading(false);
+      return;
+    }
+
     const { data: existing } = await supabase
       .from('pages')
       .select('id')
@@ -185,7 +182,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
-      created_by: user.id,
+      created_by: cmsUserId, // usa o cms_users.id, não o auth uid
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -203,12 +200,12 @@ export default function PagesPage() {
       return;
     }
 
-    await supabase.from('page_versions').insert({
-      page_id: newPage.id,
-      content: { blocks: [] },
-      version_type: 'draft',
-      edited_by: user.id,
-    });
+    // Cria a versão inicial — edited_by pode não estar no schema cache ainda
+    const versionData: any = { page_id: newPage.id, content: { blocks: [] }, version_type: 'draft' };
+    let { error: versionError } = await supabase.from('page_versions').insert({ ...versionData, edited_by: cmsUserId });
+    if (versionError?.code === 'PGRST204') {
+      ({ error: versionError } = await supabase.from('page_versions').insert(versionData));
+    }
 
     setShowCreateModal(false);
     resetForm();
@@ -233,6 +230,14 @@ export default function PagesPage() {
     }
 
     setFormLoading(true);
+
+    // Garante que o usuário existe em cms_users e retorna cms_users.id
+    const cmsUserId = await ensureUserExists();
+    if (!cmsUserId) {
+      setFormError('Erro ao registrar usuário no sistema');
+      setFormLoading(false);
+      return;
+    }
 
     const { data: existing } = await supabase
       .from('pages')
@@ -273,6 +278,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
+      created_by: cmsUserId, // usa o cms_users.id, não o auth uid
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -294,6 +300,7 @@ export default function PagesPage() {
       page_id: newPage.id,
       content,
       version_type: 'draft',
+      edited_by: cmsUserId,
     });
 
     setShowDuplicateModal(false);
@@ -561,7 +568,7 @@ export default function PagesPage() {
               <PageCard
                 key={page.id}
                 page={page}
-                userName={page.creator?.full_name || 'Desconhecido'}
+                userName={(page.creator?.full_name || 'Desconhecido').split(' ')[0]}
                 userAvatar={page.creator?.avatar_url || null}
                 formatDate={formatDate}
                 onClick={() => router.push(`/editor/${page.id}`)}

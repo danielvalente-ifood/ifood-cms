@@ -14,6 +14,7 @@ import { GrowthEditor } from './editors/GrowthEditor';
 import { IntegratedEditor } from './editors/IntegratedEditor';
 import { ResultsEditor } from './editors/ResultsEditor';
 import { FAQEditor } from './editors/FAQEditor';
+import { BigNumbersEditor } from './editors/BigNumbersEditor';
 import { NavbarEditor } from './editors/NavbarEditor';
 import { FooterEditor } from './editors/FooterEditor';
 
@@ -49,6 +50,7 @@ const typeLabels: Record<string, string> = {
   integrated: 'Features',
   results: 'Depoimentos',
   faq: 'FAQ',
+  'big-numbers': 'Big Numbers',
   footer: 'Footer',
 };
 
@@ -63,6 +65,7 @@ const typeIcons: Record<string, string> = {
   integrated: 'plugin-addon-puzzle',
   results: 'text-quotes-paragraph',
   faq: 'file-02-question-mark',
+  'big-numbers': 'barchart-default',
   footer: 'window-dock-bottom',
 };
 
@@ -90,6 +93,7 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       case 'integrated': return <IntegratedEditor block={block} onUpdate={updateHandler} />;
       case 'results': return <ResultsEditor block={block} onUpdate={updateHandler} />;
       case 'faq': return <FAQEditor block={block} onUpdate={updateHandler} />;
+      case 'big-numbers': return <BigNumbersEditor block={block} onUpdate={updateHandler} />;
       case 'navbar': return <NavbarEditor block={block} onUpdate={updateHandler} />;
       case 'footer': return <FooterEditor block={block} onUpdate={updateHandler} />;
       default: return <p>Editor não disponível para este tipo de bloco</p>;

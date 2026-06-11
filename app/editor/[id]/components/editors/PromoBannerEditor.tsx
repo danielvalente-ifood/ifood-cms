@@ -114,7 +114,7 @@ function CtasEditor({
             label="Estilo"
             value={c.style ?? 'primary'}
             onChange={(v) => setCta(i, { style: v })}
-            options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }]}
+            options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }, { v: 'empty', label: 'Vazio' }]}
           />
         </div>
       ))}
@@ -184,6 +184,18 @@ export function PromoBannerEditor({ block, onUpdate }: Props) {
         onChange={(v) => update({ curtain: v === 'on' })}
         options={[{ v: 'on', label: 'Ligado' }, { v: 'off', label: 'Desligado' }]}
       />
+
+      <div className={styles.arraySection}>
+        <div className={styles.arraySectionHeader}>
+          <span className={styles.arraySectionTitle}>Descrição</span>
+          <button
+            className={styles.addItemBtn}
+            onClick={() => update({ description: d.description ? '' : 'Uma plataforma que organiza atendimento, pedidos, pagamentos e gestão.' })}
+          >
+            {d.description ? 'Ocultar' : 'Mostrar'}
+          </button>
+        </div>
+      </div>
 
       <p className={styles.selectorEmpty}>Edite título e descrição com duplo-clique direto no preview.</p>
 

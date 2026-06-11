@@ -33,7 +33,7 @@ import {
 } from './block-config';
 import type { HeroVariant } from '@/types/database';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 /** Set imutável por path com índices (ex: 'cards.2.title'). */
 function setByPath(obj: any, path: string, value: any): any {
@@ -110,6 +110,7 @@ export default function EditorPage() {
   const [zoom, setZoom] = useState(100);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [collaborators, setCollaborators] = useState<Array<{ id: string; full_name: string | null; avatar_url: string | null }>>([]);
+  const [cmsUserId, setCmsUserId] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,6 +142,21 @@ export default function EditorPage() {
   const structureSectionRef = useRef<HTMLElement>(null);
 
   const grouped = useMemo(() => splitBlocks(blocks), [blocks]);
+
+  // Resolve o cms_users.id do usuário logado (diferente do auth.uid())
+  useEffect(() => {
+    async function resolveCmsUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('cms_users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+      if (data?.id) setCmsUserId(data.id);
+    }
+    resolveCmsUser();
+  }, []);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -265,13 +281,12 @@ export default function EditorPage() {
   const saveDraft = useCallback(async (updatedBlocks: Block[], silent = false) => {
     setSaving(true);
     const content: PageContent = { blocks: updatedBlocks };
-    const { user } = useAuth();
 
     const { error } = await supabase.from('page_versions').insert({
       page_id: pageId,
       content: content as unknown as Record<string, unknown>,
       version_type: 'draft' as const,
-      edited_by: user?.id,
+      edited_by: cmsUserId ?? undefined,
     } as any);
 
     if (error) {
@@ -282,7 +297,7 @@ export default function EditorPage() {
       if (!silent) showToast('Rascunho salvo', 'success');
     }
     setSaving(false);
-  }, [pageId, showToast]);
+  }, [pageId, showToast, cmsUserId]);
 
   useEffect(() => {
     latestBlocksRef.current = blocks;
@@ -529,6 +544,7 @@ export default function EditorPage() {
     }
     setBlocks(newBlocks);
     setSaved(false);
+    showToast(`${BLOCK_TYPE_LABELS[type] ?? type} adicionado`, 'success');
     // Mantém o painel de inserção aberto e NÃO abre o painel de edição.
     // O painel de edição (direita) só abre ao clicar no componente no canvas.
     setInsertIndex(-1);
@@ -668,9 +684,6 @@ export default function EditorPage() {
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className={styles.pageSlug}>/{page.slug}</span>
-              {collaborators.length > 0 && (
-                <AvatarStack avatars={collaborators} max={3} size={24} />
-              )}
             </div>
           </div>
         </div>
@@ -707,6 +720,9 @@ export default function EditorPage() {
         <div className={styles.topBarRight}>
           {canEdit ? (
             <>
+              {collaborators.length > 0 && (
+                <AvatarStack avatars={collaborators} max={3} size={28} square />
+              )}
               <button
                 className={styles.btnPreview}
                 onClick={() => window.open(`${LANDING_URL}/p/${page.slug}?edit=true`, '_blank')}

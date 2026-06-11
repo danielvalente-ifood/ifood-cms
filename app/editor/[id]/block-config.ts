@@ -19,14 +19,18 @@ import type {
   ResultsData,
   FAQData,
   FooterData,
+  BigNumbersData,
 } from '@/types/database';
 
 export type GroupKey = 'hero' | 'content' | 'footer';
 
-export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq';
+// BigNumbers label usado no BLOCK_TYPE_LABELS e CONTENT_CATEGORIES
+const BIG_NUMBERS_LABEL = 'Big Numbers';
+
+export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq' | 'big-numbers';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq', 'big-numbers'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
@@ -41,6 +45,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   integrated: 'Features',
   results: 'Depoimentos',
   faq: 'FAQ',
+  'big-numbers': BIG_NUMBERS_LABEL,
   footer: 'Footer',
 };
 
@@ -54,6 +59,7 @@ export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
   { type: 'integrated', label: 'Features' },
   { type: 'results', label: 'Depoimentos' },
   { type: 'faq', label: 'FAQ' },
+  { type: 'big-numbers', label: BIG_NUMBERS_LABEL },
 ];
 
 export function getGroupKey(type: BlockType): GroupKey | null {
@@ -118,7 +124,7 @@ export function heroDefaults(variant: HeroVariant = 'full'): HeroData {
 
 export type BeneficiosVariant = 'cards' | 'cards-action';
 
-const BENEFICIOS_TITLE = ['A maior base de clientes do Brasil', 'está a um clique do seu salão'];
+const BENEFICIOS_TITLE = ['A maior base de clientes do Brasil está a um clique do seu salão'];
 const BENEFICIOS_CARDS: BeneficioCard[] = [
   {
     icon: 'grid-dashboard-bento',
@@ -285,6 +291,19 @@ const FAQ_DEFAULTS: FAQData = {
   ],
 };
 
+export function bigNumbersDefaults(): BigNumbersData {
+  return {
+    badge: 'Visão integrada',
+    title: 'A maior base de clientes do Brasil está a um clique do seu salão',
+    stats: [
+      { value: '120 milhões', icon: 'heart', label: 'Pedidos no app' },
+      { value: '+450 mil', icon: 'store-building-default', label: 'Estabelecimentos parceiros' },
+      { value: '1.5 Mil', icon: 'map-pin-location-default', label: 'Cidades em todo o Brasil' },
+      { value: '+60 milhões', icon: 'users-group-default', label: 'Clientes' },
+    ],
+  };
+}
+
 const FOOTER_DEFAULTS: FooterData = {
   logo: '/images/ifood/logo_footer.svg',
   copyright: '© Copyright 2026 - iFood - Todos os direitos reservados iFood com Agência de Restaurantes Online S.A',
@@ -333,6 +352,8 @@ export function createBlock(type: BlockType, theme: number, variant?: string): B
       return { id, type: 'results', data: { ...RESULTS_DEFAULTS }, theme };
     case 'faq':
       return { id, type: 'faq', data: { ...FAQ_DEFAULTS }, theme };
+    case 'big-numbers':
+      return { id, type: 'big-numbers', data: bigNumbersDefaults(), theme };
     case 'footer':
       return { id, type: 'footer', data: { ...FOOTER_DEFAULTS }, theme };
     default:
