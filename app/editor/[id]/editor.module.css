@@ -103,6 +103,30 @@
   padding: 0 4px;
 }
 
+.btnUndo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.btnUndo:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.btnUndo:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .btnOutline {
   padding: 7px 14px;
   background: transparent;

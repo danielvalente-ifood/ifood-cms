@@ -116,6 +116,9 @@ export default function EditorPage() {
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(true);
   const latestBlocksRef = useRef<Block[]>([]);
+  const historyRef = useRef<Block[][]>([]);
+  const MAX_HISTORY = 50;
+  const [historySize, setHistorySize] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // AI adaptation config
@@ -485,9 +488,25 @@ export default function EditorPage() {
   };
 
   const updateBlocks = (nextBlocks: Block[]) => {
+    // Salva estado atual no histórico antes de aplicar a mudança
+    historyRef.current = [...historyRef.current.slice(-MAX_HISTORY + 1), blocks];
+    setHistorySize(historyRef.current.length);
     setBlocks(nextBlocks);
     setSaved(false);
   };
+
+  const undo = useCallback(() => {
+    if (historyRef.current.length === 0) return;
+    const prev = historyRef.current[historyRef.current.length - 1];
+    historyRef.current = historyRef.current.slice(0, -1);
+    setHistorySize(historyRef.current.length);
+    setBlocks(prev);
+    setSaved(false);
+    sendToIframe('cms:update-all-blocks', { blocks: prev });
+    showToast('Ação desfeita', 'success');
+  }, [showToast]);
+
+  const canUndo = historySize > 0;
 
   const updateBlock = (index: number, updatedBlock: Block) => {
     const newBlocks = [...blocks];
@@ -625,6 +644,23 @@ export default function EditorPage() {
     };
   }, [activeGroup]);
 
+  // Ctrl+Z global para desfazer — ignora quando o foco está em input/textarea/contenteditable
+  useEffect(() => {
+    const handleUndo = (e: KeyboardEvent) => {
+      if (!((e.metaKey || e.ctrlKey) && e.key === 'z')) return;
+      const target = e.target as HTMLElement;
+      const isEditing =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isEditing) return;
+      e.preventDefault();
+      undo();
+    };
+    document.addEventListener('keydown', handleUndo);
+    return () => document.removeEventListener('keydown', handleUndo);
+  }, [undo]);
+
   if (loading) {
     return <div className={styles.loading}>Carregando editor...</div>;
   }
@@ -734,6 +770,14 @@ export default function EditorPage() {
               <span className={styles.saveStatus}>
                 {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
               </span>
+              <button
+                className={styles.btnUndo}
+                onClick={undo}
+                disabled={!canUndo}
+                title="Desfazer (Ctrl+Z)"
+              >
+                <Icon name="undo" size={15} />
+              </button>
               <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
                 Publicar
               </button>
