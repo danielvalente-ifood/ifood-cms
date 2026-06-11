@@ -9,7 +9,9 @@ import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { PageCard } from '@/components/PageCard/PageCard';
+import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './home.module.css';
 
@@ -23,13 +25,21 @@ export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { canEdit } = useRole();
+  const { toast, showToast } = useToast();
   const [pages, setPages] = useState<PageWithVertical[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verticals, setVerticals] = useState<Vertical[]>([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<PageWithVertical | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formVerticalId, setFormVerticalId] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
 
   const fetchPages = useCallback(async () => {
     // Tenta com join de criador; se falhar, faz query simples (compatível com bancos antigos)
     let pagesData: any = [];
     const { data: verticalsData } = await supabase.from('verticals').select('*');
+    setVerticals(verticalsData || []);
 
     const { data: joinedPages, error: joinError } = await supabase
       .from('pages')
@@ -113,6 +123,47 @@ export default function HomePage() {
   const userName = getFirstName();
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
+  const openEditModal = (page: PageWithVertical) => {
+    setSelectedPage(page);
+    setFormName(page.name);
+    setFormVerticalId(page.vertical_id || '');
+    setShowEditModal(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedPage || !formName.trim()) {
+      showToast('Nome é obrigatório', 'error');
+      return;
+    }
+
+    setFormLoading(true);
+
+    const updateData: any = {
+      name: formName.trim(),
+    };
+    if (formVerticalId) {
+      updateData.vertical_id = formVerticalId;
+    } else {
+      updateData.vertical_id = null;
+    }
+
+    const { error } = await supabase
+      .from('pages')
+      .update(updateData)
+      .eq('id', selectedPage.id);
+
+    if (error) {
+      showToast('Erro ao salvar configurações', 'error');
+      setFormLoading(false);
+      return;
+    }
+
+    setShowEditModal(false);
+    setFormLoading(false);
+    showToast('Configurações atualizadas', 'success');
+    fetchPages();
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar />
@@ -162,6 +213,7 @@ export default function HomePage() {
                     userAvatar={page.creator?.avatar_url || null}
                     formatDate={formatCardDate}
                     onClick={() => router.push(`/editor/${page.id}`)}
+                    onEditSettings={canEdit ? () => openEditModal(page) : undefined}
                   />
                 ))}
               </div>
@@ -169,6 +221,73 @@ export default function HomePage() {
           )}
         </div>
       </main>
+
+      {/* Edit Settings Modal */}
+      <Modal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Configurações da Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSaveSettings} disabled={formLoading}>
+              {formLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Nome da página
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              placeholder="Nome da página"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Vertical
+            </label>
+            <select
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formVerticalId}
+              onChange={(e) => setFormVerticalId(e.target.value)}
+            >
+              <option value="">Ecossistema (sem vertical)</option>
+              {verticals.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

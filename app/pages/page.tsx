@@ -45,6 +45,7 @@ export default function PagesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPage, setSelectedPage] = useState<PageWithVertical | null>(null);
 
   // Form states
@@ -373,6 +374,49 @@ export default function PagesPage() {
     setGeneratingThumbnail(null);
   };
 
+  // ---- Edit Settings ----
+  const openEditModal = (page: PageWithVertical) => {
+    setSelectedPage(page);
+    setFormName(page.name);
+    setFormVerticalId(page.vertical_id || '');
+    setFormError('');
+    setShowEditModal(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedPage || !formName.trim()) {
+      setFormError('Nome é obrigatório');
+      return;
+    }
+
+    setFormLoading(true);
+
+    const updateData: any = {
+      name: formName.trim(),
+    };
+    if (formVerticalId) {
+      updateData.vertical_id = formVerticalId;
+    } else {
+      updateData.vertical_id = null;
+    }
+
+    const { error } = await supabase
+      .from('pages')
+      .update(updateData)
+      .eq('id', selectedPage.id);
+
+    if (error) {
+      setFormError('Erro ao salvar configurações');
+      setFormLoading(false);
+      return;
+    }
+
+    setShowEditModal(false);
+    setFormLoading(false);
+    showToast('Configurações atualizadas', 'success');
+    fetchData();
+  };
+
   // ---- Formatting ----
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -484,6 +528,7 @@ export default function PagesPage() {
                 formatDate={formatDate}
                 onClick={() => router.push(`/editor/${page.id}`)}
                 onStatusChange={canEdit ? (newStatus) => handleStatusChange(page, newStatus) : undefined}
+                onEditSettings={canEdit ? () => openEditModal(page) : undefined}
                 actions={canEdit ? (
                   <>
                     <button className={cardStyles.btnAction} onClick={() => router.push(`/editor/${page.id}`)}>
@@ -616,6 +661,46 @@ export default function PagesPage() {
           </>
         }
       />
+
+      {/* Edit Settings Modal */}
+      <Modal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Configurações da Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveSettings} disabled={formLoading}>
+              {formLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Nome da página</label>
+          <input
+            className={styles.formInput}
+            value={formName}
+            onChange={(e) => { setFormName(e.target.value); setFormError(''); }}
+            placeholder="Nome da página"
+            autoFocus
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Vertical</label>
+          <select
+            className={styles.formSelect}
+            value={formVerticalId}
+            onChange={(e) => { setFormVerticalId(e.target.value); setFormError(''); }}
+          >
+            <option value="">Ecossistema (sem vertical)</option>
+            {verticals.map((v) => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </select>
+        </div>
+        {formError && <p className={styles.formError}>{formError}</p>}
+      </Modal>
 
       {/* Toast */}
       <Toast toast={toast} />

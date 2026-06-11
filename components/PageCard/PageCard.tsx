@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import type { StatusType } from '@/components/ui/status-badge';
 import type { Page, Vertical } from '@/types/database';
 import { AvatarStack } from '@/components/AvatarStack/AvatarStack';
+import { ActionMenu } from '@/components/ActionMenu/ActionMenu';
 import styles from './PageCard.module.css';
 
 export interface PageWithVertical extends Page {
@@ -20,6 +21,7 @@ interface PageCardProps {
   onClick: () => void;
   actions?: ReactNode;
   onStatusChange?: (newStatus: StatusType) => void;
+  onEditSettings?: () => void;
 }
 
 const PAGE_STATUSES: StatusType[] = ['draft', 'published'];
@@ -32,6 +34,7 @@ export function PageCard({
   onClick,
   actions,
   onStatusChange,
+  onEditSettings,
 }: PageCardProps) {
   return (
     <article
@@ -50,6 +53,19 @@ export function PageCard({
             dropdownStatuses={onStatusChange ? PAGE_STATUSES : undefined}
           />
           <span className={styles.cardDate}>{formatDate(page.updated_at)}</span>
+          {onEditSettings && (
+            <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
+              <ActionMenu
+                items={[
+                  {
+                    label: 'Configurações',
+                    icon: 'settings',
+                    onClick: onEditSettings,
+                  },
+                ]}
+              />
+            </div>
+          )}
         </div>
 
         <div className={styles.cardBottom}>
