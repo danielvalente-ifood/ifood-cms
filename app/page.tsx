@@ -185,17 +185,32 @@ export default function HomePage() {
       .select()
       .single();
 
-    if (error || !newPage) {
-      setFormError('Erro ao criar página');
+    if (error) {
+      console.error('Erro ao criar página:', error);
+      setFormError(error.message || 'Erro ao criar página');
       setFormLoading(false);
       return;
     }
 
-    await supabase.from('page_versions').insert({
+    if (!newPage) {
+      setFormError('Erro ao criar página: resposta vazia');
+      setFormLoading(false);
+      return;
+    }
+
+    const { error: versionError } = await supabase.from('page_versions').insert({
       page_id: newPage.id,
       content: { blocks: [] },
       version_type: 'draft',
+      edited_by: user?.id,
     });
+
+    if (versionError) {
+      console.error('Erro ao criar versão:', versionError);
+      setFormError('Erro ao criar página');
+      setFormLoading(false);
+      return;
+    }
 
     setShowCreateModal(false);
     resetForm();
