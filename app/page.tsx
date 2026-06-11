@@ -152,33 +152,29 @@ export default function HomePage() {
 
   const ensureUserExists = async (userId: string) => {
     try {
-      // Verifica se o usuário existe em cms_users (usa maybeSingle para não falhar se não encontrar)
-      const { data: existingUser, error: selectError } = await supabase
-        .from('cms_users')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (selectError) {
-        console.error('Erro ao buscar usuário:', selectError);
-        return false;
-      }
-
-      // Se o usuário já existe, retorna true
-      if (existingUser) {
-        return true;
-      }
-
-      // Se não existe, cria o registro
-      const { error: insertError } = await supabase.from('cms_users').insert({
+      // Tenta criar ou atualizar o usuário (upsert)
+      const insertData: any = {
         id: userId,
         email: user?.email || '',
         full_name: user?.user_metadata?.full_name || '',
-        avatar_url: user?.user_metadata?.avatar_url || null,
-      });
+      };
 
-      if (insertError) {
-        console.error('Erro ao criar usuário em cms_users:', insertError);
+      // Só inclui avatar_url se tiver valor
+      if (user?.user_metadata?.avatar_url) {
+        insertData.avatar_url = user.user_metadata.avatar_url;
+      }
+
+      const { error: upsertError } = await supabase
+        .from('cms_users')
+        .upsert(insertData, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error('Erro ao garantir usuário em cms_users:', {
+          message: upsertError.message,
+          code: upsertError.code,
+          details: upsertError.details,
+          hint: upsertError.hint,
+        });
         return false;
       }
 
