@@ -13,14 +13,15 @@ export interface Collaborator {
  * Deduplicado: se o mesmo usuário editou 5 vezes, aparece uma vez.
  */
 export async function getPageCollaborators(pageId: string, limit = 3): Promise<Collaborator[]> {
+  // Tenta com join; se falhar (edited_by pode ser NULL em novos registros), retorna []
   const { data: versions, error } = await supabase
     .from('page_versions')
     .select('edited_by, creator:edited_by(id, full_name, avatar_url)')
     .eq('page_id', pageId)
+    .not('edited_by', 'is', null)
     .order('created_at', { ascending: false });
 
   if (error || !versions) {
-    console.error('Failed to fetch collaborators:', error);
     return [];
   }
 
