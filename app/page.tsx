@@ -419,7 +419,7 @@ export default function HomePage() {
               value={formVerticalId}
               onChange={(e) => setFormVerticalId(e.target.value)}
             >
-              <option value="">Ecossistema (sem vertical)</option>
+              <option value="">iFood Ecossistema</option>
               {verticals.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
@@ -504,7 +504,7 @@ export default function HomePage() {
               value={formVerticalId}
               onChange={(e) => setFormVerticalId(e.target.value)}
             >
-              <option value="">Ecossistema (sem vertical)</option>
+              <option value="">iFood Ecossistema</option>
               {verticals.map((v) => (
                 <option key={v.id} value={v.id}>{v.name}</option>
               ))}
