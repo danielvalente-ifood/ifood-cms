@@ -24,7 +24,7 @@ import { Toast } from '@/components/ui/toast';
 import { useToast } from '@/hooks/useToast';
 import styles from './experiment-detail.module.css';
 
-const LANDING_URL = 'http://localhost:3001';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 const typeLabels: Record<string, string> = {
   navbar: 'Navbar',

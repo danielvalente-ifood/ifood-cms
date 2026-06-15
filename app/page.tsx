@@ -5,40 +5,77 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { PageCard } from '@/components/PageCard/PageCard';
-import type { PageWithVertical } from '@/components/PageCard/PageCard';
+import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './home.module.css';
+
+type PageWithVertical = Page & {
+  vertical?: Vertical | null;
+  creator?: { id?: string; full_name: string | null; avatar_url: string | null } | null;
+  collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
+};
 
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { canEdit } = useRole();
+  const { toast, showToast } = useToast();
   const [pages, setPages] = useState<PageWithVertical[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verticals, setVerticals] = useState<Vertical[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<PageWithVertical | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formSlug, setFormSlug] = useState('');
+  const [formVerticalId, setFormVerticalId] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
 
   const fetchPages = useCallback(async () => {
-    const [{ data: pagesData }, { data: verticalsData }] = await Promise.all([
-      supabase
+    // Tenta com join de criador; se falhar, faz query simples (compatível com bancos antigos)
+    let pagesData: any = [];
+    const { data: verticalsData } = await supabase.from('verticals').select('*');
+    setVerticals(verticalsData || []);
+
+    const { data: joinedPages, error: joinError } = await supabase
+      .from('pages')
+      .select('*, creator:created_by(id, full_name, avatar_url)')
+      .order('updated_at', { ascending: false });
+
+    if (joinError && !joinedPages) {
+      // Coluna created_by não existe ou join falhou — query simples
+      const { data: simplePges } = await supabase
         .from('pages')
         .select('*')
-        .order('updated_at', { ascending: false }),
-      supabase.from('verticals').select('*'),
-    ]);
+        .order('updated_at', { ascending: false });
+      pagesData = simplePges || [];
+    } else {
+      pagesData = joinedPages || [];
+    }
 
     const verticalsMap = new Map(
       (verticalsData || []).map((v: Vertical) => [v.id, v])
     );
 
-    const pagesWithVerticals: PageWithVertical[] = (pagesData || []).map(
-      (page: Page) => ({
-        ...page,
-        vertical: page.vertical_id
-          ? verticalsMap.get(page.vertical_id) || null
-          : null,
+    // Fetch collaborators for each page in parallel
+    const pagesWithVerticals: PageWithVertical[] = await Promise.all(
+      (pagesData || []).map(async (page: any) => {
+        const collaborators = await getPageCollaborators(page.id);
+        return {
+          ...page,
+          vertical: page.vertical_id
+            ? verticalsMap.get(page.vertical_id) || null
+            : null,
+          creator: page.creator || null,
+          collaborators,
+        };
       })
     );
 
@@ -89,6 +126,185 @@ export default function HomePage() {
   const userName = getFirstName();
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormName(value);
+    setFormSlug(generateSlug(value));
+    setFormError('');
+  };
+
+  const resetForm = () => {
+    setFormName('');
+    setFormSlug('');
+    setFormVerticalId('');
+    setFormError('');
+    setFormLoading(false);
+    setSelectedPage(null);
+  };
+
+  // Garante que o usuário existe em cms_users e retorna o cms_users.id (diferente do auth uid!)
+  const ensureUserExists = async (): Promise<string | null> => {
+    try {
+      const { data: cmsUserId, error } = await supabase.rpc('upsert_current_user', {
+        email_input: user?.email || '',
+        full_name_input: user?.user_metadata?.full_name || '',
+        avatar_url_input: user?.user_metadata?.avatar_url || null,
+      });
+
+      if (error) {
+        console.error('Erro ao garantir usuário em cms_users:', JSON.stringify(error));
+        return null;
+      }
+
+      return cmsUserId as string;
+    } catch (err) {
+      console.error('Erro inesperado em ensureUserExists:', err);
+      return null;
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!formName.trim() || !formSlug.trim()) {
+      setFormError('Nome e slug são obrigatórios');
+      return;
+    }
+
+    if (!user?.id) {
+      setFormError('Usuário não autenticado');
+      return;
+    }
+
+    setFormLoading(true);
+
+    // Garante que o usuário existe em cms_users e retorna o cms_users.id
+    const cmsUserId = await ensureUserExists();
+    if (!cmsUserId) {
+      setFormError('Erro ao registrar usuário no sistema');
+      setFormLoading(false);
+      return;
+    }
+
+    const { data: existing } = await supabase
+      .from('pages')
+      .select('id')
+      .eq('slug', formSlug);
+
+    if (existing && existing.length > 0) {
+      setFormError('Esse slug já está em uso');
+      setFormLoading(false);
+      return;
+    }
+
+    const insertData: any = {
+      name: formName.trim(),
+      slug: formSlug.trim(),
+      status: 'draft',
+      created_by: cmsUserId, // usa o cms_users.id, não o auth uid
+    };
+    if (formVerticalId) {
+      insertData.vertical_id = formVerticalId;
+    }
+
+    const { data: newPage, error } = await supabase
+      .from('pages')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar página:', error);
+      setFormError(error.message || 'Erro ao criar página');
+      setFormLoading(false);
+      return;
+    }
+
+    if (!newPage) {
+      setFormError('Erro ao criar página: resposta vazia');
+      setFormLoading(false);
+      return;
+    }
+
+    // Cria a versão inicial — edited_by pode não existir ainda no schema cache
+    const versionData: any = {
+      page_id: newPage.id,
+      content: { blocks: [] },
+      version_type: 'draft',
+    };
+
+    // Tenta com edited_by; se falhar por schema cache, tenta sem
+    let { error: versionError } = await supabase
+      .from('page_versions')
+      .insert({ ...versionData, edited_by: cmsUserId });
+
+    if (versionError?.code === 'PGRST204') {
+      // Schema cache ainda não reconhece edited_by — insere sem o campo
+      ({ error: versionError } = await supabase
+        .from('page_versions')
+        .insert(versionData));
+    }
+
+    if (versionError) {
+      console.error('Erro ao criar versão:', versionError);
+      setFormError('Erro ao criar página');
+      setFormLoading(false);
+      return;
+    }
+
+    setShowCreateModal(false);
+    resetForm();
+    showToast('Página criada com sucesso', 'success');
+    fetchPages();
+  };
+
+  const openEditModal = (page: PageWithVertical) => {
+    setSelectedPage(page);
+    setFormName(page.name);
+    setFormVerticalId(page.vertical_id || '');
+    setShowEditModal(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedPage || !formName.trim()) {
+      showToast('Nome é obrigatório', 'error');
+      return;
+    }
+
+    setFormLoading(true);
+
+    const updateData: any = {
+      name: formName.trim(),
+    };
+    if (formVerticalId) {
+      updateData.vertical_id = formVerticalId;
+    } else {
+      updateData.vertical_id = null;
+    }
+
+    const { error } = await supabase
+      .from('pages')
+      .update(updateData)
+      .eq('id', selectedPage.id);
+
+    if (error) {
+      showToast('Erro ao salvar configurações', 'error');
+      setFormLoading(false);
+      return;
+    }
+
+    setShowEditModal(false);
+    setFormLoading(false);
+    showToast('Configurações atualizadas', 'success');
+    fetchPages();
+  };
+
   return (
     <div className={styles.layout}>
       <Sidebar />
@@ -115,7 +331,7 @@ export default function HomePage() {
                 <h2 className={styles.sectionTitle}>Suas páginas</h2>
                 <div className={styles.sectionActions}>
                   {canEdit && (
-                    <Button variant="primary" onClick={() => router.push('/pages')}>
+                    <Button variant="primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
                       <Icon name="plus-default" size={16} />
                       Criar nova página
                     </Button>
@@ -134,10 +350,11 @@ export default function HomePage() {
                   <PageCard
                     key={page.id}
                     page={page}
-                    userName={userName}
-                    userAvatar={userAvatar}
+                    userName={(page.creator?.full_name || 'Desconhecido').split(' ')[0]}
+                    userAvatar={page.creator?.avatar_url || null}
                     formatDate={formatCardDate}
                     onClick={() => router.push(`/editor/${page.id}`)}
+                    onEditSettings={canEdit ? () => openEditModal(page) : undefined}
                   />
                 ))}
               </div>
@@ -145,6 +362,157 @@ export default function HomePage() {
           )}
         </div>
       </main>
+
+      {/* Edit Settings Modal */}
+      <Modal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Configurações da Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSaveSettings} disabled={formLoading}>
+              {formLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Nome da página
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              placeholder="Nome da página"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Vertical
+            </label>
+            <select
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formVerticalId}
+              onChange={(e) => setFormVerticalId(e.target.value)}
+            >
+              <option value="">iFood Ecossistema</option>
+              {verticals.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Modal */}
+      <Modal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Nova Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={handleCreate} disabled={formLoading}>
+              {formLoading ? 'Criando...' : 'Criar página'}
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Nome da página
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formName}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="Ex: Página iFood Pago"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Slug (URL)
+            </label>
+            <input
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formSlug}
+              onChange={(e) => { setFormSlug(e.target.value); setFormError(''); }}
+              placeholder="pagina-ifood-pago"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Vertical
+            </label>
+            <select
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+              }}
+              value={formVerticalId}
+              onChange={(e) => setFormVerticalId(e.target.value)}
+            >
+              <option value="">iFood Ecossistema</option>
+              {verticals.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </select>
+          </div>
+          {formError && <p style={{ color: 'var(--color-error)', fontSize: '13px', margin: '0' }}>{formError}</p>}
+        </div>
+      </Modal>
     </div>
   );
 }

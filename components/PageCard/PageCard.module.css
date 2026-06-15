@@ -98,7 +98,16 @@
   font-weight: var(--weight-medium);
   color: var(--text-primary);
   letter-spacing: -0.42px;
-  line-height: normal;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.authorLabel {
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: 0;
+  line-height: 1.2;
   white-space: nowrap;
 }
 

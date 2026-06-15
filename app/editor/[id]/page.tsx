@@ -5,13 +5,19 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
+import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
+import { BigNumbersEditor } from './components/editors/BigNumbersEditor';
+import { StackedEditor } from './components/editors/StackedEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
 import { ImageUpload } from './components/ImageUpload';
+import { MediaPicker } from './components/MediaPicker';
 import { Icon } from '@/components/Icon/Icon';
+import { AvatarStack } from '@/components/AvatarStack/AvatarStack';
 import styles from './editor.module.css';
 import {
   HERO_TYPES,
@@ -21,11 +27,29 @@ import {
   BLOCK_TYPE_LABELS,
   createBlock,
   duplicateBlock as duplicateBlockConfig,
+  heroDefaults,
+  beneficiosDefaults,
   type GroupKey,
   type ContentType,
 } from './block-config';
+import type { HeroVariant } from '@/types/database';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
+
+/** Set imutável por path com índices (ex: 'cards.2.title'). */
+function setByPath(obj: any, path: string, value: any): any {
+  const keys = path.split('.');
+  const clone = Array.isArray(obj) ? [...obj] : { ...obj };
+  let cur: any = clone;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    const next = cur[k];
+    cur[k] = Array.isArray(next) ? [...next] : { ...(next ?? {}) };
+    cur = cur[k];
+  }
+  cur[keys[keys.length - 1]] = value;
+  return clone;
+}
 
 type StructureGroup = {
   key: GroupKey;
@@ -37,7 +61,7 @@ type StructureGroup = {
 const STRUCTURE_GROUPS: StructureGroup[] = [
   { key: 'hero', label: 'Hero', icon: 'window-dock-top', singleton: true },
   { key: 'content', label: 'Content', icon: 'window-fullscreen', singleton: false },
-  { key: 'footer', label: 'Footer', icon: 'window-dock-bottom', singleton: true },
+  // Footer é fixo (padrão da página) — não aparece como seção editável.
 ];
 
 const HERO_SET = new Set<BlockType>(HERO_TYPES);
@@ -68,6 +92,8 @@ export default function EditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const [page, setPage] = useState<Page | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const [verticalSlug, setVerticalSlug] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,17 +102,24 @@ export default function EditorPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  // Card selecionado dentro de um bloco com itens (ex: benefícios)
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [showBlockSelector, setShowBlockSelector] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number>(-1);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [zoom, setZoom] = useState(100);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [collaborators, setCollaborators] = useState<Array<{ id: string; full_name: string | null; avatar_url: string | null }>>([]);
+  const [cmsUserId, setCmsUserId] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(true);
   const latestBlocksRef = useRef<Block[]>([]);
+  const historyRef = useRef<Block[][]>([]);
+  const MAX_HISTORY = 50;
+  const [historySize, setHistorySize] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // AI adaptation config
@@ -114,10 +147,28 @@ export default function EditorPage() {
 
   const grouped = useMemo(() => splitBlocks(blocks), [blocks]);
 
+  // Resolve o cms_users.id do usuário logado (diferente do auth.uid())
+  useEffect(() => {
+    async function resolveCmsUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('cms_users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+      if (data?.id) setCmsUserId(data.id);
+    }
+    resolveCmsUser();
+  }, []);
+
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const skipNextSyncRef = useRef(false);
+  const [imageEditTarget, setImageEditTarget] = useState<{ blockId: string; path: string } | null>(null);
 
   const sendToIframe = useCallback((type: string, payload: any) => {
     if (iframeRef.current?.contentWindow) {
@@ -126,9 +177,14 @@ export default function EditorPage() {
   }, []);
 
   useEffect(() => {
-    if (iframeReady) {
-      sendToIframe('cms:update-all-blocks', { blocks });
+    if (!iframeReady) return;
+    // Edição inline nasce no próprio iframe — não reenviar de volta (resetaria
+    // o caret durante a digitação).
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
     }
+    sendToIframe('cms:update-all-blocks', { blocks });
   }, [blocks, iframeReady, sendToIframe]);
 
   useEffect(() => {
@@ -138,6 +194,28 @@ export default function EditorPage() {
       // Clique numa seção no canvas abre o painel de edição (estilo Relume)
       if (type === 'landing:block-selected' && payload?.blockId) {
         setSelectedBlockId(payload.blockId);
+        setSelectedCardIndex(null);
+      }
+      // Clique num card específico (ex: benefícios) → edição daquele card
+      if (type === 'landing:card-selected' && payload?.blockId) {
+        setSelectedBlockId(payload.blockId);
+        setSelectedCardIndex(typeof payload.cardIndex === 'number' ? payload.cardIndex : null);
+      }
+      // Edição inline de texto no iframe → aplica no bloco SEM ecoar de volta
+      // (o iframe já mostra a mudança; ecoar resetaria o caret).
+      if (type === 'landing:content-edit' && payload?.blockId && typeof payload.path === 'string') {
+        skipNextSyncRef.current = true;
+        setBlocks((prev) =>
+          prev.map((b) =>
+            b.id === payload.blockId ? { ...b, data: setByPath(b.data, payload.path, payload.value) } : b
+          )
+        );
+        setSaved(false);
+      }
+      // Duplo-clique numa imagem no iframe → abre a biblioteca pra trocar
+      if (type === 'landing:image-edit-request' && payload?.blockId && typeof payload.path === 'string') {
+        setSelectedBlockId(payload.blockId);
+        setImageEditTarget({ blockId: payload.blockId, path: payload.path });
       }
     };
     window.addEventListener('message', handler);
@@ -212,6 +290,7 @@ export default function EditorPage() {
       page_id: pageId,
       content: content as unknown as Record<string, unknown>,
       version_type: 'draft' as const,
+      edited_by: cmsUserId ?? undefined,
     } as any);
 
     if (error) {
@@ -222,7 +301,7 @@ export default function EditorPage() {
       if (!silent) showToast('Rascunho salvo', 'success');
     }
     setSaving(false);
-  }, [pageId, showToast]);
+  }, [pageId, showToast, cmsUserId]);
 
   useEffect(() => {
     latestBlocksRef.current = blocks;
@@ -241,6 +320,15 @@ export default function EditorPage() {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
   }, [blocks, saved, loading, saveDraft]);
+
+  // Busca colaboradores após salvar
+  useEffect(() => {
+    const fetchCollaborators = async () => {
+      const collabs = await getPageCollaborators(pageId);
+      setCollaborators(collabs);
+    };
+    fetchCollaborators();
+  }, [pageId, lastSavedAt]);
 
   const handlePublish = async () => {
     if (blocks.length === 0) {
@@ -276,6 +364,45 @@ export default function EditorPage() {
     if (iframeRef.current) {
       iframeRef.current.src = iframeRef.current.src;
     }
+  };
+
+  // Gera um slug a partir do nome: minúsculas, sem acento, espaços → hífen.
+  const slugify = (s: string): string =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '') // remove acentos
+      .replace(/[^a-z0-9\s-]/g, '')    // só letras/números/espaço/hífen
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+  // Renomear a página: atualiza nome e slug juntos. O slug é derivado do nome
+  // pra manter a URL coerente com o título. Só persiste se mudou de fato.
+  const savePageName = async () => {
+    if (!page) return;
+    const nextName = nameDraft.trim();
+    setEditingName(false);
+    if (!nextName || nextName === page.name) return;
+
+    const nextSlug = slugify(nextName) || page.slug;
+    // Atualização otimista (UI + iframe re-renderizam com o novo slug)
+    const prevPage = page;
+    setPage({ ...page, name: nextName, slug: nextSlug });
+    // @ts-ignore
+    const { error } = await supabase
+      .from('pages')
+      .update({ name: nextName, slug: nextSlug })
+      .eq('id', pageId);
+    if (error) {
+      setPage(prevPage); // rollback (provável colisão de slug — unique constraint)
+      const msg = (error as { code?: string }).code === '23505'
+        ? 'Já existe uma página com esse nome'
+        : 'Não foi possível renomear';
+      showToast(msg, 'error');
+      return;
+    }
+    showToast('Nome atualizado', 'success');
   };
 
   const saveAiConfig = async () => {
@@ -362,9 +489,25 @@ export default function EditorPage() {
   };
 
   const updateBlocks = (nextBlocks: Block[]) => {
+    // Salva estado atual no histórico antes de aplicar a mudança
+    historyRef.current = [...historyRef.current.slice(-MAX_HISTORY + 1), blocks];
+    setHistorySize(historyRef.current.length);
     setBlocks(nextBlocks);
     setSaved(false);
   };
+
+  const undo = useCallback(() => {
+    if (historyRef.current.length === 0) return;
+    const prev = historyRef.current[historyRef.current.length - 1];
+    historyRef.current = historyRef.current.slice(0, -1);
+    setHistorySize(historyRef.current.length);
+    setBlocks(prev);
+    setSaved(false);
+    sendToIframe('cms:update-all-blocks', { blocks: prev });
+    showToast('Ação desfeita', 'success');
+  }, [showToast]);
+
+  const canUndo = historySize > 0;
 
   const updateBlock = (index: number, updatedBlock: Block) => {
     const newBlocks = [...blocks];
@@ -372,6 +515,14 @@ export default function EditorPage() {
     setBlocks(newBlocks);
     setSaved(false);
     sendToIframe('cms:update-block', { blockId: updatedBlock.id, data: updatedBlock.data, config: updatedBlock.config });
+  };
+
+  // Aplica a imagem escolhida na biblioteca ao path solicitado (edição inline).
+  const applyInlineImage = (target: { blockId: string; path: string }, url: string) => {
+    const idx = blocks.findIndex((b) => b.id === target.blockId);
+    if (idx < 0) return;
+    const updated = { ...blocks[idx], data: setByPath(blocks[idx].data, target.path, url) };
+    updateBlock(idx, updated);
   };
 
   const removeBlock = (index: number) => {
@@ -403,8 +554,8 @@ export default function EditorPage() {
     setSaved(false);
   };
 
-  const addBlock = (type: BlockType) => {
-    const newBlock = createEmptyBlock(type);
+  const addBlock = (type: BlockType, variantId?: string) => {
+    const newBlock = createEmptyBlock(type, variantId);
     const newBlocks = [...blocks];
     if (insertIndex >= 0) {
       newBlocks.splice(insertIndex, 0, newBlock);
@@ -412,10 +563,20 @@ export default function EditorPage() {
       newBlocks.push(newBlock);
     }
     setBlocks(newBlocks);
-    setShowBlockSelector(false);
-    setInsertIndex(-1);
     setSaved(false);
-    setSelectedBlockId(newBlock.id);
+    showToast(`${BLOCK_TYPE_LABELS[type] ?? type} adicionado`, 'success');
+    // Mantém o painel de inserção aberto e NÃO abre o painel de edição.
+    // O painel de edição (direita) só abre ao clicar no componente no canvas.
+    setInsertIndex(-1);
+    // Fecha o painel de inserção (BlockSelector) ao inserir um elemento.
+    setShowBlockSelector(false);
+    // Fecha os painéis flutuantes (IA / SEO) ao inserir um elemento.
+    setShowAiPanel(false);
+    setShowSeoPanel(false);
+    // Fecha o painel de edição do componente (direita), se aberto.
+    setSelectedBlockId(null);
+    setSelectedCardIndex(null);
+    sendToIframe('cms:deselect', {});
   };
 
   const handleSelectTheme = (groupKey: GroupKey, type: BlockType, theme: number) => {
@@ -484,6 +645,23 @@ export default function EditorPage() {
     };
   }, [activeGroup]);
 
+  // Ctrl+Z global para desfazer — ignora quando o foco está em input/textarea/contenteditable
+  useEffect(() => {
+    const handleUndo = (e: KeyboardEvent) => {
+      if (!((e.metaKey || e.ctrlKey) && e.key === 'z')) return;
+      const target = e.target as HTMLElement;
+      const isEditing =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable;
+      if (isEditing) return;
+      e.preventDefault();
+      undo();
+    };
+    document.addEventListener('keydown', handleUndo);
+    return () => document.removeEventListener('keydown', handleUndo);
+  }, [undo]);
+
   if (loading) {
     return <div className={styles.loading}>Carregando editor...</div>;
   }
@@ -511,8 +689,39 @@ export default function EditorPage() {
             <Icon name="chevron-left" size={20} />
           </button>
           <div>
-            <h1 className={styles.pageTitle}>{page.name}</h1>
-            <span className={styles.pageSlug}>/{page.slug}</span>
+            {editingName ? (
+              <input
+                autoFocus
+                className={`${styles.pageTitle} ${styles.pageTitleInput}`}
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onBlur={savePageName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.currentTarget as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setEditingName(false);
+                  }
+                }}
+              />
+            ) : (
+              <h1
+                className={styles.pageTitle}
+                onClick={() => {
+                  if (!canEdit) return;
+                  setNameDraft(page.name);
+                  setEditingName(true);
+                }}
+                title={canEdit ? 'Clique para renomear' : undefined}
+                style={canEdit ? { cursor: 'pointer' } : undefined}
+              >
+                {page.name}
+              </h1>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className={styles.pageSlug}>/{page.slug}</span>
+            </div>
           </div>
         </div>
 
@@ -548,6 +757,9 @@ export default function EditorPage() {
         <div className={styles.topBarRight}>
           {canEdit ? (
             <>
+              {collaborators.length > 0 && (
+                <AvatarStack avatars={collaborators} max={3} size={28} square />
+              )}
               <button
                 className={styles.btnPreview}
                 onClick={() => window.open(`${LANDING_URL}/p/${page.slug}?edit=true`, '_blank')}
@@ -559,6 +771,14 @@ export default function EditorPage() {
               <span className={styles.saveStatus}>
                 {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
               </span>
+              <button
+                className={styles.btnUndo}
+                onClick={undo}
+                disabled={!canUndo}
+                title="Desfazer (Ctrl+Z)"
+              >
+                <Icon name="undo" size={15} />
+              </button>
               <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
                 Publicar
               </button>
@@ -615,35 +835,107 @@ export default function EditorPage() {
             {!iframeReady && <div className={styles.iframeLoading}>Carregando preview...</div>}
           </div>
         </div>
-      </div>
 
-      {/* Painel de edição flutuante (abre ao clicar na seção no canvas) */}
+      {/* Painel de edição (inline — empurra/encolhe o canvas, fica à direita) */}
       {canEdit && selectedBlock && selIndex >= 0 && (
         <aside className={styles.editPanel} aria-label="Editar seção">
           <div className={styles.editPanelHeader}>
-            <span>Editar seção</span>
-            <button
-              className={styles.addIconBtn}
-              onClick={() => { setSelectedBlockId(null); sendToIframe('cms:deselect', {}); }}
-              aria-label="Fechar"
-            >
-              <Icon name="close-x" size={16} />
-            </button>
+            <span>
+              {selectedBlock.type === 'beneficios' && selectedCardIndex !== null
+                ? `Editar card ${selectedCardIndex + 1}`
+                : 'Editar seção'}
+            </span>
+            <div className={styles.blockActions}>
+              {/* Ações padronizadas da seção — ocultas só no modo card do Benefícios */}
+              {!(selectedBlock.type === 'beneficios' && selectedCardIndex !== null) && (
+                <>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => moveBlock(selIndex, 'up')}
+                    disabled={selIndex === 0}
+                    aria-label="Mover acima"
+                    title="Mover acima"
+                  >
+                    <Icon name="chevron-big-up" size={16} />
+                  </button>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => moveBlock(selIndex, 'down')}
+                    disabled={selIndex === blocks.length - 1}
+                    aria-label="Mover abaixo"
+                    title="Mover abaixo"
+                  >
+                    <Icon name="chevron-big-down" size={16} />
+                  </button>
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => duplicateBlock(selIndex)}
+                    aria-label="Duplicar"
+                    title="Duplicar"
+                  >
+                    <Icon name="copy-default" size={16} />
+                  </button>
+                  <button
+                    className={`${styles.blockActionBtn} ${styles.blockActionBtnDanger}`}
+                    onClick={() => { removeBlock(selIndex); setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                    aria-label="Deletar seção"
+                    title="Deletar seção"
+                  >
+                    <Icon name="delete-dustbin-01" size={16} />
+                  </button>
+                </>
+              )}
+              <button
+                className={styles.blockActionBtn}
+                onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                aria-label="Fechar"
+                title="Fechar"
+              >
+                <Icon name="close-x" size={16} />
+              </button>
+            </div>
           </div>
           <div className={styles.editPanelBody}>
-            <BlockEditor
-              block={selectedBlock}
-              index={selIndex}
-              total={blocks.length}
-              isSelected
-              onUpdate={(updated) => updateBlock(selIndex, updated)}
-              onRemove={() => { removeBlock(selIndex); setSelectedBlockId(null); }}
-              onMove={(dir) => moveBlock(selIndex, dir)}
-              onDuplicate={() => duplicateBlock(selIndex)}
-            />
+            {selectedBlock.type === 'beneficios' ? (
+              <BeneficiosEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+                onCardIndexChange={(i) => {
+                  setSelectedCardIndex(i);
+                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                }}
+              />
+            ) : selectedBlock.type === 'stacked' ? (
+              <StackedEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+                onCardIndexChange={(i) => {
+                  setSelectedCardIndex(i);
+                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                }}
+              />
+            ) : selectedBlock.type === 'big-numbers' ? (
+              <BigNumbersEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+              />
+            ) : (
+              <BlockEditor
+                block={selectedBlock}
+                index={selIndex}
+                total={blocks.length}
+                isSelected
+                chromeless
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+              />
+            )}
           </div>
         </aside>
       )}
+      </div>
 
       {/* AI floating panel */}
       {canEdit && showAiPanel && (
@@ -732,6 +1024,15 @@ export default function EditorPage() {
         />
       )}
 
+      {/* Troca de imagem inline (duplo-clique numa imagem no iframe) */}
+      {canEdit && imageEditTarget && (
+        <MediaPicker
+          accept="image"
+          onSelect={(url) => { applyInlineImage(imageEditTarget, url); setImageEditTarget(null); }}
+          onClose={() => setImageEditTarget(null)}
+        />
+      )}
+
       {/* Toast */}
       {toast && (
         <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`}>
@@ -753,11 +1054,18 @@ function formatTime(date: Date): string {
 }
 
 
-function createEmptyBlock(type: BlockType): Block {
+function createEmptyBlock(type: BlockType, variantId?: string): Block {
   const id = `block-${type}-${Date.now()}`;
+  if (type === 'hero') {
+    return { id, type, data: heroDefaults((variantId as HeroVariant) || 'full') } as Block;
+  }
+  if (type === 'beneficios') {
+    return { id, type, data: beneficiosDefaults((variantId as any) || 'cards') } as Block;
+  }
   const templates: Record<BlockType, any> = {
     navbar: { logo: '', cta_text: 'CTA', cta_link: '#', items: [] },
-    hero: { title: ['Título principal'], description: 'Descrição do hero', cta_text: 'Saiba mais', cta_link: '#', background_image: '', logo_decoration: '' },
+    hero: heroDefaults('full'),
+    beneficios: beneficiosDefaults('cards'),
     vision: { badge: 'Badge', title: ['Título'], ratings_count: '0', ratings_text: '', avatars: [], cards: [] },
     growth: { badge: 'Badge', title: ['Título'], tabs: [] },
     integrated: { badge: 'Badge', title: 'Título', image: '', features: [] },

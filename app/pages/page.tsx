@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useRole } from '@/hooks/useRole';
+import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Icon } from '@/components/Icon/Icon';
 import { PageCard } from '@/components/PageCard/PageCard';
@@ -19,7 +20,11 @@ import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './pages.module.css';
 
-type PageWithVertical = Page & { vertical?: Vertical | null };
+type PageWithVertical = Page & {
+  vertical?: Vertical | null;
+  creator?: { id?: string; full_name: string | null; avatar_url: string | null } | null;
+  collaborators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
+};
 
 export default function PagesPage() {
   const router = useRouter();
@@ -40,6 +45,7 @@ export default function PagesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPage, setSelectedPage] = useState<PageWithVertical | null>(null);
 
   // Form states
@@ -51,16 +57,38 @@ export default function PagesPage() {
   const [generatingThumbnail, setGeneratingThumbnail] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const [{ data: pgs }, { data: verts }] = await Promise.all([
-      supabase.from('pages').select('*').order('updated_at', { ascending: false }),
-      supabase.from('verticals').select('*').order('name'),
-    ]);
+    // Tenta com join; se falhar (coluna criador não existe), faz query simples
+    const { data: joinedPages, error: joinError } = await supabase
+      .from('pages')
+      .select('*, creator:created_by(id, full_name, avatar_url)')
+      .order('updated_at', { ascending: false });
+
+    let pgs = joinedPages;
+    if (joinError && !joinedPages) {
+      // Fallback: coluna created_by não existe ainda
+      const { data: simplePages } = await supabase
+        .from('pages')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      pgs = simplePages;
+    }
+
+    const { data: verts } = await supabase.from('verticals').select('*').order('name');
 
     const vertMap = new Map((verts || []).map((v: Vertical) => [v.id, v]));
-    const pagesWithVerticals: PageWithVertical[] = (pgs || []).map((p: Page) => ({
-      ...p,
-      vertical: p.vertical_id ? vertMap.get(p.vertical_id) || null : null,
-    }));
+
+    // Fetch collaborators for each page in parallel
+    const pagesWithVerticals: PageWithVertical[] = await Promise.all(
+      (pgs || []).map(async (p: any) => {
+        const collaborators = await getPageCollaborators(p.id);
+        return {
+          ...p,
+          vertical: p.vertical_id ? vertMap.get(p.vertical_id) || null : null,
+          creator: p.creator || null,
+          collaborators,
+        };
+      })
+    );
 
     setPages(pagesWithVerticals);
     setVerticals(verts || []);
@@ -96,6 +124,27 @@ export default function PagesPage() {
     setSelectedPage(null);
   };
 
+  // Garante que o usuário existe em cms_users e retorna o cms_users.id (diferente do auth uid!)
+  const ensureUserExists = async (): Promise<string | null> => {
+    try {
+      const { data: cmsUserId, error } = await supabase.rpc('upsert_current_user', {
+        email_input: user?.email || '',
+        full_name_input: user?.user_metadata?.full_name || '',
+        avatar_url_input: user?.user_metadata?.avatar_url || null,
+      });
+
+      if (error) {
+        console.error('Erro ao garantir usuário em cms_users:', JSON.stringify(error));
+        return null;
+      }
+
+      return cmsUserId as string;
+    } catch (err) {
+      console.error('Erro inesperado em ensureUserExists:', err);
+      return null;
+    }
+  };
+
   // ---- Create ----
   const handleCreate = async () => {
     if (!formName.trim() || !formSlug.trim()) {
@@ -103,7 +152,20 @@ export default function PagesPage() {
       return;
     }
 
+    if (!user?.id) {
+      setFormError('Usuário não autenticado');
+      return;
+    }
+
     setFormLoading(true);
+
+    // Garante que o usuário existe em cms_users e retorna cms_users.id
+    const cmsUserId = await ensureUserExists();
+    if (!cmsUserId) {
+      setFormError('Erro ao registrar usuário no sistema');
+      setFormLoading(false);
+      return;
+    }
 
     const { data: existing } = await supabase
       .from('pages')
@@ -120,6 +182,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
+      created_by: cmsUserId, // usa o cms_users.id, não o auth uid
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -137,11 +200,12 @@ export default function PagesPage() {
       return;
     }
 
-    await supabase.from('page_versions').insert({
-      page_id: newPage.id,
-      content: { blocks: [] },
-      version_type: 'draft',
-    });
+    // Cria a versão inicial — edited_by pode não estar no schema cache ainda
+    const versionData: any = { page_id: newPage.id, content: { blocks: [] }, version_type: 'draft' };
+    let { error: versionError } = await supabase.from('page_versions').insert({ ...versionData, edited_by: cmsUserId });
+    if (versionError?.code === 'PGRST204') {
+      ({ error: versionError } = await supabase.from('page_versions').insert(versionData));
+    }
 
     setShowCreateModal(false);
     resetForm();
@@ -166,6 +230,14 @@ export default function PagesPage() {
     }
 
     setFormLoading(true);
+
+    // Garante que o usuário existe em cms_users e retorna cms_users.id
+    const cmsUserId = await ensureUserExists();
+    if (!cmsUserId) {
+      setFormError('Erro ao registrar usuário no sistema');
+      setFormLoading(false);
+      return;
+    }
 
     const { data: existing } = await supabase
       .from('pages')
@@ -206,6 +278,7 @@ export default function PagesPage() {
       name: formName.trim(),
       slug: formSlug.trim(),
       status: 'draft',
+      created_by: cmsUserId, // usa o cms_users.id, não o auth uid
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
@@ -227,6 +300,7 @@ export default function PagesPage() {
       page_id: newPage.id,
       content,
       version_type: 'draft',
+      edited_by: cmsUserId,
     });
 
     setShowDuplicateModal(false);
@@ -345,6 +419,49 @@ export default function PagesPage() {
     setGeneratingThumbnail(null);
   };
 
+  // ---- Edit Settings ----
+  const openEditModal = (page: PageWithVertical) => {
+    setSelectedPage(page);
+    setFormName(page.name);
+    setFormVerticalId(page.vertical_id || '');
+    setFormError('');
+    setShowEditModal(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedPage || !formName.trim()) {
+      setFormError('Nome é obrigatório');
+      return;
+    }
+
+    setFormLoading(true);
+
+    const updateData: any = {
+      name: formName.trim(),
+    };
+    if (formVerticalId) {
+      updateData.vertical_id = formVerticalId;
+    } else {
+      updateData.vertical_id = null;
+    }
+
+    const { error } = await supabase
+      .from('pages')
+      .update(updateData)
+      .eq('id', selectedPage.id);
+
+    if (error) {
+      setFormError('Erro ao salvar configurações');
+      setFormLoading(false);
+      return;
+    }
+
+    setShowEditModal(false);
+    setFormLoading(false);
+    showToast('Configurações atualizadas', 'success');
+    fetchData();
+  };
+
   // ---- Formatting ----
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -451,11 +568,12 @@ export default function PagesPage() {
               <PageCard
                 key={page.id}
                 page={page}
-                userName={userName}
-                userAvatar={userAvatar}
+                userName={(page.creator?.full_name || 'Desconhecido').split(' ')[0]}
+                userAvatar={page.creator?.avatar_url || null}
                 formatDate={formatDate}
                 onClick={() => router.push(`/editor/${page.id}`)}
                 onStatusChange={canEdit ? (newStatus) => handleStatusChange(page, newStatus) : undefined}
+                onEditSettings={canEdit ? () => openEditModal(page) : undefined}
                 actions={canEdit ? (
                   <>
                     <button className={cardStyles.btnAction} onClick={() => router.push(`/editor/${page.id}`)}>
@@ -588,6 +706,46 @@ export default function PagesPage() {
           </>
         }
       />
+
+      {/* Edit Settings Modal */}
+      <Modal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Configurações da Página"
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSaveSettings} disabled={formLoading}>
+              {formLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Nome da página</label>
+          <input
+            className={styles.formInput}
+            value={formName}
+            onChange={(e) => { setFormName(e.target.value); setFormError(''); }}
+            placeholder="Nome da página"
+            autoFocus
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Vertical</label>
+          <select
+            className={styles.formSelect}
+            value={formVerticalId}
+            onChange={(e) => { setFormVerticalId(e.target.value); setFormError(''); }}
+          >
+            <option value="">Ecossistema (sem vertical)</option>
+            {verticals.map((v) => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </select>
+        </div>
+        {formError && <p className={styles.formError}>{formError}</p>}
+      </Modal>
 
       {/* Toast */}
       <Toast toast={toast} />

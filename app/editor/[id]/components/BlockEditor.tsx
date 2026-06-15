@@ -3,13 +3,18 @@
 import { useState, useEffect } from 'react';
 import type { Block } from '@/types/database';
 import styles from '../editor.module.css';
-import { SectionConfigPanel } from './SectionConfigPanel';
+import { Icon } from '@/components/Icon/Icon';
 import { HeroEditor } from './editors/HeroEditor';
+import { BeneficiosEditor } from './editors/BeneficiosEditor';
+import { ContentEditor } from './editors/ContentEditor';
+import { PromoBannerEditor } from './editors/PromoBannerEditor';
+import { StackedEditor } from './editors/StackedEditor';
 import { VisionEditor } from './editors/VisionEditor';
 import { GrowthEditor } from './editors/GrowthEditor';
 import { IntegratedEditor } from './editors/IntegratedEditor';
 import { ResultsEditor } from './editors/ResultsEditor';
 import { FAQEditor } from './editors/FAQEditor';
+import { BigNumbersEditor } from './editors/BigNumbersEditor';
 import { NavbarEditor } from './editors/NavbarEditor';
 import { FooterEditor } from './editors/FooterEditor';
 
@@ -29,31 +34,42 @@ interface BlockEditorProps {
   onDragEnd?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: () => void;
+  /** Renderiza apenas os campos do editor, sem o card/cabeçalho/ações internas.
+   *  Usado no painel flutuante, que já provê título e ações padronizadas. */
+  chromeless?: boolean;
 }
 
 const typeLabels: Record<string, string> = {
   navbar: 'Navbar',
   hero: 'Hero',
+  beneficios: 'Benefícios',
+  content: 'Conteúdo',
+  promo: 'Banner promocional',
   vision: 'Social Proof',
   growth: 'Growth',
   integrated: 'Features',
   results: 'Depoimentos',
   faq: 'FAQ',
+  'big-numbers': 'Big Numbers',
   footer: 'Footer',
 };
 
 const typeIcons: Record<string, string> = {
-  navbar: 'N',
-  hero: 'H',
-  vision: 'V',
-  growth: 'G',
-  integrated: 'I',
-  results: 'R',
-  faq: 'F',
-  footer: 'Ft',
+  navbar: 'burger-menu-three',
+  hero: 'photo-image-default',
+  beneficios: 'grid-dashboard-bento',
+  content: 'text-quotes-paragraph',
+  promo: 'photo-image-default',
+  vision: 'barchart-default',
+  growth: 'rocket-ship',
+  integrated: 'plugin-addon-puzzle',
+  results: 'text-quotes-paragraph',
+  faq: 'file-02-question-mark',
+  'big-numbers': 'barchart-default',
+  footer: 'window-dock-bottom',
 };
 
-export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop }: BlockEditorProps) {
+export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdate, onRemove, onMove, onDuplicate, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop, chromeless }: BlockEditorProps) {
   const [collapsed, setCollapsed] = useState(true);
 
   // Auto-expand when selected from iframe
@@ -68,16 +84,27 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
     const updateHandler = onUpdate || (() => {});
     switch (block.type) {
       case 'hero': return <HeroEditor block={block} onUpdate={updateHandler} />;
+      case 'beneficios': return <BeneficiosEditor block={block} onUpdate={updateHandler} />;
+      case 'content': return <ContentEditor block={block} onUpdate={updateHandler} />;
+      case 'promo': return <PromoBannerEditor block={block} onUpdate={updateHandler} />;
+      case 'stacked': return <StackedEditor block={block} onUpdate={updateHandler} />;
       case 'vision': return <VisionEditor block={block} onUpdate={updateHandler} />;
       case 'growth': return <GrowthEditor block={block} onUpdate={updateHandler} />;
       case 'integrated': return <IntegratedEditor block={block} onUpdate={updateHandler} />;
       case 'results': return <ResultsEditor block={block} onUpdate={updateHandler} />;
       case 'faq': return <FAQEditor block={block} onUpdate={updateHandler} />;
+      case 'big-numbers': return <BigNumbersEditor block={block} onUpdate={updateHandler} />;
       case 'navbar': return <NavbarEditor block={block} onUpdate={updateHandler} />;
       case 'footer': return <FooterEditor block={block} onUpdate={updateHandler} />;
       default: return <p>Editor não disponível para este tipo de bloco</p>;
     }
   };
+
+  // Modo chromeless: apenas os campos do editor (sem card/cabeçalho/ações).
+  // O painel flutuante já provê título + ações padronizadas no header.
+  if (chromeless) {
+    return <>{renderEditor()}</>;
+  }
 
   return (
     <div
@@ -87,28 +114,9 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
     >
       <div className={styles.blockHeader} onClick={() => { setCollapsed(!collapsed); onSelect?.(); }}>
         <div className={styles.blockType}>
-          {!readOnly && (
-            <div
-              className={styles.dragHandle}
-              draggable
-              onDragStart={(e) => {
-                e.stopPropagation();
-                onDragStart?.();
-              }}
-              onDragEnd={(e) => {
-                e.stopPropagation();
-                onDragEnd?.();
-              }}
-              title="Arrastar para reordenar"
-            >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="5" cy="3" r="1.5" /><circle cx="11" cy="3" r="1.5" />
-                <circle cx="5" cy="8" r="1.5" /><circle cx="11" cy="8" r="1.5" />
-                <circle cx="5" cy="13" r="1.5" /><circle cx="11" cy="13" r="1.5" />
-              </svg>
-            </div>
-          )}
-          <div className={styles.blockTypeIcon}>{typeIcons[block.type] || '?'}</div>
+          <div className={styles.blockTypeIcon}>
+            <Icon name={typeIcons[block.type] || 'grid-dashboard-bento'} size={16} />
+          </div>
           {typeLabels[block.type] || block.type}
         </div>
         {!readOnly && (
@@ -137,7 +145,6 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       </div>
       {!collapsed && (
         <div className={styles.blockBody}>
-          {!readOnly && <SectionConfigPanel block={block} onUpdate={onUpdate!} />}
           {renderEditor()}
         </div>
       )}
