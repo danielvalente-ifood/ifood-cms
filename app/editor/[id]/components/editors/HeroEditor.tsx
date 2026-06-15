@@ -185,6 +185,38 @@ export function HeroEditor({ block, onUpdate }: Props) {
     <>
       <Segmented label="Variante" value={variant} onChange={changeVariant} options={VARIANTS} />
 
+      {/* Cor de fundo sólida (todas as variantes, exceto slider per-slide) */}
+      {!sliderOn && (
+        <div className={styles.fieldGroup}>
+          <label className={styles.fieldLabel}>Cor de fundo</label>
+          <div className={styles.fieldRow} style={{ alignItems: 'center', gap: 8 }}>
+            <input
+              type="color"
+              value={d.background_color || '#272727'}
+              onChange={(e) => update({ background_color: e.target.value })}
+              style={{ width: 36, height: 36, padding: 2, border: '1px solid #e8e8ed', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
+            />
+            <input
+              className={styles.fieldInput}
+              value={d.background_color || ''}
+              placeholder="#272727"
+              onChange={(e) => update({ background_color: e.target.value || undefined })}
+            />
+            {d.background_color && (
+              <button
+                type="button"
+                className={styles.removeItemBtn}
+                title="Remover cor"
+                onClick={() => update({ background_color: undefined })}
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <p className={styles.selectorEmpty} style={{ marginTop: 4 }}>Sobrepõe o fundo padrão escuro. Deixe vazio para usar o padrão.</p>
+        </div>
+      )}
+
       {/* full / slider com carrossel ligado → edita slides; senão, campos simples */}
       {isSliderVariant && (
         <Segmented

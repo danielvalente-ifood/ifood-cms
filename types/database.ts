@@ -179,6 +179,8 @@ export interface HeroData {
   title: string[];
   description: string;
   ctas?: HeroCTA[];
+  /** cor sólida de fundo (hex) — alternativa à imagem */
+  background_color?: string;
   /** full / slider — imagem de fundo (banner único) */
   background_image?: string;
   /** split-image — imagem do card */
