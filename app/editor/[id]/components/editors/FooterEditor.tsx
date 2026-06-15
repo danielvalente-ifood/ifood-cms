@@ -77,7 +77,7 @@ export function FooterEditor({ block, onUpdate }: Props) {
             <button className={styles.removeItemBtn} onClick={() => removeColumn(ci)}>x</button>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Título da coluna</label>
-              <input className={styles.fieldInput} value={col.title} onChange={(e) => updateColumn(ci, 'title', e.target.value)} />
+              <input className={styles.fieldInput} value={col.title ?? ''} onChange={(e) => updateColumn(ci, 'title', e.target.value)} />
             </div>
 
             <div className={styles.arraySection}>
@@ -91,11 +91,11 @@ export function FooterEditor({ block, onUpdate }: Props) {
                   <div className={styles.fieldRow}>
                     <div className={styles.fieldGroup}>
                       <label className={styles.fieldLabel}>Texto</label>
-                      <input className={styles.fieldInput} value={link.label} onChange={(e) => updateLink(ci, li, 'label', e.target.value)} />
+                      <input className={styles.fieldInput} value={link.label ?? ''} onChange={(e) => updateLink(ci, li, 'label', e.target.value)} />
                     </div>
                     <div className={styles.fieldGroup}>
                       <label className={styles.fieldLabel}>URL</label>
-                      <input className={styles.fieldInput} value={link.url} onChange={(e) => updateLink(ci, li, 'url', e.target.value)} />
+                      <input className={styles.fieldInput} value={link.url ?? ''} onChange={(e) => updateLink(ci, li, 'url', e.target.value)} />
                     </div>
                   </div>
                 </div>

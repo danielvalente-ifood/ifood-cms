@@ -212,6 +212,10 @@ export interface BeneficioCard {
   description: string;
   /** CTAs opcionais por card (0, 1 ou 2) */
   ctas?: BeneficioCTA[];
+  /** Cor do ícone e do fundo do chip (hex) — default '#141414' */
+  iconColor?: string;
+  /** Opacidade do fundo do chip (0–100) — default 5 */
+  iconBgOpacity?: number;
 }
 
 export interface BeneficiosData {
@@ -220,6 +224,8 @@ export interface BeneficiosData {
   description?: string;
   /** mínimo 2, máximo 5 cards */
   cards: BeneficioCard[];
+  /** 'default' (com CTAs) | 'compact' (sem CTAs, título 40px) */
+  variant?: 'default' | 'compact';
 }
 
 export type BeneficiosBlock = BaseBlock<'beneficios', BeneficiosData>;
@@ -390,6 +396,8 @@ export interface ResultsData {
   badge: string;
   title: string[];
   testimonials: Testimonial[];
+  /** 'default' = grid slider com fotos · 'featured' = card único em fundo escuro */
+  variant?: 'default' | 'featured';
 }
 
 export interface Testimonial {
@@ -441,6 +449,10 @@ export interface BigNumbersStat {
   icon: string;
   /** Rótulo descritivo — ex: "Pedidos no app" */
   label: string;
+  /** Cor pura do ícone (hex, ex: '#141414') */
+  iconColor?: string;
+  /** Opacidade do fundo do chip de ícone (0–100, default 10) */
+  iconBgOpacity?: number;
 }
 
 export interface BigNumbersData {

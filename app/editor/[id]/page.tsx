@@ -9,6 +9,7 @@ import { getPageCollaborators } from '@/lib/getPageCollaborators';
 import type { Page, PageContent, Block, BlockType } from '@/types/database';
 import { BlockEditor } from './components/BlockEditor';
 import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
+import { BigNumbersEditor } from './components/editors/BigNumbersEditor';
 import { StackedEditor } from './components/editors/StackedEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
@@ -914,6 +915,12 @@ export default function EditorPage() {
                   setSelectedCardIndex(i);
                   sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
                 }}
+              />
+            ) : selectedBlock.type === 'big-numbers' ? (
+              <BigNumbersEditor
+                block={selectedBlock}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
               />
             ) : (
               <BlockEditor

@@ -103,11 +103,11 @@ function CtasEditor({
           <div className={styles.fieldRow}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Texto</label>
-              <input className={styles.fieldInput} value={c.text} onChange={(e) => setCta(i, { text: e.target.value })} />
+              <input className={styles.fieldInput} value={c.text ?? ''} onChange={(e) => setCta(i, { text: e.target.value })} />
             </div>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Link</label>
-              <input className={styles.fieldInput} value={c.link} onChange={(e) => setCta(i, { link: e.target.value })} />
+              <input className={styles.fieldInput} value={c.link ?? ''} onChange={(e) => setCta(i, { link: e.target.value })} />
             </div>
           </div>
           <Segmented

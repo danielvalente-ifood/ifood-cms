@@ -25,7 +25,7 @@ function emptyCta(): HeroCTA {
   return { text: 'Botão', link: '#', style: 'primary' };
 }
 function emptySlide(): HeroSlide {
-  return { title: ['Novo slide'], description: '', ctas: [emptyCta()], background_image: '' };
+  return { title: ['Novo slide'], description: 'Descrição do slide', ctas: [emptyCta()], background_image: '' };
 }
 
 /* ---- segmented genérico ---- */

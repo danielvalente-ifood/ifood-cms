@@ -67,7 +67,7 @@ export function GrowthEditor({ block, onUpdate }: Props) {
             <button className={styles.removeItemBtn} onClick={() => removeTab(ti)}>x</button>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Nome da tab</label>
-              <input className={styles.fieldInput} value={tab.label} onChange={(e) => updateTab(ti, 'label', e.target.value)} />
+              <input className={styles.fieldInput} value={tab.label ?? ''} onChange={(e) => updateTab(ti, 'label', e.target.value)} />
             </div>
 
             <div className={styles.arraySection}>
@@ -81,11 +81,11 @@ export function GrowthEditor({ block, onUpdate }: Props) {
                   <div className={styles.fieldRow}>
                     <div className={styles.fieldGroup}>
                       <label className={styles.fieldLabel}>Título</label>
-                      <input className={styles.fieldInput} value={card.title} onChange={(e) => updateCard(ti, ci, 'title', e.target.value)} />
+                      <input className={styles.fieldInput} value={card.title ?? ''} onChange={(e) => updateCard(ti, ci, 'title', e.target.value)} />
                     </div>
                     <div className={styles.fieldGroup}>
                       <label className={styles.fieldLabel}>Descrição</label>
-                      <input className={styles.fieldInput} value={card.description} onChange={(e) => updateCard(ti, ci, 'description', e.target.value)} />
+                      <input className={styles.fieldInput} value={card.description ?? ''} onChange={(e) => updateCard(ti, ci, 'description', e.target.value)} />
                     </div>
                   </div>
                 </div>

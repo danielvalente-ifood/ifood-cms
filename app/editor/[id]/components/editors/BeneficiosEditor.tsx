@@ -149,11 +149,11 @@ function CtasEditor({
           <div className={styles.fieldRow}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Texto</label>
-              <input className={styles.fieldInput} value={c.text} onChange={(e) => setCta(i, { text: e.target.value })} />
+              <input className={styles.fieldInput} value={c.text ?? ''} onChange={(e) => setCta(i, { text: e.target.value })} />
             </div>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Link</label>
-              <input className={styles.fieldInput} value={c.link} onChange={(e) => setCta(i, { link: e.target.value })} />
+              <input className={styles.fieldInput} value={c.link ?? ''} onChange={(e) => setCta(i, { link: e.target.value })} />
             </div>
           </div>
           <Segmented
@@ -223,6 +223,55 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
 
         <IconPicker value={card.icon} onChange={(icon) => setCard(activeIndex, { icon })} />
 
+        {/* Cor do ícone e fundo */}
+        <div className={styles.fieldRow}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Cor do ícone / caixa</label>
+            <input
+              type="color"
+              value={card.iconColor || '#141414'}
+              onChange={(e) => setCard(activeIndex, { iconColor: e.target.value })}
+              style={{ width: '100%', height: 36, border: '1px solid #e8e8ed', borderRadius: 8, cursor: 'pointer', padding: 2 }}
+            />
+          </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Opacidade da caixa ({card.iconBgOpacity ?? 5}%)</label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={card.iconBgOpacity ?? 5}
+              onChange={(e) => setCard(activeIndex, { iconBgOpacity: Number(e.target.value) })}
+              style={{ width: '100%', marginTop: 8 }}
+            />
+          </div>
+        </div>
+
+        {/* Preview do chip */}
+        {(() => {
+          const hex = card.iconColor || '#141414';
+          const op = (card.iconBgOpacity ?? 5) / 100;
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          return (
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>Preview</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 16,
+                  background: `rgba(${r},${g},${b},${op})`,
+                  color: hex,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon name={card.icon || 'grid-dashboard-bento'} size={24} />
+                </div>
+                <span style={{ fontSize: 12, color: '#666' }}>Chip com as configurações atuais</span>
+              </div>
+            </div>
+          );
+        })()}
+
         <p className={styles.selectorEmpty}>Edite título e descrição do card com duplo-clique direto no preview.</p>
 
         <CtasEditor value={card.ctas} onChange={(v) => setCard(activeIndex, { ctas: v })} />
@@ -245,6 +294,13 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
   return (
     <>
       <p className={styles.selectorEmpty}>Edite badge, título e descrição com duplo-clique direto no preview.</p>
+
+      <Segmented
+        label="Variante"
+        value={d.variant ?? 'default'}
+        onChange={(v) => update({ variant: v })}
+        options={[{ v: 'default', label: 'Padrão' }, { v: 'compact', label: 'Compacto' }]}
+      />
 
       <div className={styles.arraySection}>
         <div className={styles.arraySectionHeader}>
