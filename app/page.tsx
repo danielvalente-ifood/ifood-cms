@@ -11,6 +11,9 @@ import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { PageCard } from '@/components/PageCard/PageCard';
+import { GroupCard } from '@/components/GroupCard/GroupCard';
+import { groupPagesByVertical } from '@/lib/groupPagesByVertical';
+import { setPageHome } from '@/lib/setPageHome';
 import { useToast } from '@/hooks/useToast';
 import type { Page, Vertical } from '@/types/database';
 import styles from './home.module.css';
@@ -35,6 +38,7 @@ export default function HomePage() {
   const [formName, setFormName] = useState('');
   const [formSlug, setFormSlug] = useState('');
   const [formVerticalId, setFormVerticalId] = useState('');
+  const [formIsHome, setFormIsHome] = useState(false);
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
@@ -145,6 +149,7 @@ export default function HomePage() {
     setFormName('');
     setFormSlug('');
     setFormVerticalId('');
+    setFormIsHome(false);
     setFormError('');
     setFormLoading(false);
     setSelectedPage(null);
@@ -211,6 +216,9 @@ export default function HomePage() {
     };
     if (formVerticalId) {
       insertData.vertical_id = formVerticalId;
+      // 1ª página da vertical vira a home; as próximas entram como subpáginas.
+      const verticalHasPages = pages.some((p) => p.vertical_id === formVerticalId);
+      insertData.is_home = !verticalHasPages;
     }
 
     const { data: newPage, error } = await supabase
@@ -268,6 +276,7 @@ export default function HomePage() {
     setSelectedPage(page);
     setFormName(page.name);
     setFormVerticalId(page.vertical_id || '');
+    setFormIsHome(page.is_home ?? false);
     setShowEditModal(true);
   };
 
@@ -297,6 +306,13 @@ export default function HomePage() {
       showToast('Erro ao salvar configurações', 'error');
       setFormLoading(false);
       return;
+    }
+
+    // Home da vertical: marca/desmarca garantindo 1 home por vertical.
+    if (formVerticalId && formIsHome) {
+      await setPageHome(selectedPage.id, formVerticalId);
+    } else {
+      await supabase.from('pages').update({ is_home: false }).eq('id', selectedPage.id);
     }
 
     setShowEditModal(false);
@@ -346,17 +362,32 @@ export default function HomePage() {
               </div>
 
               <div className={styles.pagesGrid}>
-                {pages.slice(0, 4).map((page) => (
-                  <PageCard
-                    key={page.id}
-                    page={page}
-                    userName={(page.creator?.full_name || 'Desconhecido').split(' ')[0]}
-                    userAvatar={page.creator?.avatar_url || null}
-                    formatDate={formatCardDate}
-                    onClick={() => router.push(`/editor/${page.id}`)}
-                    onEditSettings={canEdit ? () => openEditModal(page) : undefined}
-                  />
-                ))}
+                {groupPagesByVertical(pages, verticals).slice(0, 4).map((group) => {
+                  // Vertical com >1 página → card agrupador (estilo projeto).
+                  if (group.pages.length > 1) {
+                    const verticalParam = group.vertical?.id ?? '__none__';
+                    return (
+                      <GroupCard
+                        key={group.vertical?.id ?? '__ecossistema__'}
+                        group={group}
+                        onClick={() => router.push(`/pages?vertical=${verticalParam}`)}
+                      />
+                    );
+                  }
+                  // Vertical/Ecossistema com 1 página → card normal.
+                  const page = group.pages[0];
+                  return (
+                    <PageCard
+                      key={page.id}
+                      page={page}
+                      userName={(page.creator?.full_name || 'Desconhecido').split(' ')[0]}
+                      userAvatar={page.creator?.avatar_url || null}
+                      formatDate={formatCardDate}
+                      onClick={() => router.push(`/editor/${page.id}`)}
+                      onEditSettings={canEdit ? () => openEditModal(page) : undefined}
+                    />
+                  );
+                })}
               </div>
             </section>
           )}
@@ -427,6 +458,16 @@ export default function HomePage() {
               ))}
             </select>
           </div>
+          {formVerticalId && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={formIsHome}
+                onChange={(e) => setFormIsHome(e.target.checked)}
+              />
+              Página inicial (home) da vertical
+            </label>
+          )}
         </div>
       </Modal>
 

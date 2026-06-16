@@ -1,0 +1,70 @@
+.group {
+  background: var(--home-card-bg, #ffffff);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  /* visible para o dropdown do ActionMenu (nas linhas) não ser cortado */
+  overflow: visible;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+/* aberto: header arredonda só o topo (o corpo encosta embaixo) */
+.headerOpen {
+  border-radius: 12px 12px 0 0;
+}
+
+.header:hover {
+  background: var(--bg-secondary);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: var(--weight-medium);
+}
+
+.body {
+  padding: 6px 8px 10px;
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
