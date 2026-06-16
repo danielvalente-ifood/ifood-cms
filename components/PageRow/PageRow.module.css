@@ -1,0 +1,75 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: var(--bg-secondary);
+}
+
+.statusCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.nameCol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0;
+}
+
+.slug {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.actionsCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .slug { display: none; }
+  .date { display: none; }
+}
