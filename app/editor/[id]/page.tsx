@@ -668,7 +668,12 @@ export default function EditorPage() {
 
   if (!page) return null;
 
-  const iframeSrc = `${LANDING_URL}/p/${page.slug}?edit=true`;
+  const landingPath = verticalSlug
+    ? page.is_home
+      ? `/p/${verticalSlug}`
+      : `/p/${verticalSlug}/${page.slug}`
+    : `/p/${page.slug}`;
+  const iframeSrc = `${LANDING_URL}${landingPath}?edit=true`;
 
   const selIndex = selectedBlockId ? blocks.findIndex((b) => b.id === selectedBlockId) : -1;
   const selectedBlock = selIndex >= 0 ? blocks[selIndex] : null;
@@ -762,7 +767,7 @@ export default function EditorPage() {
               )}
               <button
                 className={styles.btnPreview}
-                onClick={() => window.open(`${LANDING_URL}/p/${page.slug}?edit=true`, '_blank')}
+                onClick={() => window.open(`${LANDING_URL}${landingPath}?edit=true`, '_blank')}
                 title="Abrir preview em nova aba"
               >
                 <Icon name="eye-on" size={16} />
