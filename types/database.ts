@@ -19,6 +19,12 @@ export interface Page {
   thumbnail_url: string | null;
   ai_adaptation_enabled: boolean;
   ai_adaptation_prompt: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
+  created_by: string | null;
+  /** Marca esta página como a "home" da vertical (agrupador). Demais = subpáginas. */
+  is_home: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -42,11 +48,22 @@ export interface PageVersion {
 export interface Asset {
   id: string;
   page_id: string | null;
+  vertical_id: string | null;
   file_url: string;
   file_name: string | null;
   file_type: string;
   file_size: number | null;
+  storage_path: string | null;
+  alt_text: string | null;
+  uploaded_by: string | null;
+  tags: string[];
   created_at: string;
+}
+
+export type AssetMediaType = 'image' | 'video' | 'pdf' | 'other';
+
+export interface AssetWithVertical extends Asset {
+  vertical: Vertical | null;
 }
 
 // =============================================
@@ -60,32 +77,54 @@ export interface PageContent {
 export type Block =
   | NavbarBlock
   | HeroBlock
+  | BeneficiosBlock
+  | ContentBlock
+  | PromoBlock
   | VisionBlock
   | GrowthBlock
   | IntegratedBlock
   | ResultsBlock
   | FAQBlock
-  | FooterBlock;
+  | FooterBlock
+  | StackedBlock
+  | BigNumbersBlock;
 
 export type BlockType =
   | 'navbar'
   | 'hero'
+  | 'beneficios'
+  | 'content'
+  | 'promo'
+  | 'stacked'
   | 'vision'
   | 'growth'
   | 'integrated'
   | 'results'
   | 'faq'
-  | 'footer';
+  | 'footer'
+  | 'big-numbers';
 
 // =============================================
 // Block base
 // =============================================
+
+/** Configuração estrutural rápida de uma seção (painel estilo Relume). */
+export interface SectionConfig {
+  name?: string;
+  prompt?: string;
+  headerType?: string;                 // tipo de layout/header
+  style?: 'normal' | 'card';
+  assetType?: 'image' | 'video';
+  assetPosition?: 'left' | 'right';
+  contentType?: 'button' | 'form' | 'none';
+}
 
 interface BaseBlock<T extends BlockType, D> {
   id: string;
   type: T;
   data: D;
   theme?: number;
+  config?: SectionConfig;
 }
 
 // =============================================
@@ -111,16 +150,179 @@ export type NavbarBlock = BaseBlock<'navbar', NavbarData>;
 // Hero
 // =============================================
 
-export interface HeroData {
+export type HeroVariant = 'full' | 'slider' | 'centered' | 'split-image' | 'split-form';
+
+export interface HeroCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary' | 'empty';
+}
+
+export interface HeroSlide {
   title: string[];
   description: string;
-  cta_text: string;
-  cta_link: string;
-  background_image: string;
-  logo_decoration: string;
+  ctas?: HeroCTA[];
+  background_image?: string;
+}
+
+export interface HeroForm {
+  title: string;
+  subtitle: string;
+  label: string;
+  placeholder: string;
+  button_text: string;
+  legal: string;
+  legal_link_text: string;
+  legal_link: string;
+}
+
+export interface HeroData {
+  variant?: HeroVariant;
+  title: string[];
+  description: string;
+  ctas?: HeroCTA[];
+  /** cor sólida de fundo (hex) — alternativa à imagem */
+  background_color?: string;
+  /** full / slider — imagem de fundo (banner único) */
+  background_image?: string;
+  /** split-image — imagem do card */
+  image?: string;
+  /** split-image / split-form — posição do card */
+  assetPosition?: 'left' | 'right';
+  /** full / slider — modo carrossel */
+  slider?: boolean;
+  /** full / slider — slides (máx. 3) */
+  slides?: HeroSlide[];
+  /** split-form — campos do formulário */
+  form?: HeroForm;
 }
 
 export type HeroBlock = BaseBlock<'hero', HeroData>;
+
+// =============================================
+// Benefícios (cards)
+// =============================================
+
+export interface BeneficioCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary' | 'empty';
+}
+
+export interface BeneficioCard {
+  /** nome do ícone da biblioteca fixa (/public/icons) */
+  icon: string;
+  title: string;
+  description: string;
+  /** CTAs opcionais por card (0, 1 ou 2) */
+  ctas?: BeneficioCTA[];
+  /** Cor do ícone e do fundo do chip (hex) — default '#141414' */
+  iconColor?: string;
+  /** Opacidade do fundo do chip (0–100) — default 5 */
+  iconBgOpacity?: number;
+}
+
+export interface BeneficiosData {
+  badge?: string;
+  title: string[];
+  description?: string;
+  /** mínimo 2, máximo 5 cards */
+  cards: BeneficioCard[];
+  /** 'default' (com CTAs) | 'compact' (sem CTAs, título 40px) */
+  variant?: 'default' | 'compact';
+}
+
+export type BeneficiosBlock = BaseBlock<'beneficios', BeneficiosData>;
+
+// =============================================
+// Content (seção 2 colunas: imagem + texto)
+// =============================================
+
+export interface ContentCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary' | 'empty';
+}
+
+export interface ContentData {
+  badge?: string;
+  /** título multi-linha (uma string por linha) */
+  title: string[];
+  description?: string;
+  /** imagem do card; vazio = placeholder */
+  image?: string;
+  /** posição do card de imagem — única variação de layout */
+  assetPosition?: 'left' | 'right';
+  /** 0, 1 ou 2 CTAs (botões) */
+  ctas?: ContentCTA[];
+}
+
+export type ContentBlock = BaseBlock<'content', ContentData>;
+
+// =============================================
+// Promo Banner (fundo cor/imagem + efeito cortina)
+// =============================================
+
+export interface PromoCTA {
+  text: string;
+  link: string;
+  style?: 'primary' | 'secondary' | 'empty';
+}
+
+export interface PromoData {
+  /** centered = texto centralizado · split = texto + card de imagem */
+  layout?: 'centered' | 'split';
+  title: string[];
+  description?: string;
+  /** fundo: cor hex única ou imagem */
+  backgroundType?: 'color' | 'image';
+  backgroundColor?: string;
+  backgroundImage?: string;
+  /** split — imagem do card e posição */
+  image?: string;
+  assetPosition?: 'left' | 'right';
+  /** esquema do conteúdo: light (fundo escuro) · dark (fundo claro) */
+  contentColor?: 'light' | 'dark';
+  /** efeito cortina (sticky/parallax estilo nubank) */
+  curtain?: boolean;
+  /** 0, 1 ou 2 CTAs */
+  ctas?: PromoCTA[];
+}
+
+export type PromoBlock = BaseBlock<'promo', PromoData>;
+
+// =============================================
+// Stacked (cards empilhados scroll-driven, estilo Nubank)
+// =============================================
+
+export interface StackedCTA {
+  text: string;
+  link: string;
+}
+
+export interface StackedCard {
+  /** rótulo sempre visível (barra do card) */
+  label: string;
+  /** título grande exibido quando o card está aberto */
+  title: string;
+  description?: string;
+  /** imagem do card aberto */
+  image?: string;
+  /** botão opcional (outline) */
+  cta?: StackedCTA;
+}
+
+export interface StackedData {
+  badge?: string;
+  /** título da seção (uma linha por item) */
+  title: string[];
+  /** lado da imagem no card aberto */
+  assetPosition?: 'left' | 'right';
+  /** mínimo 3, máximo 8 cards */
+  cards: StackedCard[];
+}
+
+export type StackedBlock = BaseBlock<'stacked', StackedData>;
 
 // =============================================
 // Vision (Social Proof)
@@ -198,6 +400,8 @@ export interface ResultsData {
   badge: string;
   title: string[];
   testimonials: Testimonial[];
+  /** 'default' = grid slider com fotos · 'featured' = card único em fundo escuro */
+  variant?: 'default' | 'featured';
 }
 
 export interface Testimonial {
@@ -216,10 +420,17 @@ export type ResultsBlock = BaseBlock<'results', ResultsData>;
 // FAQ
 // =============================================
 
+export interface FAQCta {
+  text: string;
+  link: string;
+}
+
 export interface FAQData {
   badge: string;
   title: string;
   description: string;
+  /** CTA opcional ("Não encontrei minha dúvida"). null/ausente = oculto. */
+  cta?: FAQCta | null;
   items: FAQItem[];
 }
 
@@ -230,6 +441,33 @@ export interface FAQItem {
 }
 
 export type FAQBlock = BaseBlock<'faq', FAQData>;
+
+// =============================================
+// Big Numbers
+// =============================================
+
+export interface BigNumbersStat {
+  /** Valor numérico em destaque — ex: "120 milhões", "+450 mil" */
+  value: string;
+  /** Nome do ícone da biblioteca fixa (/public/icons) */
+  icon: string;
+  /** Rótulo descritivo — ex: "Pedidos no app" */
+  label: string;
+  /** Cor pura do ícone (hex, ex: '#141414') */
+  iconColor?: string;
+  /** Opacidade do fundo do chip de ícone (0–100, default 10) */
+  iconBgOpacity?: number;
+}
+
+export interface BigNumbersData {
+  badge?: string;
+  /** Título centralizado (string simples, não array) */
+  title: string;
+  /** Mínimo 3, máximo 5 stats */
+  stats: BigNumbersStat[];
+}
+
+export type BigNumbersBlock = BaseBlock<'big-numbers', BigNumbersData>;
 
 // =============================================
 // Footer
@@ -353,11 +591,15 @@ export interface Database {
     Tables: {
       pages: {
         Row: Page;
-        Insert: Omit<Page, 'id' | 'created_at' | 'updated_at' | 'vertical_id' | 'ai_adaptation_enabled' | 'ai_adaptation_prompt'> & {
+        Insert: Omit<Page, 'id' | 'created_at' | 'updated_at' | 'vertical_id' | 'ai_adaptation_enabled' | 'ai_adaptation_prompt' | 'meta_title' | 'meta_description' | 'og_image' | 'is_home'> & {
           id?: string;
           vertical_id?: string | null;
           ai_adaptation_enabled?: boolean;
           ai_adaptation_prompt?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          og_image?: string | null;
+          is_home?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -406,8 +648,9 @@ export interface Database {
       };
       cms_users: {
         Row: CmsUser;
-        Insert: Omit<CmsUser, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: Omit<CmsUser, 'id' | 'role' | 'created_at' | 'updated_at'> & {
           id?: string;
+          role?: UserRole;
           created_at?: string;
           updated_at?: string;
         };

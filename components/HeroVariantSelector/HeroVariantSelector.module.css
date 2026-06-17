@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  text-align: center;
+}
+
+.card:hover {
+  border-color: var(--brand);
+  background: var(--bg-secondary);
+}
+
+.card.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+
+.card.active .label,
+.card.active .description {
+  color: white;
+}
+
+.preview {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.description {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card.active .description {
+  color: rgba(255, 255, 255, 0.8);
+}

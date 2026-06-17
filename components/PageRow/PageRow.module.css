@@ -1,0 +1,80 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 12px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: var(--bg-secondary);
+}
+
+.connector {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+.nameCol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.slug {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.statusCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.actionsCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .slug { display: none; }
+  .date { display: none; }
+}

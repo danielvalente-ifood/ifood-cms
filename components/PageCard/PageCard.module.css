@@ -76,14 +76,14 @@
 .authorAvatar {
   width: 22px;
   height: 22px;
-  border-radius: 20px;
+  border-radius: 6px;
   object-fit: cover;
 }
 
 .authorAvatarFallback {
   width: 22px;
   height: 22px;
-  border-radius: 20px;
+  border-radius: 6px;
   background: var(--brand);
   color: var(--text-inverse);
   display: flex;
@@ -98,7 +98,16 @@
   font-weight: var(--weight-medium);
   color: var(--text-primary);
   letter-spacing: -0.42px;
-  line-height: normal;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.authorLabel {
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: 0;
+  line-height: 1.2;
   white-space: nowrap;
 }
 

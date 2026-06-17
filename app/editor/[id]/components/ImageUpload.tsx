@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
+import { uploadMedia } from '@/lib/media';
+import { useMediaContext } from './MediaContext';
+import { MediaPicker } from './MediaPicker';
 import styles from './ImageUpload.module.css';
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
@@ -20,70 +23,35 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
+  const { verticalId, verticalSlug } = useMediaContext();
+  const { user } = useAuth();
+
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const prevValueRef = useRef(value);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset error state when value changes (new image uploaded)
+  // Reset error state when value changes (new image set)
   if (value !== prevValueRef.current) {
     prevValueRef.current = value;
     if (imgError) setImgError(false);
   }
 
+  // Upload to the shared `media` bucket so it lands in the Media Library,
+  // organized by the page's vertical and registered in the assets table.
   const uploadFile = async (file: File) => {
     setUploading(true);
-    setProgress(0);
-
-    const ext = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const filePath = `uploads/${fileName}`;
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const url = `${supabaseUrl}/storage/v1/object/images/${filePath}`;
-
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-
-        xhr.open('POST', url);
-        xhr.setRequestHeader('Authorization', `Bearer ${supabaseKey}`);
-        xhr.setRequestHeader('apikey', supabaseKey);
-        xhr.setRequestHeader('x-upsert', 'false');
-        xhr.setRequestHeader('Cache-Control', 'max-age=3600');
-        xhr.send(file);
-      });
-
-      const { data: urlData } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
-
-      onChange(urlData.publicUrl);
-    } catch (err) {
-      console.error('Upload error:', err);
-    }
-
+    const { asset, error } = await uploadMedia({
+      file,
+      verticalId,
+      verticalSlug,
+      uploadedBy: user?.id ?? null,
+    });
     setUploading(false);
-    setProgress(0);
+    if (asset) onChange(asset.file_url);
+    else console.error('Upload error:', error);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,13 +63,7 @@ export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      uploadFile(file);
-    }
-  };
-
-  const handleRemove = () => {
-    onChange('');
+    if (file && file.type.startsWith('image/')) uploadFile(file);
   };
 
   return (
@@ -124,17 +86,17 @@ export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
           )}
           {uploading && (
             <div className={styles.previewProgress}>
-              <span className={styles.progressText}>Enviando... {progress}%</span>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-              </div>
+              <span className={styles.progressText}>Enviando…</span>
             </div>
           )}
           <div className={styles.previewActions}>
-            <button className={styles.changeBtn} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-              {uploading ? 'Enviando...' : 'Trocar'}
+            <button className={styles.changeBtn} onClick={() => setPickerOpen(true)} disabled={uploading}>
+              Biblioteca
             </button>
-            <button className={styles.removeBtn} onClick={handleRemove} disabled={uploading}>
+            <button className={styles.changeBtn} onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? 'Enviando…' : 'Upload'}
+            </button>
+            <button className={styles.removeBtn} onClick={() => onChange('')} disabled={uploading}>
               Remover
             </button>
           </div>
@@ -148,12 +110,7 @@ export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
           onDrop={handleDrop}
         >
           {uploading ? (
-            <div className={styles.progressContainer}>
-              <span className={styles.progressText}>Enviando... {progress}%</span>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-              </div>
-            </div>
+            <span className={styles.progressText}>Enviando…</span>
           ) : (
             <>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={styles.uploadIcon}>
@@ -162,7 +119,13 @@ export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
                 <polyline points="21 15 16 10 5 21" />
               </svg>
               <span className={styles.dropText}>Clique ou arraste uma imagem</span>
-              <span className={styles.dropHint}>JPG, PNG, WebP, SVG</span>
+              <button
+                type="button"
+                className={styles.libraryLink}
+                onClick={(e) => { e.stopPropagation(); setPickerOpen(true); }}
+              >
+                ou escolher da biblioteca
+              </button>
             </>
           )}
         </div>
@@ -175,6 +138,14 @@ export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
+
+      {pickerOpen && (
+        <MediaPicker
+          accept="image"
+          onSelect={(url) => onChange(url)}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

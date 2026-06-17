@@ -1,10 +1,10 @@
-// @ts-nocheck
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { syncUserProfile } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -32,56 +32,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    // Listener primeiro — captura o SIGNED_IN que vem do callback OAuth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return;
+    // Lê a sessão persistida imediatamente no mount — não depende do timing do
+    // evento. Cobre o caso de carregar/atualizar uma página autenticada.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       setUser(session?.user ?? null);
       if (session?.provider_token) setProviderToken(session.provider_token);
       setLoading(false);
-
-      if (_event === 'SIGNED_IN' && session?.user) {
-        const u = session.user;
-        supabase.from('cms_users').upsert({
-          auth_id: u.id,
-          email: u.email || '',
-          full_name: u.user_metadata?.full_name || '',
-          avatar_url: u.user_metadata?.avatar_url || '',
-        }, { onConflict: 'auth_id' }).then(() => {}).catch(console.error);
-      }
     });
 
-    // Checa sessão existente (caso já logado)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (isMounted && loading) {
-        setUser(session?.user ?? null);
-        setProviderToken(session?.provider_token ?? null);
-        setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      setUser(session?.user ?? null);
+      if (session?.provider_token) {
+        setProviderToken(session.provider_token);
       }
-    }).catch(() => {
-      if (isMounted) setLoading(false);
+
+      // Sincroniza o perfil em cms_users no login (fonte única — antes isso
+      // estava duplicado também no /auth/callback).
+      if (event === 'SIGNED_IN' && session?.user) {
+        void syncUserProfile(session.user);
+      }
+
+      setLoading(false);
     });
+
+    // Rede de segurança: se nada disparar em 5s, libera o loading.
+    const timeout = setTimeout(() => { if (mounted) setLoading(false); }, 5000);
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 
   useEffect(() => {
     if (loading) return;
     const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-    if (!user && !isPublic) router.replace('/login');
+
+    if (!user && !isPublic) {
+      router.replace('/login');
+    }
   }, [user, loading, pathname, router]);
 
   const signOut = async () => {
+    // Salva o último usuário para exibir na próxima tela de login.
     if (user) {
-      localStorage.setItem('ifood_last_user', JSON.stringify({
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-        avatar: user.user_metadata?.avatar_url || '',
-        email: user.email || '',
-      }));
+      localStorage.setItem(
+        'ifood_last_user',
+        JSON.stringify({
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+          avatar: user.user_metadata?.avatar_url || '',
+          email: user.email || '',
+        }),
+      );
     }
     await supabase.auth.signOut();
     router.replace('/login');
@@ -89,14 +96,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '14px', background: 'var(--bg-primary)' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-secondary)',
+          fontSize: '14px',
+          background: 'var(--bg-primary)',
+        }}
+      >
         Carregando...
       </div>
     );
   }
 
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-  if (!user && !isPublic) return null;
+
+  if (!user && !isPublic) {
+    return null;
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, providerToken, signOut }}>
@@ -104,4 +124,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-

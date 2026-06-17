@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js';
  * Body: { pageId: string, slug: string }
  */
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3001';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 export async function POST(request: NextRequest) {
   try {

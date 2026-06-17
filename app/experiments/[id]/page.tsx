@@ -24,7 +24,7 @@ import { Toast } from '@/components/ui/toast';
 import { useToast } from '@/hooks/useToast';
 import styles from './experiment-detail.module.css';
 
-const LANDING_URL = 'http://localhost:3001';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 const typeLabels: Record<string, string> = {
   navbar: 'Navbar',
@@ -374,7 +374,7 @@ export default function ExperimentDetailPage() {
                   }}
                 />
                 <span className={styles.trafficText}>
-                  {trafficPct}% controle &nbsp;|&nbsp; {100 - trafficPct}% variante
+                  {trafficPct}% controle &nbsp;|&nbsp; {100 - trafficPct}% Variante
                 </span>
               </div>
             </div>

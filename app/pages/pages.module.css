@@ -76,6 +76,14 @@
   gap: 6px;
 }
 
+/* ---- Lista agrupada por vertical (accordion) ---- */
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ---- Empty state ---- */
 
 .emptyState {

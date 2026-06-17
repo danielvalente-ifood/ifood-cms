@@ -13,7 +13,7 @@ import styles from './heatmap.module.css';
 type Period = '7d' | '14d' | '30d';
 type HeatmapType = 'clicks' | 'scroll';
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3000';
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:3002';
 
 const periodLabels: Record<Period, string> = {
   '7d': '7 dias',

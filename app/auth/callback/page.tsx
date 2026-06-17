@@ -1,50 +1,80 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { isAllowedDomain, syncUserProfile } from '@/lib/auth';
 
-const ALLOWED_DOMAIN = 'ifood.com.br';
+// Promise module-level: o code PKCE só pode ser trocado UMA vez. Compartilhar a
+// mesma promise entre os dois invokes do useEffect (React StrictMode em dev)
+// garante um único exchange — ambos os mounts aguardam o mesmo resultado e
+// fazem o redirect (idempotente). Em page load real o módulo reinicia → null.
+let exchangePromise: ReturnType<typeof supabase.auth.exchangeCodeForSession> | null = null;
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+    async function run() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const oauthError = params.get('error');
 
-      if (error || !session) {
+      if (oauthError) {
+        console.error('[Callback] OAuth error:', oauthError);
         router.replace('/login');
         return;
       }
 
-      const email = session.user.email || '';
-      const domain = email.split('@')[1];
+      if (code) {
+        if (!exchangePromise) {
+          exchangePromise = supabase.auth.exchangeCodeForSession(code);
+        }
+        const { data, error } = await exchangePromise;
 
-      if (domain !== ALLOWED_DOMAIN) {
-        await supabase.auth.signOut();
-        router.replace('/login?error=domain');
+        if (error || !data.session) {
+          console.error('[Callback] exchangeCodeForSession falhou:', error?.message);
+          router.replace('/login');
+          return;
+        }
+
+        const session = data.session;
+
+        if (!isAllowedDomain(session.user.email)) {
+          await supabase.auth.signOut();
+          router.replace('/login?error=domain');
+          return;
+        }
+
+        void syncUserProfile(session.user);
+        router.replace('/');
         return;
       }
 
-      // Ensure cms_users profile exists
-      const u = session.user;
-      await supabase.from('cms_users').upsert({
-        auth_id: u.id,
-        email: u.email || '',
-        full_name: u.user_metadata?.full_name || '',
-        avatar_url: u.user_metadata?.avatar_url || '',
-      }, { onConflict: 'auth_id' });
+      // Sem code: sessão já pode existir (revisita direta). Senão volta ao login.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && isAllowedDomain(session.user.email)) {
+        router.replace('/');
+      } else {
+        router.replace('/login');
+      }
+    }
 
-      router.replace('/');
-    };
-
-    handleCallback();
+    run();
   }, [router]);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '14px', background: 'var(--bg-primary)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)',
+        fontSize: '14px',
+        background: 'var(--bg-primary)',
+      }}
+    >
       Autenticando...
     </div>
   );

@@ -11,13 +11,13 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'light',
+  theme: 'dark',
   setTheme: () => {},
   toggleTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   const applyTheme = useCallback((t: Theme) => {
     document.documentElement.setAttribute('data-theme', t);
@@ -34,8 +34,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, setTheme]);
 
   useEffect(() => {
+    // dark é o padrão; só usa light se o usuário escolheu explicitamente.
     const stored = localStorage.getItem('theme') as Theme | null;
-    const initial = stored === 'dark' ? 'dark' : 'light';
+    const initial = stored === 'light' ? 'light' : 'dark';
     setThemeState(initial);
     applyTheme(initial);
   }, [applyTheme]);

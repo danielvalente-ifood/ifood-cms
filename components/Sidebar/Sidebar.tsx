@@ -18,6 +18,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/', label: 'Início', icon: 'grid-dashboard-bento' },
   { href: '/pages', label: 'Páginas', icon: 'file-default' },
+  { href: '/media', label: 'Mídia', icon: 'folder' },
   { href: '/experiments', label: 'Testes A/B', icon: 'lab-flask-round' },
   { href: '/analytics', label: 'Analytics', icon: 'barchart-default' },
 ];
