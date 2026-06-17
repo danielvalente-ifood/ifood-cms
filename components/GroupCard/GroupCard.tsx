@@ -30,16 +30,22 @@ function Thumb({ src, label }: { src: string | null; label: string }) {
 export function GroupCard({ group, onClick }: GroupCardProps) {
   const name = group.vertical?.name || 'Ecossistema';
   const count = group.pages.length;
-  // Até 4 previews em grade 2×2 (igual a um "projeto" do Figma). A contagem
-  // "N páginas" abaixo já comunica o total — sem indicador "+N".
-  const thumbs = group.pages.slice(0, 4);
+
+  const MAX_VISIBLE = 4;
+  const overflow = count > MAX_VISIBLE ? count - (MAX_VISIBLE - 1) : 0;
+  const thumbs = overflow > 0 ? group.pages.slice(0, MAX_VISIBLE - 1) : group.pages.slice(0, MAX_VISIBLE);
 
   return (
     <article className={styles.card} onClick={onClick}>
-      <div className={styles.thumbs} data-count={thumbs.length}>
+      <div className={styles.thumbs} data-count={Math.min(count, MAX_VISIBLE)}>
         {thumbs.map((p) => (
           <Thumb key={p.id} src={p.thumbnail_url} label={p.name} />
         ))}
+        {overflow > 0 && (
+          <div className={styles.overflow}>
+            <span>+{overflow}</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.cardBottom}>
