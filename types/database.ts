@@ -256,6 +256,7 @@ export interface ContentCTA {
   text: string;
   link: string;
   style?: 'primary' | 'secondary' | 'empty';
+  target?: '_blank' | '_self';
 }
 
 export interface ContentBullet {

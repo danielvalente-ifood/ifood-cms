@@ -79,12 +79,20 @@ function CtasEditor({
               <input className={styles.fieldInput} value={c.link} onChange={(e) => setCta(i, { link: e.target.value })} />
             </div>
           </div>
-          <Segmented
-            label="Estilo"
-            value={c.style ?? 'primary'}
-            onChange={(v) => setCta(i, { style: v })}
-            options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }, { v: 'empty', label: 'Vazio' }]}
-          />
+          <div className={styles.fieldRow}>
+            <Segmented
+              label="Estilo"
+              value={c.style ?? 'primary'}
+              onChange={(v) => setCta(i, { style: v })}
+              options={[{ v: 'primary', label: 'Primário' }, { v: 'secondary', label: 'Secundário' }, { v: 'empty', label: 'Vazio' }]}
+            />
+            <Segmented
+              label="Abrir em"
+              value={c.target ?? '_self'}
+              onChange={(v) => setCta(i, { target: v as '_blank' | '_self' })}
+              options={[{ v: '_self', label: 'Mesma aba' }, { v: '_blank', label: 'Nova aba' }]}
+            />
+          </div>
         </div>
       ))}
       {ctas.length === 0 && <p className={styles.selectorEmpty}>Sem botões (CTA opcional).</p>}
