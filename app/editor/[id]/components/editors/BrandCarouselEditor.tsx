@@ -85,7 +85,6 @@ export function BrandCarouselEditor({ block, onUpdate }: Props) {
               <ImageUpload
                 value={logo.src}
                 onChange={(url) => updateLogo(i, 'src', url)}
-                folder="logos"
               />
             </div>
 
