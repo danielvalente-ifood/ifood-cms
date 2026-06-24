@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { ContentBlock, ContentCTA } from '@/types/database';
+import type { ContentBlock, ContentCTA, ContentBullet } from '@/types/database';
 import styles from '../../editor.module.css';
 import { ImageUpload } from '../ImageUpload';
-import { contentDefaults } from '../../block-config';
+import { contentDefaults, CONTENT_BULLETS_DEFAULT } from '../../block-config';
 
 interface Props {
   block: ContentBlock;
@@ -92,15 +92,50 @@ function CtasEditor({
   );
 }
 
+/* ---- editor de bullets ---- */
+function BulletsEditor({
+  value, onChange,
+}: {
+  value: ContentBullet[] | undefined;
+  onChange: (v: ContentBullet[]) => void;
+}) {
+  const bullets = value ?? [];
+  const set = (i: number, patch: Partial<ContentBullet>) =>
+    onChange(bullets.map((b, j) => (j === i ? { ...b, ...patch } : b)));
+
+  return (
+    <div className={styles.arraySection}>
+      <div className={styles.arraySectionHeader}>
+        <span className={styles.arraySectionTitle}>Bullets ({bullets.length})</span>
+        <button type="button" className={styles.addItemBtn}
+          onClick={() => onChange([...bullets, { label: '', text: 'Novo item' }])}>
+          + Item
+        </button>
+      </div>
+      {bullets.map((b, i) => (
+        <div key={i} className={styles.arrayItem}>
+          <button type="button" className={styles.removeItemBtn} onClick={() => onChange(bullets.filter((_, j) => j !== i))}>×</button>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Prefixo em negrito</label>
+            <input className={styles.fieldInput} value={b.label ?? ''} placeholder="Ex: CRM nativo:" onChange={(e) => set(i, { label: e.target.value })} />
+          </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Texto</label>
+            <textarea className={styles.fieldTextarea} rows={2} value={b.text} onChange={(e) => set(i, { text: e.target.value })} />
+          </div>
+        </div>
+      ))}
+      {bullets.length === 0 && <p className={styles.selectorEmpty}>Nenhum bullet adicionado.</p>}
+    </div>
+  );
+}
+
 /* ---- ContentEditor ---- */
 export function ContentEditor({ block, onUpdate }: Props) {
-  // Bloco sem data (criado por caminho legado) → semeia o conteúdo default
-  // completo para que o usuário só precise editar as informações.
   const existing = block.data as ContentBlock['data'] | undefined;
   const d = existing ?? contentDefaults('image-left');
+  const isBullets = Array.isArray(d.bullets);
 
-  // Persiste o default no bloco para que o preview e o salvamento fiquem
-  // consistentes — usuário só precisa editar as informações.
   useEffect(() => {
     if (!existing) onUpdate({ ...block, data: d });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,6 +155,20 @@ export function ContentEditor({ block, onUpdate }: Props) {
       <p className={styles.selectorEmpty}>Edite badge, título e descrição com duplo-clique direto no preview.</p>
 
       <ImageUpload label="Imagem" value={d.image || ''} onChange={(url) => update({ image: url })} />
+
+      {isBullets ? (
+        <BulletsEditor value={d.bullets} onChange={(v) => update({ bullets: v })} />
+      ) : (
+        <div className={styles.fieldGroup}>
+          <button
+            type="button"
+            className={styles.addItemBtn}
+            onClick={() => update({ bullets: CONTENT_BULLETS_DEFAULT.map((b) => ({ ...b })) })}
+          >
+            + Ativar bullets (5 padrões)
+          </button>
+        </div>
+      )}
 
       <CtasEditor value={d.ctas} onChange={(v) => update({ ctas: v })} />
     </>

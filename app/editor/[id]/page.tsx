@@ -11,6 +11,7 @@ import { BlockEditor } from './components/BlockEditor';
 import { BeneficiosEditor } from './components/editors/BeneficiosEditor';
 import { BigNumbersEditor } from './components/editors/BigNumbersEditor';
 import { StackedEditor } from './components/editors/StackedEditor';
+import { ChoiceCardsEditor } from './components/editors/ChoiceCardsEditor';
 import { MediaProvider } from './components/MediaContext';
 import { BlockSelector } from './components/BlockSelector';
 import { FilterDropdown } from '@/components/ui/filter-dropdown';
@@ -29,6 +30,11 @@ import {
   duplicateBlock as duplicateBlockConfig,
   heroDefaults,
   beneficiosDefaults,
+  leadFormDefaults,
+  bigNumbersTestimonialDefaults,
+  segmentosDefaults,
+  sectionTitleDefaults,
+  choiceCardsDefaults,
   type GroupKey,
   type ContentType,
 } from './block-config';
@@ -927,6 +933,16 @@ export default function EditorPage() {
                 onUpdate={(updated) => updateBlock(selIndex, updated)}
                 cardIndex={selectedCardIndex}
               />
+            ) : selectedBlock.type === 'choice-cards' ? (
+              <ChoiceCardsEditor
+                block={selectedBlock as Block & { type: 'choice-cards' }}
+                onUpdate={(updated) => updateBlock(selIndex, updated)}
+                cardIndex={selectedCardIndex}
+                onCardIndexChange={(i) => {
+                  setSelectedCardIndex(i);
+                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                }}
+              />
             ) : (
               <BlockEditor
                 block={selectedBlock}
@@ -1077,6 +1093,11 @@ function createEmptyBlock(type: BlockType, variantId?: string): Block {
     results: { badge: 'Badge', title: ['Título'], testimonials: [] },
     faq: { badge: 'FAQ', title: 'Perguntas frequentes', description: '', items: [] },
     footer: { logo: '', copyright: '', social_links: [], columns: [] },
+    leadform: leadFormDefaults(),
+    'big-numbers-testimonial': bigNumbersTestimonialDefaults(),
+    segmentos: segmentosDefaults(),
+    'section-title': sectionTitleDefaults(),
+    'choice-cards': choiceCardsDefaults(),
   };
   return { id, type, data: templates[type] } as Block;
 }
