@@ -3,6 +3,7 @@
 import type { BeneficiosBlock, BeneficioCard, BeneficioCTA } from '@/types/database';
 import styles from '../../editor.module.css';
 import { Icon } from '@/components/Icon/Icon';
+import { ImageUpload } from '../ImageUpload';
 
 interface Props {
   block: BeneficiosBlock;
@@ -221,56 +222,76 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
           </div>
         )}
 
-        <IconPicker value={card.icon} onChange={(icon) => setCard(activeIndex, { icon })} />
+        <Segmented
+          label="Tipo de ícone"
+          value={card.image !== undefined ? 'image' : 'icon'}
+          onChange={(v) => {
+            if (v === 'icon') setCard(activeIndex, { image: undefined });
+            else setCard(activeIndex, { image: '' });
+          }}
+          options={[{ v: 'icon', label: 'Ícone' }, { v: 'image', label: 'Imagem' }]}
+        />
 
-        {/* Cor do ícone e fundo */}
-        <div className={styles.fieldRow}>
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Cor do ícone / caixa</label>
-            <input
-              type="color"
-              value={card.iconColor || '#141414'}
-              onChange={(e) => setCard(activeIndex, { iconColor: e.target.value })}
-              style={{ width: '100%', height: 36, border: '1px solid #e8e8ed', borderRadius: 8, cursor: 'pointer', padding: 2 }}
-            />
-          </div>
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Opacidade da caixa ({card.iconBgOpacity ?? 5}%)</label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={card.iconBgOpacity ?? 5}
-              onChange={(e) => setCard(activeIndex, { iconBgOpacity: Number(e.target.value) })}
-              style={{ width: '100%', marginTop: 8 }}
-            />
-          </div>
-        </div>
+        {card.image !== undefined ? (
+          <ImageUpload
+            label="Imagem do card (50×50)"
+            value={card.image}
+            onChange={(url) => setCard(activeIndex, { image: url })}
+          />
+        ) : (
+          <>
+            <IconPicker value={card.icon} onChange={(icon) => setCard(activeIndex, { icon })} />
 
-        {/* Preview do chip */}
-        {(() => {
-          const hex = card.iconColor || '#141414';
-          const op = (card.iconBgOpacity ?? 5) / 100;
-          const r = parseInt(hex.slice(1, 3), 16);
-          const g = parseInt(hex.slice(3, 5), 16);
-          const b = parseInt(hex.slice(5, 7), 16);
-          return (
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Preview</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 16,
-                  background: `rgba(${r},${g},${b},${op})`,
-                  color: hex,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon name={card.icon || 'grid-dashboard-bento'} size={24} />
-                </div>
-                <span style={{ fontSize: 12, color: '#666' }}>Chip com as configurações atuais</span>
+            {/* Cor do ícone e fundo */}
+            <div className={styles.fieldRow}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Cor do ícone / caixa</label>
+                <input
+                  type="color"
+                  value={card.iconColor || '#141414'}
+                  onChange={(e) => setCard(activeIndex, { iconColor: e.target.value })}
+                  style={{ width: '100%', height: 36, border: '1px solid #e8e8ed', borderRadius: 8, cursor: 'pointer', padding: 2 }}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Opacidade da caixa ({card.iconBgOpacity ?? 5}%)</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={card.iconBgOpacity ?? 5}
+                  onChange={(e) => setCard(activeIndex, { iconBgOpacity: Number(e.target.value) })}
+                  style={{ width: '100%', marginTop: 8 }}
+                />
               </div>
             </div>
-          );
-        })()}
+
+            {/* Preview do chip */}
+            {(() => {
+              const hex = card.iconColor || '#141414';
+              const op = (card.iconBgOpacity ?? 5) / 100;
+              const r = parseInt(hex.slice(1, 3), 16);
+              const g = parseInt(hex.slice(3, 5), 16);
+              const b = parseInt(hex.slice(5, 7), 16);
+              return (
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>Preview</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 16,
+                      background: `rgba(${r},${g},${b},${op})`,
+                      color: hex,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon name={card.icon || 'grid-dashboard-bento'} size={24} />
+                    </div>
+                    <span style={{ fontSize: 12, color: '#666' }}>Chip com as configurações atuais</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </>
+        )}
 
         <p className={styles.selectorEmpty}>Edite título e descrição do card com duplo-clique direto no preview.</p>
 
