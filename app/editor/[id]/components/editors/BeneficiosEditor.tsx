@@ -224,7 +224,7 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
 
         <Segmented
           label="Tipo de ícone"
-          value={card.image ? 'image' : 'icon'}
+          value={card.image !== undefined ? 'image' : 'icon'}
           onChange={(v) => {
             if (v === 'icon') setCard(activeIndex, { image: undefined });
             else setCard(activeIndex, { image: '' });
@@ -242,6 +242,7 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
           <>
             <IconPicker value={card.icon} onChange={(icon) => setCard(activeIndex, { icon })} />
 
+            {/* Cor do ícone e fundo */}
             <div className={styles.fieldRow}>
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>Cor do ícone / caixa</label>
@@ -265,6 +266,7 @@ export function BeneficiosEditor({ block, onUpdate, cardIndex = null, onCardInde
               </div>
             </div>
 
+            {/* Preview do chip */}
             {(() => {
               const hex = card.iconColor || '#141414';
               const op = (card.iconBgOpacity ?? 5) / 100;

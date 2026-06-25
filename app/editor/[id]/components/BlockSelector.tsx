@@ -35,6 +35,12 @@ const typeIcons: Record<string, string> = {
   results: 'text-quotes-paragraph',
   faq: 'file-02-question-mark',
   'big-numbers': 'barchart-default',
+  leadform: 'users-group-default',
+  'big-numbers-testimonial': 'barchart-default',
+  segmentos: 'grid-dashboard-bento',
+  'section-title': 'text-quotes-paragraph',
+  'choice-cards': 'grid-dashboard-bento',
+  'brand-carousel': 'photo-image-default',
   footer: 'window-dock-bottom',
 };
 
@@ -50,6 +56,12 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
   { type: 'results', label: 'Depoimentos', description: 'Testimonials de clientes' },
   { type: 'faq', label: 'FAQ', description: 'Perguntas e respostas' },
   { type: 'big-numbers', label: 'Big Numbers', description: 'Estatísticas em destaque (3 a 5 itens)' },
+  { type: 'leadform', label: 'Formulário de Lead', description: 'Captura de leads com layout ilha escura' },
+  { type: 'big-numbers-testimonial', label: 'Big Numbers + Depoimentos', description: 'Estatísticas em destaque com depoimentos de clientes' },
+  { type: 'segmentos', label: 'Segmentos', description: 'Tabs interativas por tipo de restaurante (Bar, Hamburgueria, Pizzaria…)' },
+  { type: 'section-title', label: 'Título de Seção', description: 'Badge + título + descrição centralizado (separador entre seções)' },
+  { type: 'choice-cards', label: 'Cards de Escolha', description: '3 cards de perfil do usuário com ícone e texto (fundo #FAFAFC)' },
+  { type: 'brand-carousel', label: 'Carrossel de Marcas', description: 'Badge + título + logos de parceiros sobre fundo #FAFAFC' },
   { type: 'navbar', label: 'Navbar', description: 'Menu de navegação' },
   // Footer é fixo em toda página — não selecionável no painel de adicionar.
 ];
@@ -73,6 +85,8 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   content: [
     { id: 'image-left', label: 'Imagem à esquerda', description: 'Card de imagem à esquerda, texto à direita.' },
     { id: 'image-right', label: 'Imagem à direita', description: 'Texto à esquerda, card de imagem à direita.' },
+    { id: 'bullets-right', label: 'Bullets + imagem à direita', description: 'Lista de bullet points à esquerda, imagem à direita.' },
+    { id: 'bullets-left', label: 'Bullets + imagem à esquerda', description: 'Imagem à esquerda, lista de bullet points à direita.' },
   ],
   promo: [
     { id: 'centered', label: 'Centralizado', description: 'Texto e CTAs centralizados sobre o fundo.' },
@@ -98,6 +112,25 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   ],
   'big-numbers': [
     { id: 'default', label: 'Grade horizontal', description: 'Estatísticas em destaque lado a lado (3 a 5 itens).' },
+  ],
+  leadform: [
+    { id: 'default', label: 'Ilha escura', description: 'Container #141414, coluna de benefícios + card branco do formulário.' },
+  ],
+  'big-numbers-testimonial': [
+    { id: 'default', label: 'Fundo escuro', description: 'Big numbers vermelhos em destaque + cards brancos de depoimentos.' },
+  ],
+  segmentos: [
+    { id: 'default', label: 'Fundo escuro', description: 'Seção escura com card branco e tabs interativas por segmento de restaurante.' },
+  ],
+  'section-title': [
+    { id: 'light', label: 'Fundo claro', description: 'Badge + título + descrição centralizado sobre fundo transparente.' },
+    { id: 'dark', label: 'Fundo escuro', description: 'Badge + título + descrição centralizado sobre fundo #141414.' },
+  ],
+  'choice-cards': [
+    { id: 'default', label: 'Padrão', description: '3 cards de perfil com ícone chip vermelho sobre fundo #FAFAFC.' },
+  ],
+  'brand-carousel': [
+    { id: 'default', label: 'Padrão', description: 'Badge + título + linha de logos de parceiros sobre fundo #FAFAFC.' },
   ],
   navbar: [
     { id: 'navbar-1', label: 'Layout 1', description: 'Logo + menu central + CTA direita' },

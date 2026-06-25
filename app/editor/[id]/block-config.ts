@@ -20,6 +20,13 @@ import type {
   FAQData,
   FooterData,
   BigNumbersData,
+  LeadFormData,
+  BigNumbersTestimonialData,
+  SegmentosData,
+  SectionTitleData,
+  ChoiceCardsData,
+  ChoiceCardItem,
+  BrandCarouselData,
 } from '@/types/database';
 
 export type GroupKey = 'hero' | 'content' | 'footer';
@@ -27,10 +34,10 @@ export type GroupKey = 'hero' | 'content' | 'footer';
 // BigNumbers label usado no BLOCK_TYPE_LABELS e CONTENT_CATEGORIES
 const BIG_NUMBERS_LABEL = 'Big Numbers';
 
-export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq' | 'big-numbers';
+export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq' | 'big-numbers' | 'leadform' | 'big-numbers-testimonial' | 'segmentos' | 'section-title' | 'choice-cards' | 'brand-carousel';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq', 'big-numbers'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq', 'big-numbers', 'leadform', 'big-numbers-testimonial', 'segmentos', 'section-title', 'choice-cards', 'brand-carousel'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
@@ -46,6 +53,12 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   results: 'Depoimentos',
   faq: 'FAQ',
   'big-numbers': BIG_NUMBERS_LABEL,
+  leadform: 'Formulário de Lead',
+  'big-numbers-testimonial': 'Big Numbers + Depoimentos',
+  segmentos: 'Segmentos',
+  'section-title': 'Título de Seção',
+  'choice-cards': 'Cards de Escolha',
+  'brand-carousel': 'Carrossel de Marcas',
   footer: 'Footer',
 };
 
@@ -60,6 +73,12 @@ export const CONTENT_CATEGORIES: { type: ContentType; label: string }[] = [
   { type: 'results', label: 'Depoimentos' },
   { type: 'faq', label: 'FAQ' },
   { type: 'big-numbers', label: BIG_NUMBERS_LABEL },
+  { type: 'leadform', label: 'Formulário de Lead' },
+  { type: 'big-numbers-testimonial', label: 'Big Numbers + Depoimentos' },
+  { type: 'segmentos', label: 'Segmentos' },
+  { type: 'section-title', label: 'Título de Seção' },
+  { type: 'choice-cards', label: 'Cards de Escolha' },
+  { type: 'brand-carousel', label: 'Carrossel de Marcas' },
 ];
 
 export function getGroupKey(type: BlockType): GroupKey | null {
@@ -159,7 +178,7 @@ export function beneficiosDefaults(variant: BeneficiosVariant = 'cards'): Benefi
   return { badge: 'Visão integrada', title: [...BENEFICIOS_TITLE], cards };
 }
 
-export type ContentVariant = 'image-left' | 'image-right';
+export type ContentVariant = 'image-left' | 'image-right' | 'bullets-right' | 'bullets-left';
 
 const CONTENT_TITLE = ['Atraia clientes do delivery', 'para o salão'];
 const CONTENT_DESCRIPTION = 'Ative sua base de clientes delivery para visitarem seu restaurante.';
@@ -168,14 +187,36 @@ const CONTENT_CTAS: ContentCTA[] = [
   { text: 'Saiba mais', link: '#', style: 'secondary' },
 ];
 
+export const CONTENT_BULLETS_DEFAULT = [
+  { label: '', text: 'Visibilidade gratuita na vitrine do maior app de food do Brasil.' },
+  { label: 'CRM nativo do salão:', text: 'Dados reais de quem visita, quando e com que frequência.' },
+  { label: 'Recorrência garantida:', text: 'Cashback e promoções do salão fazem o cliente voltar.' },
+  { label: 'Zero marketing:', text: 'Promoções ativas geram visibilidade automática na sua região.' },
+  { label: '', text: 'Disponível nas cidades de Campinas, Curitiba e Salvador.' },
+];
+
 /** Defaults por variante de Conteúdo — seed ao adicionar o bloco. */
 export function contentDefaults(variant: ContentVariant = 'image-left'): ContentData {
+  const isBullets = variant.startsWith('bullets');
+  const assetPosition = variant.endsWith('right') ? 'right' : 'left';
+
+  if (isBullets) {
+    return {
+      badge: 'Comer fora e Reservas',
+      title: ['Fidelização e Recorrência'],
+      bullets: CONTENT_BULLETS_DEFAULT.map((b) => ({ ...b })),
+      image: '',
+      assetPosition,
+      ctas: [{ text: 'Saiba mais sobre o Comer fora', link: '#', style: 'primary' }],
+    };
+  }
+
   return {
     badge: 'Comer fora',
     title: [...CONTENT_TITLE],
     description: CONTENT_DESCRIPTION,
     image: '',
-    assetPosition: variant === 'image-right' ? 'right' : 'left',
+    assetPosition,
     ctas: CONTENT_CTAS.map((c) => ({ ...c })),
   };
 }
@@ -304,6 +345,48 @@ export function bigNumbersDefaults(): BigNumbersData {
   };
 }
 
+export function bigNumbersTestimonialDefaults(): BigNumbersTestimonialData {
+  return {
+    badge: 'Resultados reais',
+    title: 'Números que falam por si',
+    stats: [
+      { value: '+30%', description: 'de economia de tempo\nno fechamento de caixa' },
+      { value: 'R$0', description: 'de comissão em pedidos\npelo cardápio próprio' },
+      { value: '-40%', description: 'de desistência\nna fila de espera' },
+    ],
+    testimonials: [
+      { rating: 5, quote: 'Nós precisávamos de um sistema que nos entregasse muita agilidade, rapidez e principalmente a integração dos aplicativos, e a Saipos nos trouxe isso.', author: 'Lucas Xavier, sócio', company: 'Frango Loco' },
+      { rating: 5, quote: 'O robô de WhatsApp pagou o plano inteiro só no primeiro mês. Os clientes adoram e eu não perco mais pedido.', author: 'Ana R.', company: 'Hamburgueria Artesanal' },
+      { rating: 5, quote: 'A fila digital foi um divisor de águas. Zero cliente foi embora sem sentar desde que ativamos.', author: 'João P.', company: 'Restaurante A La Carte' },
+    ],
+  };
+}
+
+export function leadFormDefaults(): LeadFormData {
+  return {
+    badge: 'Demonstração gratuita',
+    title: 'Vamos agendar sua demonstração gratuita',
+    subtitle: 'Contrate a solução para o seu restaurante que centraliza sua gestão, traz clareza no dia a dia.',
+    benefits: [
+      { text: 'Resposta em até 2 horas úteis' },
+      { text: 'Demo personalizada para o seu segmento' },
+      { text: 'Sem compromisso de contratação' },
+      { text: 'Diagnóstico gratuito da sua operação atual' },
+    ],
+    form_title: 'Preencha seus dados',
+    fields: [
+      { id: 'nome', label: 'Nome completo', type: 'text', placeholder: 'Seu nome', required: true },
+      { id: 'email', label: 'Email', type: 'email', placeholder: 'Seu email', required: true },
+      { id: 'telefone', label: 'Telefone / Whatsapp', type: 'tel', placeholder: 'Número', required: true },
+      { id: 'restaurante', label: 'Nome do restaurante', type: 'text', placeholder: 'Restaurante', required: true },
+      { id: 'cnpj', label: 'CNPJ', type: 'text', placeholder: 'Somente números', required: false, fullWidth: true },
+      { id: 'desafio', label: 'Maior desafio atual', type: 'select', required: true, fullWidth: true, options: ['Delivery caótico', 'Controle Financeiro / Estoque', 'Filas no Salão', 'Tudo junto'] },
+    ],
+    submit_text: 'Quero ver o sistema na prática',
+    success_message: 'Recebemos! Nossa equipe entrará em contato em até 2 horas.',
+  };
+}
+
 const FOOTER_DEFAULTS: FooterData = {
   logo: '/images/ifood/logo_footer.svg',
   copyright: '© Copyright 2026 - iFood - Todos os direitos reservados iFood com Agência de Restaurantes Online S.A',
@@ -354,11 +437,140 @@ export function createBlock(type: BlockType, theme: number, variant?: string): B
       return { id, type: 'faq', data: { ...FAQ_DEFAULTS }, theme };
     case 'big-numbers':
       return { id, type: 'big-numbers', data: bigNumbersDefaults(), theme };
+    case 'leadform':
+      return { id, type: 'leadform', data: leadFormDefaults(), theme };
+    case 'big-numbers-testimonial':
+      return { id, type: 'big-numbers-testimonial', data: bigNumbersTestimonialDefaults(), theme };
+    case 'segmentos':
+      return { id, type: 'segmentos', data: segmentosDefaults(), theme };
+    case 'section-title':
+      return { id, type: 'section-title', data: sectionTitleDefaults(), theme };
+    case 'choice-cards':
+      return { id, type: 'choice-cards', data: choiceCardsDefaults(), theme };
+    case 'brand-carousel':
+      return { id, type: 'brand-carousel', data: brandCarouselDefaults(), theme };
     case 'footer':
       return { id, type: 'footer', data: { ...FOOTER_DEFAULTS }, theme };
     default:
       throw new Error(`Block type not supported: ${type}`);
   }
+}
+
+export function sectionTitleDefaults(): SectionTitleData {
+  return {
+    badge: 'A Plataforma Conectada',
+    title: ['Um produto para cada momento da sua jornada'],
+    description: 'Cada produto foi construído para funcionar sozinho — e brilhar junto.',
+    align: 'center',
+    theme: 'light',
+  };
+}
+
+export function choiceCardsDefaults(): ChoiceCardsData {
+  return {
+    badge: 'Soluções',
+    title: ['Entenda qual a solução ideal', 'para o seu negócio'],
+    description: 'Selecione o perfil do seu negócio e veja qual módulo faz mais sentido para você.',
+    cards: [
+      {
+        icon: 'store-building-default',
+        iconColor: '#EB0033',
+        iconBgOpacity: 10,
+        text: 'Estou começando',
+        subtitle: 'Fatura menos de R$40k/mês',
+        challenges: [
+          { text: 'Recebo pedidos pelo WhatsApp' },
+          { text: 'Demoro para responder clientes' },
+          { text: 'Pago muita comissão em marketplaces' },
+        ],
+        needs: [
+          { text: 'Pagamento Online' },
+          { text: 'Cardápio Digital' },
+          { text: 'Atendimento Automatizado' },
+        ],
+        choicebox: {
+          label: 'Produto ideal',
+          title: 'Anota AI',
+          description: 'Robô com IA no WhatsApp, cardápio digital e canal próprio de delivery sem comissão por pedido.',
+          image: '/images/anota-ai-logo.png',
+        },
+        ctaText: 'Contratar agora',
+        ctaLink: '#',
+      },
+      {
+        icon: 'barchart-default',
+        iconColor: '#EB0033',
+        iconBgOpacity: 10,
+        text: 'Estou crescendo',
+        subtitle: 'Fatura mais de R$40k/mês',
+        challenges: [
+          { text: 'Não sei meu CMV' },
+          { text: 'Tenho múltiplos canais de venda' },
+          { text: 'Estoque desorganizado' },
+        ],
+        needs: [
+          { text: 'Gestão Financeira' },
+          { text: 'Centralização de Pedidos' },
+          { text: 'Controle de Estoque' },
+        ],
+        choicebox: {
+          label: 'Produto ideal',
+          title: 'Saipos',
+          description: 'Sistema completo com CMV automático, integração iFood, estoque e gestão multi-canal em um só lugar.',
+          image: '/images/saipos-logo.png',
+        },
+        ctaText: 'Contratar agora',
+        ctaLink: '#',
+      },
+      {
+        icon: 'rocket-ship',
+        iconColor: '#EB0033',
+        iconBgOpacity: 10,
+        text: 'Estou expandindo',
+        subtitle: 'Redes e grupos com múltiplas unidades',
+        challenges: [
+          { text: 'Gestão multiunidade' },
+          { text: 'Operação distribuída' },
+          { text: 'Necessidade de soluções customizadas' },
+        ],
+        needs: [
+          { text: 'CRM avançado' },
+          { text: 'Integrações customizadas' },
+          { text: 'Soluções sob medida' },
+          { text: 'Estoque centralizado' },
+        ],
+        choicebox: {
+          label: 'Fale com um especialista',
+          title: 'Construímos uma proposta personalizada para sua operação.',
+          description: 'Ideal para operações que precisam escalar com padronização.',
+          image: '',
+        },
+        ctaText: 'Contratar agora',
+        ctaLink: '#',
+      },
+    ],
+  };
+}
+
+export function brandCarouselDefaults(): BrandCarouselData {
+  return {
+    badge: 'Empresas parceiras',
+    title: 'Empresas de todos os portes utilizam e aprovam nossas soluções',
+    logos: Array.from({ length: 11 }, () => ({ src: '', alt: '' })),
+  };
+}
+
+export function segmentosDefaults(): SegmentosData {
+  return {
+    badge: 'Segmentos',
+    title: ['Construído para negócios de todos os sabores'],
+    tabs: [
+      { label: 'Bar e Pub', icon: '', description: 'Controle de comanda por mesa, gestão de estoque de bebidas e integração com delivery para aumentar o movimento nas noites de semana.' },
+      { label: 'Hamburgueria', icon: '', description: 'Cardápio digital, pedidos online e gestão de fila integrados para atender mais clientes no horário de pico sem perder qualidade.' },
+      { label: 'Pizzaria', icon: '', description: 'Gestão de delivery e salão em um único sistema, com controle de ingredientes e automação de promoções para aumentar o ticket médio.' },
+      { label: 'Restaurante A La Carte', icon: '', description: 'Experiência completa do salão: comanda digital, reservas online, cardápio QR e integração com delivery para maximizar a ocupação das mesas.' },
+    ],
+  };
 }
 
 export function duplicateBlock(block: Block): Block {

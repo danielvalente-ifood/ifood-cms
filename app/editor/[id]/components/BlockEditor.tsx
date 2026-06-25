@@ -17,6 +17,12 @@ import { FAQEditor } from './editors/FAQEditor';
 import { BigNumbersEditor } from './editors/BigNumbersEditor';
 import { NavbarEditor } from './editors/NavbarEditor';
 import { FooterEditor } from './editors/FooterEditor';
+import { LeadFormEditor } from './editors/LeadFormEditor';
+import { BigNumbersTestimonialEditor } from './editors/BigNumbersTestimonialEditor';
+import { SegmentosEditor } from './editors/SegmentosEditor';
+import { SectionTitleEditor } from './editors/SectionTitleEditor';
+import { ChoiceCardsEditor } from './editors/ChoiceCardsEditor';
+import { BrandCarouselEditor } from './editors/BrandCarouselEditor';
 
 interface BlockEditorProps {
   block: Block;
@@ -51,6 +57,11 @@ const typeLabels: Record<string, string> = {
   results: 'Depoimentos',
   faq: 'FAQ',
   'big-numbers': 'Big Numbers',
+  leadform: 'Formulário de Lead',
+  'big-numbers-testimonial': 'Big Numbers + Depoimentos',
+  segmentos: 'Segmentos',
+  'section-title': 'Título de Seção',
+  'choice-cards': 'Cards de Escolha',
   footer: 'Footer',
 };
 
@@ -66,6 +77,11 @@ const typeIcons: Record<string, string> = {
   results: 'text-quotes-paragraph',
   faq: 'file-02-question-mark',
   'big-numbers': 'barchart-default',
+  leadform: 'users-group-default',
+  'big-numbers-testimonial': 'barchart-default',
+  segmentos: 'grid-dashboard-bento',
+  'section-title': 'text-quotes-paragraph',
+  'choice-cards': 'grid-dashboard-bento',
   footer: 'window-dock-bottom',
 };
 
@@ -94,6 +110,12 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       case 'results': return <ResultsEditor block={block} onUpdate={updateHandler} />;
       case 'faq': return <FAQEditor block={block} onUpdate={updateHandler} />;
       case 'big-numbers': return <BigNumbersEditor block={block} onUpdate={updateHandler} />;
+      case 'leadform': return <LeadFormEditor block={block} onUpdate={updateHandler} />;
+      case 'big-numbers-testimonial': return <BigNumbersTestimonialEditor block={block as Block & { type: 'big-numbers-testimonial' }} onUpdate={updateHandler} />;
+      case 'segmentos': return <SegmentosEditor block={block as Block & { type: 'segmentos' }} onUpdate={updateHandler} />;
+      case 'section-title': return <SectionTitleEditor block={block as Block & { type: 'section-title' }} onUpdate={updateHandler} />;
+      case 'choice-cards': return <ChoiceCardsEditor block={block as Block & { type: 'choice-cards' }} onUpdate={updateHandler} />;
+      case 'brand-carousel': return <BrandCarouselEditor block={block as Block & { type: 'brand-carousel' }} onUpdate={updateHandler} />;
       case 'navbar': return <NavbarEditor block={block} onUpdate={updateHandler} />;
       case 'footer': return <FooterEditor block={block} onUpdate={updateHandler} />;
       default: return <p>Editor não disponível para este tipo de bloco</p>;
@@ -103,7 +125,22 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
   // Modo chromeless: apenas os campos do editor (sem card/cabeçalho/ações).
   // O painel flutuante já provê título + ações padronizadas no header.
   if (chromeless) {
-    return <>{renderEditor()}</>;
+    return (
+      <>
+        {renderEditor()}
+        {!readOnly && (
+          <div className={styles.fieldGroup} style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <label className={styles.fieldLabel}>ID de âncora</label>
+            <input
+              className={styles.fieldInput}
+              value={(block as Block & { anchor_id?: string }).anchor_id ?? ''}
+              onChange={(e) => onUpdate?.({ ...block, anchor_id: e.target.value || undefined } as Block)}
+              placeholder="ex: lead-form → use #lead-form no href do CTA"
+            />
+          </div>
+        )}
+      </>
+    );
   }
 
   return (

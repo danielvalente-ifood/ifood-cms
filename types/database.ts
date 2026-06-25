@@ -87,7 +87,13 @@ export type Block =
   | FAQBlock
   | FooterBlock
   | StackedBlock
-  | BigNumbersBlock;
+  | BigNumbersBlock
+  | LeadFormBlock
+  | BigNumbersTestimonialBlock
+  | SegmentosBlock
+  | SectionTitleBlock
+  | ChoiceCardsBlock
+  | BrandCarouselBlock;
 
 export type BlockType =
   | 'navbar'
@@ -102,7 +108,13 @@ export type BlockType =
   | 'results'
   | 'faq'
   | 'footer'
-  | 'big-numbers';
+  | 'big-numbers'
+  | 'leadform'
+  | 'big-numbers-testimonial'
+  | 'segmentos'
+  | 'section-title'
+  | 'choice-cards'
+  | 'brand-carousel';
 
 // =============================================
 // Block base
@@ -125,6 +137,8 @@ interface BaseBlock<T extends BlockType, D> {
   data: D;
   theme?: number;
   config?: SectionConfig;
+  /** ID de âncora HTML — ex: "lead-form" → href="#lead-form" aponta para esta seção. */
+  anchor_id?: string;
 }
 
 // =============================================
@@ -244,6 +258,14 @@ export interface ContentCTA {
   text: string;
   link: string;
   style?: 'primary' | 'secondary' | 'empty';
+  target?: '_blank' | '_self';
+}
+
+export interface ContentBullet {
+  /** prefixo em negrito (opcional) — ex: "CRM nativo do salão:" */
+  label?: string;
+  /** texto normal após o label */
+  text: string;
 }
 
 export interface ContentData {
@@ -251,6 +273,8 @@ export interface ContentData {
   /** título multi-linha (uma string por linha) */
   title: string[];
   description?: string;
+  /** lista de bullets com ícone check vermelho (variante bullets-*) */
+  bullets?: ContentBullet[];
   /** imagem do card; vazio = placeholder */
   image?: string;
   /** posição do card de imagem — única variação de layout */
@@ -268,7 +292,7 @@ export type ContentBlock = BaseBlock<'content', ContentData>;
 export interface PromoCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary' | 'empty';
+  style?: 'primary' | 'secondary' | 'empty' | 'red';
 }
 
 export interface PromoData {
@@ -500,6 +524,163 @@ export interface FooterLink {
 }
 
 export type FooterBlock = BaseBlock<'footer', FooterData>;
+
+// =============================================
+// LeadForm (formulário de captura de lead)
+// =============================================
+
+export interface LeadFormBenefit {
+  text: string;
+}
+
+export interface LeadFormField {
+  id: string;
+  label: string;
+  type: 'text' | 'email' | 'tel' | 'select';
+  placeholder?: string;
+  required?: boolean;
+  /** Ocupa as 2 colunas do grid (CNPJ, selects, etc.) */
+  fullWidth?: boolean;
+  /** Opções disponíveis quando type = 'select' */
+  options?: string[];
+}
+
+export interface LeadFormData {
+  badge?: string;
+  title: string;
+  subtitle?: string;
+  benefits?: LeadFormBenefit[];
+  form_title: string;
+  fields: LeadFormField[];
+  submit_text: string;
+  success_message?: string;
+}
+
+export type LeadFormBlock = BaseBlock<'leadform', LeadFormData>;
+
+// =============================================
+// BigNumbersTestimonial
+// =============================================
+
+export interface BigNumbersTestimonialStat {
+  value: string;
+  description: string;
+}
+
+export interface BigNumbersTestimonialCard {
+  rating: number;
+  quote: string;
+  author: string;
+  company: string;
+}
+
+export interface BigNumbersTestimonialData {
+  badge?: string;
+  title: string;
+  stats: BigNumbersTestimonialStat[];
+  testimonials: BigNumbersTestimonialCard[];
+}
+
+export type BigNumbersTestimonialBlock = BaseBlock<'big-numbers-testimonial', BigNumbersTestimonialData>;
+
+// =============================================
+// Segmentos
+// =============================================
+
+export interface SegmentosTab {
+  label: string;
+  icon?: string;
+  description: string;
+}
+
+export interface SegmentosData {
+  badge?: string;
+  title: string[];
+  tabs: SegmentosTab[];
+}
+
+export type SegmentosBlock = BaseBlock<'segmentos', SegmentosData>;
+
+// =============================================
+// SectionTitle (título isolado: badge + h2 + descrição)
+// =============================================
+
+export interface SectionTitleData {
+  badge?: string;
+  title: string[];
+  description?: string;
+  align?: 'center' | 'left';
+  theme?: 'light' | 'dark';
+}
+
+export type SectionTitleBlock = BaseBlock<'section-title', SectionTitleData>;
+
+// =============================================
+// ChoiceCards (cards de perfil — grid vertical)
+// =============================================
+
+export interface ChoiceCardChallenge {
+  text: string;
+}
+
+export interface ChoiceCardNeed {
+  text: string;
+}
+
+export interface ChoiceCardChoicebox {
+  label?: string;
+  title: string;
+  description: string;
+  image?: string;
+}
+
+export interface ChoiceCardItem {
+  /** nome do ícone da biblioteca fixa (/public/icons) */
+  icon: string;
+  /** título do card */
+  text: string;
+  /** cor do ícone e fundo do chip (hex) — default '#EB0033' */
+  iconColor?: string;
+  /** opacidade do fundo do chip (0–100) — default 10 */
+  iconBgOpacity?: number;
+  /** subtítulo do card (ex: "Fatura menos de R$40k/mês") */
+  subtitle?: string;
+  /** lista de desafios */
+  challenges?: ChoiceCardChallenge[];
+  /** tags de necessidades (pills) */
+  needs?: ChoiceCardNeed[];
+  /** caixa de produto recomendado */
+  choicebox?: ChoiceCardChoicebox;
+  /** texto e link do botão CTA */
+  ctaText?: string;
+  ctaLink?: string;
+}
+
+export interface ChoiceCardsData {
+  badge?: string;
+  title: string[];
+  description?: string;
+  cards: ChoiceCardItem[];
+}
+
+export type ChoiceCardsBlock = BaseBlock<'choice-cards', ChoiceCardsData>;
+
+// =============================================
+// BrandCarousel (logos de parceiros)
+// =============================================
+
+export interface BrandCarouselLogo {
+  src: string;
+  alt?: string;
+}
+
+export interface BrandCarouselData {
+  badge?: string;
+  title: string;
+  logos: BrandCarouselLogo[];
+}
+
+export type BrandCarouselBlock = BaseBlock<'brand-carousel', BrandCarouselData>;
 
 // =============================================
 // User Management (RBAC)
