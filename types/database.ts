@@ -155,7 +155,7 @@ export type HeroVariant = 'full' | 'slider' | 'centered' | 'split-image' | 'spli
 export interface HeroCTA {
   text: string;
   link: string;
-  style?: 'primary' | 'secondary' | 'empty';
+  style?: 'primary' | 'secondary' | 'empty' | 'red';
 }
 
 export interface HeroSlide {
@@ -220,6 +220,8 @@ export interface BeneficioCard {
   iconColor?: string;
   /** Opacidade do fundo do chip (0–100) — default 5 */
   iconBgOpacity?: number;
+  /** URL de imagem personalizada (50×50) — substitui o chip de ícone */
+  image?: string;
 }
 
 export interface BeneficiosData {
