@@ -85,29 +85,30 @@ export function BigNumbersTestimonialEditor({ block, onUpdate }: Props) {
         </div>
       </div>
 
-      {/* Badge + Título + Stats — apenas na variante default */}
+      {/* Badge + Título — sempre visível */}
+      <div className={styles.fieldGroup}>
+        <label className={styles.fieldLabel}>Badge</label>
+        <input
+          className={styles.fieldInput}
+          value={d.badge ?? ''}
+          onChange={(e) => patch({ badge: e.target.value })}
+          placeholder="Resultado na prática"
+        />
+      </div>
+
+      <div className={styles.fieldGroup}>
+        <label className={styles.fieldLabel}>Título</label>
+        <input
+          className={styles.fieldInput}
+          value={d.title}
+          onChange={(e) => patch({ title: e.target.value })}
+          placeholder="Números que falam por si"
+        />
+      </div>
+
+      {/* Stats — apenas na variante default */}
       {!isTriple && (
         <>
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Badge</label>
-            <input
-              className={styles.fieldInput}
-              value={d.badge ?? ''}
-              onChange={(e) => patch({ badge: e.target.value })}
-              placeholder="Resultados reais"
-            />
-          </div>
-
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Título</label>
-            <input
-              className={styles.fieldInput}
-              value={d.title}
-              onChange={(e) => patch({ title: e.target.value })}
-              placeholder="Números que falam por si"
-            />
-          </div>
-
           <div className={styles.fieldGroup}>
             <label className={styles.fieldLabel}>Estatísticas</label>
             {d.stats.map((stat, i) => (
@@ -142,6 +143,7 @@ export function BigNumbersTestimonialEditor({ block, onUpdate }: Props) {
           </div>
         </>
       )}
+
 
       {/* Testimonials */}
       <div className={styles.fieldGroup}>
