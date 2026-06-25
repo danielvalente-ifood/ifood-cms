@@ -64,62 +64,84 @@ export function BigNumbersTestimonialEditor({ block, onUpdate }: Props) {
     patch({ testimonials: d.testimonials.filter((_, i) => i !== index) });
   }
 
+  const isTriple = d.variant === 'triple';
+
   return (
     <div className={styles.editorFields}>
-      {/* Header */}
+      {/* Variante */}
       <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Badge</label>
-        <input
-          className={styles.fieldInput}
-          value={d.badge ?? ''}
-          onChange={(e) => patch({ badge: e.target.value })}
-          placeholder="Resultados reais"
-        />
+        <label className={styles.fieldLabel}>Variante</label>
+        <div className={styles.segmented} role="group">
+          {(['default', 'triple'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              className={`${styles.segmentBtn} ${(d.variant ?? 'default') === v ? styles.segmentBtnActive : ''}`}
+              onClick={() => patch({ variant: v })}
+            >
+              {v === 'default' ? 'Big Numbers + Depoimentos' : '3 Depoimentos'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Título</label>
-        <input
-          className={styles.fieldInput}
-          value={d.title}
-          onChange={(e) => patch({ title: e.target.value })}
-          placeholder="Números que falam por si"
-        />
-      </div>
-
-      {/* Stats */}
-      <div className={styles.fieldGroup}>
-        <label className={styles.fieldLabel}>Estatísticas</label>
-        {d.stats.map((stat, i) => (
-          <div key={i} className={styles.repeaterItem}>
-            <div className={styles.repeaterRow}>
-              <input
-                className={styles.fieldInput}
-                value={stat.value}
-                onChange={(e) => updateStat(i, 'value', e.target.value)}
-                placeholder="+30%"
-                style={{ flex: '0 0 120px' }}
-              />
-              <textarea
-                className={styles.fieldTextarea}
-                value={stat.description}
-                onChange={(e) => updateStat(i, 'description', e.target.value)}
-                placeholder="descrição (use Enter para nova linha)"
-                rows={2}
-              />
-              <button
-                type="button"
-                className={styles.removeBtn}
-                onClick={() => removeStat(i)}
-                title="Remover"
-              >×</button>
-            </div>
+      {/* Badge + Título + Stats — apenas na variante default */}
+      {!isTriple && (
+        <>
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Badge</label>
+            <input
+              className={styles.fieldInput}
+              value={d.badge ?? ''}
+              onChange={(e) => patch({ badge: e.target.value })}
+              placeholder="Resultados reais"
+            />
           </div>
-        ))}
-        <button type="button" className={styles.addItemBtn} onClick={addStat}>
-          + Adicionar estatística
-        </button>
-      </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Título</label>
+            <input
+              className={styles.fieldInput}
+              value={d.title}
+              onChange={(e) => patch({ title: e.target.value })}
+              placeholder="Números que falam por si"
+            />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Estatísticas</label>
+            {d.stats.map((stat, i) => (
+              <div key={i} className={styles.repeaterItem}>
+                <div className={styles.repeaterRow}>
+                  <input
+                    className={styles.fieldInput}
+                    value={stat.value}
+                    onChange={(e) => updateStat(i, 'value', e.target.value)}
+                    placeholder="+30%"
+                    style={{ flex: '0 0 120px' }}
+                  />
+                  <textarea
+                    className={styles.fieldTextarea}
+                    value={stat.description}
+                    onChange={(e) => updateStat(i, 'description', e.target.value)}
+                    placeholder="descrição (use Enter para nova linha)"
+                    rows={2}
+                  />
+                  <button
+                    type="button"
+                    className={styles.removeBtn}
+                    onClick={() => removeStat(i)}
+                    title="Remover"
+                  >×</button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className={styles.addItemBtn} onClick={addStat}>
+              + Adicionar estatística
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Testimonials */}
       <div className={styles.fieldGroup}>
