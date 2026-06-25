@@ -180,7 +180,7 @@ export function beneficiosDefaults(variant: BeneficiosVariant = 'cards'): Benefi
 
 export type ContentVariant = 'image-left' | 'image-right' | 'bullets-right' | 'bullets-left';
 
-const CONTENT_TITLE = ['Atraia clientes do delivery', 'para o salão'];
+const CONTENT_TITLE = ['Atraia clientes do delivery para o salão'];
 const CONTENT_DESCRIPTION = 'Ative sua base de clientes delivery para visitarem seu restaurante.';
 const CONTENT_CTAS: ContentCTA[] = [
   { text: 'Ativar agora', link: '#', style: 'primary' },
