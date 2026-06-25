@@ -579,6 +579,8 @@ export interface BigNumbersTestimonialData {
   title: string;
   stats: BigNumbersTestimonialStat[];
   testimonials: BigNumbersTestimonialCard[];
+  /** 'default' = big numbers + depoimentos · 'triple' = apenas 3 cards lado a lado */
+  variant?: 'default' | 'triple';
 }
 
 export type BigNumbersTestimonialBlock = BaseBlock<'big-numbers-testimonial', BigNumbersTestimonialData>;
