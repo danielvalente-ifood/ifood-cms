@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type DragEvent } from 'react';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
@@ -23,6 +23,16 @@ interface MediaPickerProps {
 
 type Scope = 'vertical' | 'global';
 
+interface FileProgress {
+  name: string;
+  status: 'uploading' | 'done' | 'error';
+}
+
+const DROP_ACCEPT: Record<string, string> = {
+  image: 'image/*',
+  all: 'image/*,video/*,application/pdf',
+};
+
 export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPickerProps) {
   const { verticalId, verticalSlug } = useMediaContext();
   const { user } = useAuth();
@@ -32,6 +42,9 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [queue, setQueue] = useState<FileProgress[]>([]);
+  const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -57,27 +70,94 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
     return matchType && matchSearch;
   });
 
-  const handleUpload = async (files: FileList | null) => {
+  /** Accepts files from both the file input and drag-and-drop */
+  const handleFiles = useCallback(async (files: FileList | File[]) => {
     if (!files || files.length === 0) return;
+
+    const fileArr = Array.from(files);
     setUploading(true);
+    setQueue(fileArr.map(f => ({ name: f.name, status: 'uploading' as const })));
+
     const useVertical = scope === 'vertical';
-    const { asset } = await uploadMedia({
-      file: files[0],
-      verticalId: useVertical ? verticalId : null,
-      verticalSlug: useVertical ? verticalSlug : null,
-      uploadedBy: user?.id ?? null,
-    });
-    setUploading(false);
-    if (asset) {
-      onSelect(asset.file_url);
-      onClose();
-    } else {
-      await load();
+    let autoSelect: string | null = null;
+
+    for (let i = 0; i < fileArr.length; i++) {
+      const file = fileArr[i];
+      const { asset } = await uploadMedia({
+        file,
+        verticalId: useVertical ? verticalId : null,
+        verticalSlug: useVertical ? verticalSlug : null,
+        uploadedBy: user?.id ?? null,
+      });
+      setQueue(prev => prev.map((q, idx) =>
+        idx === i ? { ...q, status: asset ? 'done' : 'error' } : q,
+      ));
+
+      // If only one file was uploaded, auto-select it (legacy behavior)
+      if (asset && fileArr.length === 1) {
+        autoSelect = asset.file_url;
+      }
     }
-  };
+
+    setUploading(false);
+
+    // Clear queue after a short delay so the user can see all "done" badges
+    setTimeout(() => setQueue([]), 2000);
+    await load();
+
+    if (autoSelect) {
+      onSelect(autoSelect);
+      onClose();
+    }
+  }, [scope, verticalId, verticalSlug, user, load, onSelect, onClose]);
+
+  // ── Drag-and-drop handlers ────────────────────────────────────────────
+
+  const onDragEnter = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.items?.length) setDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setDragOver(false);
+  }, []);
+
+  const onDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const onDrop = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files?.length) handleFiles(files);
+  }, [handleFiles]);
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      {dragOver && (
+        <div className={styles.dropZone}>
+          <Icon name="upload" size={32} />
+          <p>Soltar arquivo{queue.length > 0 ? 's' : ''} para upload</p>
+        </div>
+      )}
+
       <div className={styles.modal} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Selecionar mídia">
         {/* Header */}
         <div className={styles.header}>
@@ -126,11 +206,27 @@ export function MediaPicker({ onSelect, onClose, accept = 'image' }: MediaPicker
           <input
             ref={fileInputRef}
             type="file"
-            accept={accept === 'image' ? 'image/*' : 'image/*,video/*,application/pdf'}
+            accept={DROP_ACCEPT[accept]}
+            multiple
             style={{ display: 'none' }}
-            onChange={e => handleUpload(e.target.files)}
+            onChange={e => { if (e.target.files) handleFiles(e.target.files); }}
           />
         </div>
+
+        {/* Upload queue banner */}
+        {queue.length > 0 && (
+          <div className={styles.queue}>
+            {queue.map((f, i) => (
+              <div key={i} className={`${styles.queueItem} ${styles[`queueItem--${f.status}`]}`}>
+                <Icon name={f.status === 'done' ? 'check' : f.status === 'error' ? 'close-x' : 'upload'} size={14} />
+                <span className={styles.queueName}>{f.name}</span>
+                {f.status === 'uploading' && <span className={styles.queuePill}>Enviando…</span>}
+                {f.status === 'done' && <span className={styles.queuePill}>Pronto</span>}
+                {f.status === 'error' && <span className={styles.queuePill}>Erro</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Grid */}
         <div className={styles.body}>
