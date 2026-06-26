@@ -23,6 +23,7 @@ import { SegmentosEditor } from './editors/SegmentosEditor';
 import { SectionTitleEditor } from './editors/SectionTitleEditor';
 import { ChoiceCardsEditor } from './editors/ChoiceCardsEditor';
 import { BrandCarouselEditor } from './editors/BrandCarouselEditor';
+import { BigNumbersEcossistemaEditor } from './editors/BigNumbersEcossistemaEditor';
 
 interface BlockEditorProps {
   block: Block;
@@ -116,6 +117,7 @@ export function BlockEditor({ block, index, total, isSelected, onSelect, onUpdat
       case 'section-title': return <SectionTitleEditor block={block as Block & { type: 'section-title' }} onUpdate={updateHandler} />;
       case 'choice-cards': return <ChoiceCardsEditor block={block as Block & { type: 'choice-cards' }} onUpdate={updateHandler} />;
       case 'brand-carousel': return <BrandCarouselEditor block={block as Block & { type: 'brand-carousel' }} onUpdate={updateHandler} />;
+      case 'big-numbers-ecossistema': return <BigNumbersEcossistemaEditor block={block as Block & { type: 'big-numbers-ecossistema' }} onUpdate={updateHandler} />;
       case 'navbar': return <NavbarEditor block={block} onUpdate={updateHandler} />;
       case 'footer': return <FooterEditor block={block} onUpdate={updateHandler} />;
       default: return <p>Editor não disponível para este tipo de bloco</p>;

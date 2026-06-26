@@ -41,6 +41,7 @@ const typeIcons: Record<string, string> = {
   'section-title': 'text-quotes-paragraph',
   'choice-cards': 'grid-dashboard-bento',
   'brand-carousel': 'photo-image-default',
+  'big-numbers-ecossistema': 'barchart-default',
   footer: 'window-dock-bottom',
 };
 
@@ -62,6 +63,7 @@ const blockOptions: { type: BlockType; label: string; description: string }[] = 
   { type: 'section-title', label: 'Título de Seção', description: 'Badge + título + descrição centralizado (separador entre seções)' },
   { type: 'choice-cards', label: 'Cards de Escolha', description: '3 cards de perfil do usuário com ícone e texto (fundo #FAFAFC)' },
   { type: 'brand-carousel', label: 'Carrossel de Marcas', description: 'Badge + título + logos de parceiros sobre fundo #FAFAFC' },
+  { type: 'big-numbers-ecossistema', label: 'Big Numbers Ecossistema', description: '4 cards brancos com ícone (imagem), número e rótulo sobre fundo #FAFAFC' },
   { type: 'navbar', label: 'Navbar', description: 'Menu de navegação' },
   // Footer é fixo em toda página — não selecionável no painel de adicionar.
 ];
@@ -131,6 +133,9 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   ],
   'brand-carousel': [
     { id: 'default', label: 'Padrão', description: 'Badge + título + linha de logos de parceiros sobre fundo #FAFAFC.' },
+  ],
+  'big-numbers-ecossistema': [
+    { id: 'default', label: '4 cards', description: 'Ícone (imagem) + número + rótulo em 4 cards brancos lado a lado sobre fundo #FAFAFC.' },
   ],
   navbar: [
     { id: 'navbar-1', label: 'Layout 1', description: 'Logo + menu central + CTA direita' },
