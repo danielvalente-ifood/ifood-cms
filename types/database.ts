@@ -298,8 +298,8 @@ export interface PromoCTA {
 }
 
 export interface PromoData {
-  /** centered = texto centralizado · split = texto + card de imagem */
-  layout?: 'centered' | 'split';
+  /** centered = texto centralizado · split = texto + card · video = vídeo full-width */
+  layout?: 'centered' | 'split' | 'video';
   title: string[];
   description?: string;
   /** fundo: cor hex única ou imagem */
@@ -315,6 +315,11 @@ export interface PromoData {
   curtain?: boolean;
   /** 0, 1 ou 2 CTAs */
   ctas?: PromoCTA[];
+  /** video variant */
+  videoType?: 'upload' | 'youtube';
+  videoSrc?: string;
+  videoUrl?: string;
+  autoplay?: boolean;
 }
 
 export type PromoBlock = BaseBlock<'promo', PromoData>;
