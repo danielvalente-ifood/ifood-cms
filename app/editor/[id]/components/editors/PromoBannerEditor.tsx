@@ -137,73 +137,115 @@ export function PromoBannerEditor({ block, onUpdate }: Props) {
   const update = (patch: Partial<typeof d>) => onUpdate({ ...block, data: { ...d, ...patch } });
 
   const bgType = d.backgroundType ?? 'color';
+  const layout = d.layout ?? 'centered';
 
   return (
     <>
       <Segmented
         label="Layout"
-        value={d.layout ?? 'centered'}
+        value={layout}
         onChange={(v) => update({ layout: v })}
-        options={[{ v: 'centered', label: 'Centralizado' }, { v: 'split', label: 'Com imagem' }]}
+        options={[
+          { v: 'centered', label: 'Centralizado' },
+          { v: 'split', label: 'Com imagem' },
+          { v: 'video', label: 'Vídeo' },
+        ]}
       />
 
-      {d.layout === 'split' && (
-        <Segmented
-          label="Posição da imagem"
-          value={d.assetPosition ?? 'right'}
-          onChange={(v) => update({ assetPosition: v })}
-          options={[{ v: 'left', label: 'Esquerda' }, { v: 'right', label: 'Direita' }]}
-        />
+      {/* ---- variante vídeo ---- */}
+      {layout === 'video' && (
+        <>
+          <Segmented
+            label="Autoplay"
+            value={d.autoplay === false ? 'off' : 'on'}
+            onChange={(v) => update({ autoplay: v === 'on' })}
+            options={[{ v: 'on', label: 'Ligado' }, { v: 'off', label: 'Desligado' }]}
+          />
+          <Segmented
+            label="Fonte do vídeo"
+            value={d.videoType ?? 'youtube'}
+            onChange={(v) => update({ videoType: v })}
+            options={[{ v: 'youtube', label: 'YouTube' }, { v: 'upload', label: 'Upload' }]}
+          />
+          {(d.videoType ?? 'youtube') === 'youtube' ? (
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>URL do YouTube</label>
+              <input
+                className={styles.fieldInput}
+                value={d.videoUrl ?? ''}
+                placeholder="https://www.youtube.com/watch?v=..."
+                onChange={(e) => update({ videoUrl: e.target.value })}
+              />
+            </div>
+          ) : (
+            <ImageUpload
+              label="Arquivo de vídeo"
+              value={d.videoSrc ?? ''}
+              onChange={(url) => update({ videoSrc: url })}
+            />
+          )}
+        </>
       )}
 
-      {/* fundo: cor ou imagem */}
-      <Segmented
-        label="Fundo"
-        value={bgType}
-        onChange={(v) => update({ backgroundType: v })}
-        options={[{ v: 'color', label: 'Cor' }, { v: 'image', label: 'Imagem' }]}
-      />
-      {bgType === 'color' ? (
-        <ColorField value={d.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
-      ) : (
-        <ImageUpload label="Imagem de fundo" value={d.backgroundImage || ''} onChange={(url) => update({ backgroundImage: url })} />
+      {/* ---- variantes texto ---- */}
+      {layout !== 'video' && (
+        <>
+          {layout === 'split' && (
+            <Segmented
+              label="Posição da imagem"
+              value={d.assetPosition ?? 'right'}
+              onChange={(v) => update({ assetPosition: v })}
+              options={[{ v: 'left', label: 'Esquerda' }, { v: 'right', label: 'Direita' }]}
+            />
+          )}
+
+          <Segmented
+            label="Fundo"
+            value={bgType}
+            onChange={(v) => update({ backgroundType: v })}
+            options={[{ v: 'color', label: 'Cor' }, { v: 'image', label: 'Imagem' }]}
+          />
+          {bgType === 'color' ? (
+            <ColorField value={d.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          ) : (
+            <ImageUpload label="Imagem de fundo" value={d.backgroundImage || ''} onChange={(url) => update({ backgroundImage: url })} />
+          )}
+
+          <Segmented
+            label="Cor do conteúdo"
+            value={d.contentColor ?? 'light'}
+            onChange={(v) => update({ contentColor: v })}
+            options={[{ v: 'light', label: 'Claro' }, { v: 'dark', label: 'Escuro' }]}
+          />
+
+          <Segmented
+            label="Efeito cortina (rolagem)"
+            value={d.curtain === false ? 'off' : 'on'}
+            onChange={(v) => update({ curtain: v === 'on' })}
+            options={[{ v: 'on', label: 'Ligado' }, { v: 'off', label: 'Desligado' }]}
+          />
+
+          <div className={styles.arraySection}>
+            <div className={styles.arraySectionHeader}>
+              <span className={styles.arraySectionTitle}>Descrição</span>
+              <button
+                className={styles.addItemBtn}
+                onClick={() => update({ description: d.description ? '' : 'Uma plataforma que organiza atendimento, pedidos, pagamentos e gestão.' })}
+              >
+                {d.description ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+          </div>
+
+          <p className={styles.selectorEmpty}>Edite título e descrição com duplo-clique direto no preview.</p>
+
+          {layout === 'split' && (
+            <ImageUpload label="Imagem do card" value={d.image || ''} onChange={(url) => update({ image: url })} />
+          )}
+
+          <CtasEditor value={d.ctas} onChange={(v) => update({ ctas: v })} />
+        </>
       )}
-
-      {/* cor do conteúdo (claro sobre fundo escuro / escuro sobre fundo claro) */}
-      <Segmented
-        label="Cor do conteúdo"
-        value={d.contentColor ?? 'light'}
-        onChange={(v) => update({ contentColor: v })}
-        options={[{ v: 'light', label: 'Claro' }, { v: 'dark', label: 'Escuro' }]}
-      />
-
-      {/* efeito cortina */}
-      <Segmented
-        label="Efeito cortina (rolagem)"
-        value={d.curtain === false ? 'off' : 'on'}
-        onChange={(v) => update({ curtain: v === 'on' })}
-        options={[{ v: 'on', label: 'Ligado' }, { v: 'off', label: 'Desligado' }]}
-      />
-
-      <div className={styles.arraySection}>
-        <div className={styles.arraySectionHeader}>
-          <span className={styles.arraySectionTitle}>Descrição</span>
-          <button
-            className={styles.addItemBtn}
-            onClick={() => update({ description: d.description ? '' : 'Uma plataforma que organiza atendimento, pedidos, pagamentos e gestão.' })}
-          >
-            {d.description ? 'Ocultar' : 'Mostrar'}
-          </button>
-        </div>
-      </div>
-
-      <p className={styles.selectorEmpty}>Edite título e descrição com duplo-clique direto no preview.</p>
-
-      {d.layout === 'split' && (
-        <ImageUpload label="Imagem do card" value={d.image || ''} onChange={(url) => update({ image: url })} />
-      )}
-
-      <CtasEditor value={d.ctas} onChange={(v) => update({ ctas: v })} />
     </>
   );
 }

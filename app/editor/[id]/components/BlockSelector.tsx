@@ -93,6 +93,7 @@ const BLOCK_VARIANTS: Record<BlockType, BlockVariant[]> = {
   promo: [
     { id: 'centered', label: 'Centralizado', description: 'Texto e CTAs centralizados sobre o fundo.' },
     { id: 'split', label: 'Com imagem', description: 'Texto à esquerda, card de imagem à direita.' },
+    { id: 'video', label: 'Vídeo', description: 'Vídeo full-width via upload ou YouTube. Sem texto sobreposto.' },
   ],
   stacked: [
     { id: 'media', label: 'Mídia + texto', description: 'Cards empilham no scroll; aberto = imagem + título, descrição e CTA (3 a 8).' },

@@ -223,7 +223,7 @@ export function contentDefaults(variant: ContentVariant = 'image-left'): Content
   };
 }
 
-export type PromoVariant = 'centered' | 'split';
+export type PromoVariant = 'centered' | 'split' | 'video';
 
 const PROMO_TITLE = [
   'Seus clientes do delivery agora',
@@ -239,6 +239,16 @@ const PROMO_CTAS: PromoCTA[] = [
 
 /** Defaults por variante de Banner promocional — seed ao adicionar o bloco. */
 export function promoDefaults(variant: PromoVariant = 'centered'): PromoData {
+  if (variant === 'video') {
+    return {
+      layout: 'video',
+      title: [],
+      videoType: 'youtube',
+      videoUrl: '',
+      videoSrc: '',
+      autoplay: true,
+    };
+  }
   return {
     layout: variant,
     title: [...PROMO_TITLE],
