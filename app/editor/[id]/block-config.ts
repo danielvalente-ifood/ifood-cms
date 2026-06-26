@@ -27,6 +27,7 @@ import type {
   ChoiceCardsData,
   ChoiceCardItem,
   BrandCarouselData,
+  BigNumbersEcossistemaData,
 } from '@/types/database';
 
 export type GroupKey = 'hero' | 'content' | 'footer';
@@ -34,10 +35,10 @@ export type GroupKey = 'hero' | 'content' | 'footer';
 // BigNumbers label usado no BLOCK_TYPE_LABELS e CONTENT_CATEGORIES
 const BIG_NUMBERS_LABEL = 'Big Numbers';
 
-export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq' | 'big-numbers' | 'leadform' | 'big-numbers-testimonial' | 'segmentos' | 'section-title' | 'choice-cards' | 'brand-carousel';
+export type ContentType = 'beneficios' | 'content' | 'promo' | 'stacked' | 'vision' | 'growth' | 'integrated' | 'results' | 'faq' | 'big-numbers' | 'leadform' | 'big-numbers-testimonial' | 'segmentos' | 'section-title' | 'choice-cards' | 'brand-carousel' | 'big-numbers-ecossistema';
 
 export const HERO_TYPES: BlockType[] = ['hero'];
-export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq', 'big-numbers', 'leadform', 'big-numbers-testimonial', 'segmentos', 'section-title', 'choice-cards', 'brand-carousel'];
+export const CONTENT_TYPES: ContentType[] = ['beneficios', 'content', 'promo', 'stacked', 'vision', 'growth', 'integrated', 'results', 'faq', 'big-numbers', 'leadform', 'big-numbers-testimonial', 'segmentos', 'section-title', 'choice-cards', 'brand-carousel', 'big-numbers-ecossistema'];
 export const FOOTER_TYPES: BlockType[] = ['footer'];
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
@@ -59,6 +60,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   'section-title': 'Título de Seção',
   'choice-cards': 'Cards de Escolha',
   'brand-carousel': 'Carrossel de Marcas',
+  'big-numbers-ecossistema': 'Big Numbers Ecossistema',
   footer: 'Footer',
 };
 
@@ -449,6 +451,8 @@ export function createBlock(type: BlockType, theme: number, variant?: string): B
       return { id, type: 'choice-cards', data: choiceCardsDefaults(), theme };
     case 'brand-carousel':
       return { id, type: 'brand-carousel', data: brandCarouselDefaults(), theme };
+    case 'big-numbers-ecossistema':
+      return { id, type: 'big-numbers-ecossistema', data: bigNumbersEcossistemaDefaults(), theme };
     case 'footer':
       return { id, type: 'footer', data: { ...FOOTER_DEFAULTS }, theme };
     default:
@@ -557,6 +561,19 @@ export function brandCarouselDefaults(): BrandCarouselData {
     badge: 'Empresas parceiras',
     title: 'Empresas de todos os portes utilizam e aprovam nossas soluções',
     logos: Array.from({ length: 11 }, () => ({ src: '', alt: '' })),
+  };
+}
+
+export function bigNumbersEcossistemaDefaults(): BigNumbersEcossistemaData {
+  return {
+    badge: 'Ecossistema',
+    title: 'A plataforma que conecta milhares de restaurantes todos os dias',
+    cards: [
+      { value: '65 milhões', label: 'clientes conectados ao ecossistema iFood' },
+      { value: '180 milhões', label: 'de pedidos realizados no mês' },
+      { value: '500 mil', label: 'lojas parceiras' },
+      { value: '600 mil', label: 'entregadores ativos - maior frota do Brasil' },
+    ],
   };
 }
 

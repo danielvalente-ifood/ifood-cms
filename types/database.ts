@@ -93,7 +93,8 @@ export type Block =
   | SegmentosBlock
   | SectionTitleBlock
   | ChoiceCardsBlock
-  | BrandCarouselBlock;
+  | BrandCarouselBlock
+  | BigNumbersEcossistemaBlock;
 
 export type BlockType =
   | 'navbar'
@@ -114,7 +115,8 @@ export type BlockType =
   | 'segmentos'
   | 'section-title'
   | 'choice-cards'
-  | 'brand-carousel';
+  | 'brand-carousel'
+  | 'big-numbers-ecossistema';
 
 // =============================================
 // Block base
@@ -683,6 +685,24 @@ export interface BrandCarouselData {
 }
 
 export type BrandCarouselBlock = BaseBlock<'brand-carousel', BrandCarouselData>;
+
+// =============================================
+// BigNumbersEcossistema
+// =============================================
+
+export interface BigNumbersEcossistemaCard {
+  icon?: string;
+  value: string;
+  label: string;
+}
+
+export interface BigNumbersEcossistemaData {
+  badge?: string;
+  title: string;
+  cards: BigNumbersEcossistemaCard[];
+}
+
+export type BigNumbersEcossistemaBlock = BaseBlock<'big-numbers-ecossistema', BigNumbersEcossistemaData>;
 
 // =============================================
 // User Management (RBAC)

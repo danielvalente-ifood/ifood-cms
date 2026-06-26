@@ -325,7 +325,22 @@ export default function EditorPage() {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blocks, saved, loading, saveDraft]);
+    // 'saved' omitido dos deps intencionalmente: se incluído, o cleanup de um
+    // save concluído cancelaria o timer de mudanças mais recentes ainda pendentes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks, loading, saveDraft]);
+
+  // Avisa o usuário ao fechar/recarregar com mudanças não salvas
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!saved) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saved]);
 
   // Busca colaboradores após salvar
   useEffect(() => {
