@@ -707,375 +707,375 @@ export default function EditorPage() {
 
   return (
     <MediaProvider verticalId={page.vertical_id} verticalSlug={verticalSlug}>
-    <div className={styles.editorLayout}>
-      {/* Top bar */}
-      <header className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <button className={styles.backBtn} onClick={() => router.push('/')}>
-            <Icon name="chevron-left" size={20} />
-          </button>
-          <div>
-            {editingName ? (
-              <input
-                autoFocus
-                className={`${styles.pageTitle} ${styles.pageTitleInput}`}
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onBlur={savePageName}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    (e.currentTarget as HTMLInputElement).blur();
-                  } else if (e.key === 'Escape') {
-                    setEditingName(false);
-                  }
-                }}
-              />
-            ) : (
-              <h1
-                className={styles.pageTitle}
-                onClick={() => {
-                  if (!canEdit) return;
-                  setNameDraft(page.name);
-                  setEditingName(true);
-                }}
-                title={canEdit ? 'Clique para renomear' : undefined}
-                style={canEdit ? { cursor: 'pointer' } : undefined}
-              >
-                {page.name}
-              </h1>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span className={styles.pageSlug}>/{page.slug}</span>
+      <div className={styles.editorLayout}>
+        {/* Top bar */}
+        <header className={styles.topBar}>
+          <div className={styles.topBarLeft}>
+            <button className={styles.backBtn} onClick={() => router.push('/pages')}>
+              <Icon name="chevron-left" size={20} />
+            </button>
+            <div>
+              {editingName ? (
+                <input
+                  autoFocus
+                  className={`${styles.pageTitle} ${styles.pageTitleInput}`}
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={savePageName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      (e.currentTarget as HTMLInputElement).blur();
+                    } else if (e.key === 'Escape') {
+                      setEditingName(false);
+                    }
+                  }}
+                />
+              ) : (
+                <h1
+                  className={styles.pageTitle}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setNameDraft(page.name);
+                    setEditingName(true);
+                  }}
+                  title={canEdit ? 'Clique para renomear' : undefined}
+                  style={canEdit ? { cursor: 'pointer' } : undefined}
+                >
+                  {page.name}
+                </h1>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className={styles.pageSlug}>/{page.slug}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Centro: device + zoom */}
-        <div className={styles.viewportBar}>
-          <div className={styles.deviceGroup} role="group" aria-label="Dispositivo">
-            {([
-              { v: 'desktop', icon: 'monitor' },
-              { v: 'tablet', icon: 'tablet' },
-              { v: 'mobile', icon: 'smartphone' },
-            ] as const).map((d) => (
-              <button
-                key={d.v}
-                className={`${styles.deviceBtn} ${device === d.v ? styles.deviceBtnActive : ''}`}
-                onClick={() => setDevice(d.v)}
-                aria-label={d.v}
-                aria-pressed={device === d.v}
-              >
-                <Icon name={d.icon} size={16} />
-              </button>
-            ))}
+          {/* Centro: device + zoom */}
+          <div className={styles.viewportBar}>
+            <div className={styles.deviceGroup} role="group" aria-label="Dispositivo">
+              {([
+                { v: 'desktop', icon: 'monitor' },
+                { v: 'tablet', icon: 'tablet' },
+                { v: 'mobile', icon: 'smartphone' },
+              ] as const).map((d) => (
+                <button
+                  key={d.v}
+                  className={`${styles.deviceBtn} ${device === d.v ? styles.deviceBtnActive : ''}`}
+                  onClick={() => setDevice(d.v)}
+                  aria-label={d.v}
+                  aria-pressed={device === d.v}
+                >
+                  <Icon name={d.icon} size={16} />
+                </button>
+              ))}
+            </div>
+            <span className={styles.viewportDivider} />
+            <div className={styles.zoomDropdown}>
+              <FilterDropdown
+                options={[50, 75, 100, 125].map((z) => ({ value: String(z), label: `${z}%` }))}
+                value={String(zoom)}
+                onChange={(v) => setZoom(Number(v))}
+              />
+            </div>
           </div>
-          <span className={styles.viewportDivider} />
-          <div className={styles.zoomDropdown}>
-            <FilterDropdown
-              options={[50, 75, 100, 125].map((z) => ({ value: String(z), label: `${z}%` }))}
-              value={String(zoom)}
-              onChange={(v) => setZoom(Number(v))}
-            />
-          </div>
-        </div>
 
-        <div className={styles.topBarRight}>
-          {canEdit ? (
-            <>
-              {collaborators.length > 0 && (
-                <AvatarStack avatars={collaborators} max={3} size={28} square />
-              )}
-              <button
-                className={styles.btnPreview}
-                onClick={() => window.open(`${LANDING_URL}${landingPath}?edit=true`, '_blank')}
-                title="Abrir preview em nova aba"
-              >
-                <Icon name="eye-on" size={16} />
-                Preview
-              </button>
-              <span className={styles.saveStatus}>
-                {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
+          <div className={styles.topBarRight}>
+            {canEdit ? (
+              <>
+                {collaborators.length > 0 && (
+                  <AvatarStack avatars={collaborators} max={3} size={28} square />
+                )}
+                <button
+                  className={styles.btnPreview}
+                  onClick={() => window.open(`${LANDING_URL}${landingPath}?edit=true`, '_blank')}
+                  title="Abrir preview em nova aba"
+                >
+                  <Icon name="eye-on" size={16} />
+                  Preview
+                </button>
+                <span className={styles.saveStatus}>
+                  {saving ? 'Salvando...' : saved ? 'Salvo' : 'Alterações não salvas'}
+                </span>
+                <button
+                  className={styles.btnUndo}
+                  onClick={undo}
+                  disabled={!canUndo}
+                  title="Desfazer (Ctrl+Z)"
+                >
+                  <Icon name="undo" size={15} />
+                </button>
+                <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
+                  Publicar
+                </button>
+              </>
+            ) : (
+              <span className={styles.readOnlyBadge}>
+                <Icon name="eye-on" size={14} />
+                Modo leitura
               </span>
+            )}
+          </div>
+        </header>
+
+        {/* Main editor area */}
+        <div className={styles.editorBody}>
+          {/* Rail esquerdo: adicionar + IA */}
+          {canEdit && (
+            <div className={styles.rail}>
               <button
-                className={styles.btnUndo}
-                onClick={undo}
-                disabled={!canUndo}
-                title="Desfazer (Ctrl+Z)"
+                className={styles.railBtn}
+                onClick={() => { setSelectedBlockId(null); openBlockSelector(); }}
+                aria-label="Adicionar bloco"
               >
-                <Icon name="undo" size={15} />
+                <span className={styles.railIcon}><Icon name="plus-default" size={20} /></span>
+                <span className={styles.railTooltip}>Adicionar bloco</span>
               </button>
-              <button className={styles.btnPublish} onClick={handlePublish} disabled={saving}>
-                Publicar
+              <button
+                className={`${styles.railBtn} ${showAiPanel ? styles.railBtnActive : ''}`}
+                onClick={() => setShowAiPanel((v) => !v)}
+                aria-label="Personalização com IA"
+              >
+                <span className={styles.railIcon}><Icon name="bot" size={20} /></span>
+                {aiEnabled && <span className={styles.railDot} />}
+                <span className={styles.railTooltip}>Personalização com IA</span>
               </button>
-            </>
-          ) : (
-            <span className={styles.readOnlyBadge}>
-              <Icon name="eye-on" size={14} />
-              Modo leitura
-            </span>
+              <button
+                className={`${styles.railBtn} ${showSeoPanel ? styles.railBtnActive : ''}`}
+                onClick={() => setShowSeoPanel((v) => !v)}
+                aria-label="SEO da página"
+              >
+                <span className={styles.railIcon}><Icon name="search" size={20} /></span>
+                <span className={styles.railTooltip}>SEO da página</span>
+              </button>
+            </div>
+          )}
+
+          {/* Canvas: iframe com device + zoom */}
+          <div className={styles.canvas}>
+            <div
+              className={`${styles.frameWrap} ${styles[`frame_${device}`]}`}
+              style={{ transform: `scale(${zoom / 100})` }}
+            >
+              <iframe ref={iframeRef} src={iframeSrc} className={styles.iframe} title="Preview" />
+              {!iframeReady && <div className={styles.iframeLoading}>Carregando preview...</div>}
+            </div>
+          </div>
+
+          {/* Painel de edição (inline — empurra/encolhe o canvas, fica à direita) */}
+          {canEdit && selectedBlock && selIndex >= 0 && (
+            <aside className={styles.editPanel} aria-label="Editar seção">
+              <div className={styles.editPanelHeader}>
+                <span>
+                  {selectedBlock.type === 'beneficios' && selectedCardIndex !== null
+                    ? `Editar card ${selectedCardIndex + 1}`
+                    : 'Editar seção'}
+                </span>
+                <div className={styles.blockActions}>
+                  {/* Ações padronizadas da seção — ocultas só no modo card do Benefícios */}
+                  {!(selectedBlock.type === 'beneficios' && selectedCardIndex !== null) && (
+                    <>
+                      <button
+                        className={styles.blockActionBtn}
+                        onClick={() => moveBlock(selIndex, 'up')}
+                        disabled={selIndex === 0}
+                        aria-label="Mover acima"
+                        title="Mover acima"
+                      >
+                        <Icon name="chevron-big-up" size={16} />
+                      </button>
+                      <button
+                        className={styles.blockActionBtn}
+                        onClick={() => moveBlock(selIndex, 'down')}
+                        disabled={selIndex === blocks.length - 1}
+                        aria-label="Mover abaixo"
+                        title="Mover abaixo"
+                      >
+                        <Icon name="chevron-big-down" size={16} />
+                      </button>
+                      <button
+                        className={styles.blockActionBtn}
+                        onClick={() => duplicateBlock(selIndex)}
+                        aria-label="Duplicar"
+                        title="Duplicar"
+                      >
+                        <Icon name="copy-default" size={16} />
+                      </button>
+                      <button
+                        className={`${styles.blockActionBtn} ${styles.blockActionBtnDanger}`}
+                        onClick={() => { removeBlock(selIndex); setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                        aria-label="Deletar seção"
+                        title="Deletar seção"
+                      >
+                        <Icon name="delete-dustbin-01" size={16} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    className={styles.blockActionBtn}
+                    onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
+                    aria-label="Fechar"
+                    title="Fechar"
+                  >
+                    <Icon name="close-x" size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className={styles.editPanelBody}>
+                {selectedBlock.type === 'beneficios' ? (
+                  <BeneficiosEditor
+                    block={selectedBlock}
+                    onUpdate={(updated) => updateBlock(selIndex, updated)}
+                    cardIndex={selectedCardIndex}
+                    onCardIndexChange={(i) => {
+                      setSelectedCardIndex(i);
+                      sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                    }}
+                  />
+                ) : selectedBlock.type === 'stacked' ? (
+                  <StackedEditor
+                    block={selectedBlock}
+                    onUpdate={(updated) => updateBlock(selIndex, updated)}
+                    cardIndex={selectedCardIndex}
+                    onCardIndexChange={(i) => {
+                      setSelectedCardIndex(i);
+                      sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                    }}
+                  />
+                ) : selectedBlock.type === 'big-numbers' ? (
+                  <BigNumbersEditor
+                    block={selectedBlock}
+                    onUpdate={(updated) => updateBlock(selIndex, updated)}
+                    cardIndex={selectedCardIndex}
+                  />
+                ) : selectedBlock.type === 'choice-cards' ? (
+                  <ChoiceCardsEditor
+                    block={selectedBlock as Block & { type: 'choice-cards' }}
+                    onUpdate={(updated) => updateBlock(selIndex, updated)}
+                    cardIndex={selectedCardIndex}
+                    onCardIndexChange={(i) => {
+                      setSelectedCardIndex(i);
+                      sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
+                    }}
+                  />
+                ) : (
+                  <BlockEditor
+                    block={selectedBlock}
+                    index={selIndex}
+                    total={blocks.length}
+                    isSelected
+                    chromeless
+                    onUpdate={(updated) => updateBlock(selIndex, updated)}
+                  />
+                )}
+              </div>
+            </aside>
           )}
         </div>
-      </header>
 
-      {/* Main editor area */}
-      <div className={styles.editorBody}>
-        {/* Rail esquerdo: adicionar + IA */}
-        {canEdit && (
-          <div className={styles.rail}>
-            <button
-              className={styles.railBtn}
-              onClick={() => { setSelectedBlockId(null); openBlockSelector(); }}
-              aria-label="Adicionar bloco"
-            >
-              <span className={styles.railIcon}><Icon name="plus-default" size={20} /></span>
-              <span className={styles.railTooltip}>Adicionar bloco</span>
-            </button>
-            <button
-              className={`${styles.railBtn} ${showAiPanel ? styles.railBtnActive : ''}`}
-              onClick={() => setShowAiPanel((v) => !v)}
-              aria-label="Personalização com IA"
-            >
-              <span className={styles.railIcon}><Icon name="bot" size={20} /></span>
-              {aiEnabled && <span className={styles.railDot} />}
-              <span className={styles.railTooltip}>Personalização com IA</span>
-            </button>
-            <button
-              className={`${styles.railBtn} ${showSeoPanel ? styles.railBtnActive : ''}`}
-              onClick={() => setShowSeoPanel((v) => !v)}
-              aria-label="SEO da página"
-            >
-              <span className={styles.railIcon}><Icon name="search" size={20} /></span>
-              <span className={styles.railTooltip}>SEO da página</span>
-            </button>
-          </div>
-        )}
-
-        {/* Canvas: iframe com device + zoom */}
-        <div className={styles.canvas}>
-          <div
-            className={`${styles.frameWrap} ${styles[`frame_${device}`]}`}
-            style={{ transform: `scale(${zoom / 100})` }}
-          >
-            <iframe ref={iframeRef} src={iframeSrc} className={styles.iframe} title="Preview" />
-            {!iframeReady && <div className={styles.iframeLoading}>Carregando preview...</div>}
-          </div>
-        </div>
-
-      {/* Painel de edição (inline — empurra/encolhe o canvas, fica à direita) */}
-      {canEdit && selectedBlock && selIndex >= 0 && (
-        <aside className={styles.editPanel} aria-label="Editar seção">
-          <div className={styles.editPanelHeader}>
-            <span>
-              {selectedBlock.type === 'beneficios' && selectedCardIndex !== null
-                ? `Editar card ${selectedCardIndex + 1}`
-                : 'Editar seção'}
-            </span>
-            <div className={styles.blockActions}>
-              {/* Ações padronizadas da seção — ocultas só no modo card do Benefícios */}
-              {!(selectedBlock.type === 'beneficios' && selectedCardIndex !== null) && (
-                <>
-                  <button
-                    className={styles.blockActionBtn}
-                    onClick={() => moveBlock(selIndex, 'up')}
-                    disabled={selIndex === 0}
-                    aria-label="Mover acima"
-                    title="Mover acima"
-                  >
-                    <Icon name="chevron-big-up" size={16} />
-                  </button>
-                  <button
-                    className={styles.blockActionBtn}
-                    onClick={() => moveBlock(selIndex, 'down')}
-                    disabled={selIndex === blocks.length - 1}
-                    aria-label="Mover abaixo"
-                    title="Mover abaixo"
-                  >
-                    <Icon name="chevron-big-down" size={16} />
-                  </button>
-                  <button
-                    className={styles.blockActionBtn}
-                    onClick={() => duplicateBlock(selIndex)}
-                    aria-label="Duplicar"
-                    title="Duplicar"
-                  >
-                    <Icon name="copy-default" size={16} />
-                  </button>
-                  <button
-                    className={`${styles.blockActionBtn} ${styles.blockActionBtnDanger}`}
-                    onClick={() => { removeBlock(selIndex); setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
-                    aria-label="Deletar seção"
-                    title="Deletar seção"
-                  >
-                    <Icon name="delete-dustbin-01" size={16} />
-                  </button>
-                </>
-              )}
-              <button
-                className={styles.blockActionBtn}
-                onClick={() => { setSelectedBlockId(null); setSelectedCardIndex(null); sendToIframe('cms:deselect', {}); }}
-                aria-label="Fechar"
-                title="Fechar"
-              >
+        {/* AI floating panel */}
+        {canEdit && showAiPanel && (
+          <aside className={styles.aiPanel} aria-label="Personalização com IA">
+            <div className={styles.editPanelHeader}>
+              <span>Personalização com IA</span>
+              <button className={styles.addIconBtn} onClick={() => setShowAiPanel(false)} aria-label="Fechar">
                 <Icon name="close-x" size={16} />
               </button>
             </div>
-          </div>
-          <div className={styles.editPanelBody}>
-            {selectedBlock.type === 'beneficios' ? (
-              <BeneficiosEditor
-                block={selectedBlock}
-                onUpdate={(updated) => updateBlock(selIndex, updated)}
-                cardIndex={selectedCardIndex}
-                onCardIndexChange={(i) => {
-                  setSelectedCardIndex(i);
-                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
-                }}
-              />
-            ) : selectedBlock.type === 'stacked' ? (
-              <StackedEditor
-                block={selectedBlock}
-                onUpdate={(updated) => updateBlock(selIndex, updated)}
-                cardIndex={selectedCardIndex}
-                onCardIndexChange={(i) => {
-                  setSelectedCardIndex(i);
-                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
-                }}
-              />
-            ) : selectedBlock.type === 'big-numbers' ? (
-              <BigNumbersEditor
-                block={selectedBlock}
-                onUpdate={(updated) => updateBlock(selIndex, updated)}
-                cardIndex={selectedCardIndex}
-              />
-            ) : selectedBlock.type === 'choice-cards' ? (
-              <ChoiceCardsEditor
-                block={selectedBlock as Block & { type: 'choice-cards' }}
-                onUpdate={(updated) => updateBlock(selIndex, updated)}
-                cardIndex={selectedCardIndex}
-                onCardIndexChange={(i) => {
-                  setSelectedCardIndex(i);
-                  sendToIframe('cms:select-card', { blockId: selectedBlock.id, cardIndex: i });
-                }}
-              />
-            ) : (
-              <BlockEditor
-                block={selectedBlock}
-                index={selIndex}
-                total={blocks.length}
-                isSelected
-                chromeless
-                onUpdate={(updated) => updateBlock(selIndex, updated)}
-              />
-            )}
-          </div>
-        </aside>
-      )}
-      </div>
-
-      {/* AI floating panel */}
-      {canEdit && showAiPanel && (
-        <aside className={styles.aiPanel} aria-label="Personalização com IA">
-          <div className={styles.editPanelHeader}>
-            <span>Personalização com IA</span>
-            <button className={styles.addIconBtn} onClick={() => setShowAiPanel(false)} aria-label="Fechar">
-              <Icon name="close-x" size={16} />
-            </button>
-          </div>
-          <div className={styles.aiPanelBody}>
-            <label className={styles.aiToggleRow}>
-              <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
-              <button
-                className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
-                onClick={() => setAiEnabled(!aiEnabled)}
-                role="switch"
-                aria-checked={aiEnabled}
-              >
-                <span className={styles.aiToggleKnob} />
+            <div className={styles.aiPanelBody}>
+              <label className={styles.aiToggleRow}>
+                <span className={styles.aiToggleLabel}>Adaptar conteúdo por UTM</span>
+                <button
+                  className={`${styles.aiToggleSwitch} ${aiEnabled ? styles.aiToggleSwitchOn : ''}`}
+                  onClick={() => setAiEnabled(!aiEnabled)}
+                  role="switch"
+                  aria-checked={aiEnabled}
+                >
+                  <span className={styles.aiToggleKnob} />
+                </button>
+              </label>
+              {aiEnabled && (
+                <div className={styles.aiPromptGroup}>
+                  <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
+                  <textarea
+                    className={styles.aiPromptInput}
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="Ex: tom mais informal para redes sociais; destacar benefícios financeiros em Google Ads."
+                    rows={4}
+                  />
+                </div>
+              )}
+              <button className={styles.aiSaveBtn} onClick={saveAiConfig} disabled={aiSaving}>
+                {aiSaving ? 'Salvando...' : 'Salvar configuração'}
               </button>
-            </label>
-            {aiEnabled && (
-              <div className={styles.aiPromptGroup}>
-                <label className={styles.aiPromptLabel}>Instruções para a IA (opcional)</label>
-                <textarea
-                  className={styles.aiPromptInput}
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Ex: tom mais informal para redes sociais; destacar benefícios financeiros em Google Ads."
-                  rows={4}
+            </div>
+          </aside>
+        )}
+
+        {/* SEO floating panel */}
+        {canEdit && showSeoPanel && (
+          <aside className={styles.aiPanel} aria-label="SEO da página">
+            <div className={styles.editPanelHeader}>
+              <span>SEO da página</span>
+              <button className={styles.addIconBtn} onClick={() => setShowSeoPanel(false)} aria-label="Fechar">
+                <Icon name="close-x" size={16} />
+              </button>
+            </div>
+            <div className={styles.editPanelBody}>
+              <div className={styles.cfgField}>
+                <label className={styles.fieldLabel}>Meta title</label>
+                <input
+                  className={styles.fieldInput}
+                  value={metaTitle}
+                  placeholder={page.name}
+                  onChange={(e) => setMetaTitle(e.target.value)}
                 />
               </div>
-            )}
-            <button className={styles.aiSaveBtn} onClick={saveAiConfig} disabled={aiSaving}>
-              {aiSaving ? 'Salvando...' : 'Salvar configuração'}
-            </button>
-          </div>
-        </aside>
-      )}
-
-      {/* SEO floating panel */}
-      {canEdit && showSeoPanel && (
-        <aside className={styles.aiPanel} aria-label="SEO da página">
-          <div className={styles.editPanelHeader}>
-            <span>SEO da página</span>
-            <button className={styles.addIconBtn} onClick={() => setShowSeoPanel(false)} aria-label="Fechar">
-              <Icon name="close-x" size={16} />
-            </button>
-          </div>
-          <div className={styles.editPanelBody}>
-            <div className={styles.cfgField}>
-              <label className={styles.fieldLabel}>Meta title</label>
-              <input
-                className={styles.fieldInput}
-                value={metaTitle}
-                placeholder={page.name}
-                onChange={(e) => setMetaTitle(e.target.value)}
-              />
+              <div className={styles.cfgField} style={{ marginTop: 12 }}>
+                <label className={styles.fieldLabel}>Meta description</label>
+                <textarea
+                  className={styles.fieldTextarea}
+                  value={metaDescription}
+                  placeholder="Resumo da página para buscadores e redes sociais"
+                  rows={3}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                />
+              </div>
+              <div className={styles.cfgField} style={{ marginTop: 12 }}>
+                <ImageUpload label="Imagem de compartilhamento (OG)" value={ogImage} onChange={setOgImage} />
+              </div>
+              <button className={styles.aiSaveBtn} style={{ marginTop: 16 }} onClick={saveSeo} disabled={seoSaving}>
+                {seoSaving ? 'Salvando...' : 'Salvar SEO'}
+              </button>
             </div>
-            <div className={styles.cfgField} style={{ marginTop: 12 }}>
-              <label className={styles.fieldLabel}>Meta description</label>
-              <textarea
-                className={styles.fieldTextarea}
-                value={metaDescription}
-                placeholder="Resumo da página para buscadores e redes sociais"
-                rows={3}
-                onChange={(e) => setMetaDescription(e.target.value)}
-              />
-            </div>
-            <div className={styles.cfgField} style={{ marginTop: 12 }}>
-              <ImageUpload label="Imagem de compartilhamento (OG)" value={ogImage} onChange={setOgImage} />
-            </div>
-            <button className={styles.aiSaveBtn} style={{ marginTop: 16 }} onClick={saveSeo} disabled={seoSaving}>
-              {seoSaving ? 'Salvando...' : 'Salvar SEO'}
-            </button>
+          </aside>
+        )}
+
+        {/* Block selector flutuante */}
+        {canEdit && showBlockSelector && (
+          <BlockSelector
+            onSelect={addBlock}
+            onClose={() => { setShowBlockSelector(false); setInsertIndex(-1); }}
+          />
+        )}
+
+        {/* Troca de imagem inline (duplo-clique numa imagem no iframe) */}
+        {canEdit && imageEditTarget && (
+          <MediaPicker
+            accept="image"
+            onSelect={(url) => { applyInlineImage(imageEditTarget, url); setImageEditTarget(null); }}
+            onClose={() => setImageEditTarget(null)}
+          />
+        )}
+
+        {/* Toast */}
+        {toast && (
+          <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`}>
+            {toast.message}
           </div>
-        </aside>
-      )}
-
-      {/* Block selector flutuante */}
-      {canEdit && showBlockSelector && (
-        <BlockSelector
-          onSelect={addBlock}
-          onClose={() => { setShowBlockSelector(false); setInsertIndex(-1); }}
-        />
-      )}
-
-      {/* Troca de imagem inline (duplo-clique numa imagem no iframe) */}
-      {canEdit && imageEditTarget && (
-        <MediaPicker
-          accept="image"
-          onSelect={(url) => { applyInlineImage(imageEditTarget, url); setImageEditTarget(null); }}
-          onClose={() => setImageEditTarget(null)}
-        />
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`}>
-          {toast.message}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </MediaProvider>
   );
 }
